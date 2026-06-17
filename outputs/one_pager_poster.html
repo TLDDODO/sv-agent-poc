@@ -5,94 +5,108 @@
 <title>Structural Biology Copilot — Poster</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#0b1220; display:flex; align-items:center; justify-content:center; min-height:100vh;
+  body { background:#e7ebf1; display:flex; align-items:center; justify-content:center; min-height:100vh;
          font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif; }
-  .poster { width:1280px; height:720px; background:linear-gradient(160deg,#0f172a 0%,#111d36 60%,#0b1220 100%);
-            color:#e9eef7; padding:54px 60px 44px; position:relative; overflow:hidden;
-            box-shadow:0 24px 70px rgba(0,0,0,.5); }
-  .poster::before { content:""; position:absolute; top:-120px; right:-120px; width:380px; height:380px;
-                    background:radial-gradient(circle,#1d4ed833,transparent 70%); }
-  .poster::after { content:""; position:absolute; bottom:-140px; left:-100px; width:380px; height:380px;
-                   background:radial-gradient(circle,#06b6d422,transparent 70%); }
+  .poster { width:1280px; height:720px; background:#ffffff; color:#0f2440; padding:46px 58px 0;
+            position:relative; overflow:hidden; box-shadow:0 18px 60px rgba(15,36,64,.22);
+            border-top:7px solid #1d4ed8; }
 
-  .kicker { font-size:14px; letter-spacing:3px; text-transform:uppercase; color:#5eead4; font-weight:700; }
-  h1 { font-size:54px; line-height:1.05; font-weight:800; margin:8px 0 10px;
-       background:linear-gradient(90deg,#e9eef7,#7dd3fc); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .lede { font-size:20px; color:#aebbd4; max-width:880px; font-weight:400; }
-  .lede b { color:#e9eef7; font-weight:600; }
+  .kicker { font-size:13px; letter-spacing:3px; text-transform:uppercase; color:#0e7490; font-weight:700; }
+  h1 { font-size:40px; line-height:1.05; font-weight:800; margin:6px 0 16px; color:#0f2440; }
+  h1 small { display:block; font-size:17px; font-weight:500; color:#5b6b82; margin-top:6px; }
 
-  /* contrast strip */
-  .contrast { display:flex; gap:16px; margin:30px 0 26px; }
-  .chip { flex:1; border-radius:14px; padding:16px 22px; position:relative; }
-  .before { background:rgba(244,63,94,.10); border:1px solid rgba(244,63,94,.35); }
-  .after  { background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.40); }
-  .chip .lab { font-size:13px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; }
-  .before .lab { color:#fb7185; } .after .lab { color:#34d399; }
-  .chip .big { font-size:30px; font-weight:800; margin:2px 0 1px; }
-  .chip .sub { font-size:14px; color:#93a3bf; }
-  .arrowx { align-self:center; font-size:30px; color:#475569; }
+  /* CORE message band */
+  .core { background:#0f2440; color:#fff; border-radius:14px; padding:18px 26px; display:flex; align-items:center; gap:22px; }
+  .core .punch { font-size:27px; font-weight:800; line-height:1.15; white-space:nowrap; }
+  .core .punch em { color:#5eead4; font-style:normal; }
+  .core .expl { font-size:14.5px; color:#c4d0e4; line-height:1.5; padding-left:20px; border-left:2px solid #33507a; }
+  .core .expl b { color:#fff; }
 
-  /* pipeline hero */
-  .flow { display:flex; align-items:stretch; gap:0; margin-top:4px; }
-  .node { flex:1; text-align:center; position:relative; padding:6px 6px; }
-  .ic { width:62px; height:62px; margin:0 auto 10px; border-radius:16px; display:flex; align-items:center; justify-content:center;
-        font-size:28px; background:rgba(125,211,252,.08); border:1px solid rgba(125,211,252,.28); }
-  .node h3 { font-size:16px; font-weight:700; color:#e9eef7; }
-  .node p { font-size:12.5px; color:#8aa0c2; margin-top:3px; line-height:1.35; }
-  .conn { align-self:flex-start; margin-top:25px; color:#3b82f6; font-size:24px; font-weight:700; }
-  .node.audit .ic { background:rgba(94,234,212,.10); border-color:rgba(94,234,212,.45); }
-  .node.out .ic   { background:rgba(52,211,153,.12); border-color:rgba(52,211,153,.5); }
+  /* split: labor vs judgment */
+  .split { display:flex; gap:18px; margin:22px 0 20px; }
+  .card { flex:1; border-radius:12px; padding:16px 20px 14px; }
+  .labor { background:#eef5ff; border:1px solid #c5dbff; }
+  .judge { background:#f1faf6; border:1px solid #b9e7d4; }
+  .card .ttl { font-size:12.5px; letter-spacing:1.2px; text-transform:uppercase; font-weight:800; margin-bottom:9px; }
+  .labor .ttl { color:#1d4ed8; } .judge .ttl { color:#0f9d6b; }
+  .card ul { list-style:none; display:flex; flex-wrap:wrap; gap:7px; }
+  .card li { font-size:13px; padding:5px 11px; border-radius:20px; font-weight:600; }
+  .labor li { background:#dbe8ff; color:#1e40af; }
+  .judge li { background:#d5f2e5; color:#0b7a52; }
+  .card .tag { font-size:12px; font-weight:700; margin-top:10px; }
+  .labor .tag { color:#1d4ed8; } .judge .tag { color:#0f9d6b; }
 
-  /* footer */
-  .foot { position:absolute; left:0; right:0; bottom:0; display:flex; align-items:center; }
-  .proof { flex:1; background:#0a1730; border-top:1px solid #1e3a5f; padding:16px 60px;
-           font-size:14px; color:#cbd8ef; display:flex; align-items:center; gap:14px; }
-  .dot { width:9px; height:9px; border-radius:50%; background:#34d399; box-shadow:0 0 0 4px rgba(52,211,153,.18); }
-  .proof b { color:#7dd3fc; }
-  .anchor { background:#1d4ed8; color:#fff; padding:16px 40px; font-size:15px; font-weight:700; white-space:nowrap; }
-  .anchor span { color:#bfdbfe; font-weight:500; }
+  /* pipeline */
+  .flowlab { font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#8294ad; font-weight:700; margin-bottom:8px; }
+  .flow { display:flex; align-items:flex-start; }
+  .node { flex:1; text-align:center; }
+  .ic { width:46px; height:46px; margin:0 auto 7px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+        font-size:21px; background:#eef3fb; border:1px solid #d3e0f2; }
+  .node h3 { font-size:14px; font-weight:700; color:#0f2440; }
+  .node p { font-size:11px; color:#6b7c95; margin-top:2px; line-height:1.3; }
+  .node.out .ic { background:#eafaf2; border-color:#bfe9d5; }
+  .conn { padding-top:14px; color:#9fb2cc; font-size:18px; font-weight:700; }
+
+  /* footer proof */
+  .foot { position:absolute; left:0; right:0; bottom:0; display:flex; align-items:center;
+          border-top:1px solid #e2e8f2; background:#f7f9fc; }
+  .proof { flex:1; padding:14px 58px; font-size:13.5px; color:#33455f; display:flex; align-items:center; gap:12px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:#0f9d6b; box-shadow:0 0 0 4px rgba(15,157,107,.15); }
+  .proof b { color:#0f2440; }
+  .proof code { background:#0f2440; color:#7dd3fc; padding:1px 7px; border-radius:5px; font-size:12.5px; }
+  .anchor { background:#1d4ed8; color:#fff; padding:14px 34px; font-size:14px; font-weight:700; white-space:nowrap; align-self:stretch; display:flex; align-items:center; }
 </style>
 </head>
 <body>
 <div class="poster">
   <div class="kicker">AI Agent × Structural Biology · running on HPC</div>
-  <h1>Structural Biology Copilot</h1>
-  <div class="lede">One question in plain English &rarr; a <b>sourced, auditable mechanism brief</b> for a disease mutation. <b>MD stays the engine</b>; the agent wires the infrastructure around it.</div>
+  <h1>Structural Biology Copilot
+    <small>Plain-English mutation question &rarr; a sourced, auditable mechanism brief.</small>
+  </h1>
 
-  <div class="contrast">
-    <div class="chip before">
-      <div class="lab">Today</div>
-      <div class="big">~ 2&ndash;3 days</div>
-      <div class="sub">manual hops across PDBe · UniProt · papers · MD scripts</div>
+  <div class="core">
+    <div class="punch">Automate the <em>grunt work</em>,<br>not the science.</div>
+    <div class="expl">A structural-biology mutation analysis burns <b>2&ndash;3 days</b> of a scientist's time on mechanical cross-database labor. This copilot does that labor in <b>minutes</b> &mdash; the scientist keeps the judgment, and <b>MD stays the engine</b>.</div>
+  </div>
+
+  <div class="split">
+    <div class="card labor">
+      <div class="ttl">&#9881; The agent does the grunt work</div>
+      <ul>
+        <li>Database search</li><li>Residue-number mapping</li><li>Apo / bound &amp; WT / mutant sorting</li><li>Evidence collection</li><li>Consistency audit</li><li>Bilingual report drafting</li>
+      </ul>
+      <div class="tag">&rarr; the mechanical 95%, done in minutes</div>
     </div>
-    <div class="arrowx">&rarr;</div>
-    <div class="chip after">
-      <div class="lab">With the copilot</div>
-      <div class="big">~ minutes</div>
-      <div class="sub">one pipeline · every claim traceable to a source</div>
+    <div class="card judge">
+      <div class="ttl">&#129504; The scientist keeps the judgment</div>
+      <ul>
+        <li>Which hypothesis matters</li><li>MD modelling &amp; setup</li><li>Mechanistic interpretation</li><li>Go / no-go decisions</li>
+      </ul>
+      <div class="tag">&rarr; the high-value 5%, where humans decide</div>
     </div>
   </div>
 
+  <div class="flowlab">How the grunt work is wired together</div>
   <div class="flow">
-    <div class="node"><div class="ic">&#128172;</div><h3>Ask</h3><p>natural-language<br>mutation question</p></div>
+    <div class="node"><div class="ic">&#128172;</div><h3>Ask</h3><p>NL question</p></div>
     <div class="conn">&rarr;</div>
-    <div class="node"><div class="ic">&#128269;</div><h3>Search</h3><p>official PDBe MCP<br>real structures</p></div>
+    <div class="node"><div class="ic">&#128269;</div><h3>Search</h3><p>PDBe MCP<br>real structures</p></div>
     <div class="conn">&rarr;</div>
     <div class="node"><div class="ic">&#129517;</div><h3>Map</h3><p>SIFTS canonical<br>residue 790</p></div>
     <div class="conn">&rarr;</div>
     <div class="node"><div class="ic">&#9883;</div><h3>Simulate</h3><p>MD metrics<br>dist · RMSF · contacts</p></div>
     <div class="conn">&rarr;</div>
-    <div class="node audit"><div class="ic">&#128270;</div><h3>Audit</h3><p>critic checks<br>consistency &amp; causality</p></div>
+    <div class="node"><div class="ic">&#128270;</div><h3>Audit</h3><p>critic checks<br>consistency</p></div>
     <div class="conn">&rarr;</div>
-    <div class="node out"><div class="ic">&#128203;</div><h3>Brief</h3><p>bilingual report<br>JSON + Markdown</p></div>
+    <div class="node out"><div class="ic">&#128203;</div><h3>Brief</h3><p>JSON + report</p></div>
   </div>
 
   <div class="foot">
     <div class="proof">
       <span class="dot"></span>
-      <span><b>Already real, not mock:</b> live PDBe MCP run on EGFR T790M &nbsp;·&nbsp; top hit <b>5UG9 @ 1.33&Aring;</b> &nbsp;·&nbsp; critic: no critical issues</span>
+      <span><b>Already real, not mock:</b> live PDBe MCP run on EGFR T790M &nbsp;·&nbsp; top hit <code>5UG9 @ 1.33&Aring;</code> &nbsp;·&nbsp; critic: no critical issues</span>
     </div>
-    <div class="anchor">MD is the engine.<br><span>The agent orchestrates it.</span></div>
+    <div class="anchor">MD is the engine &mdash; the agent just accelerates the labor.</div>
   </div>
 </div>
 </body>

@@ -1,0 +1,181 @@
+{
+  "host": "compbioasia-cpu-32-student3",
+  "pdbe_mcp_payload": {
+    "query": "text:*EGFR* AND text:*T790M*",
+    "fq": [
+      "resolution:[0 TO 3.5]",
+      "(experimental_method:\"X-ray diffraction\" OR experimental_method:\"Electron microscopy\")",
+      "(ligand_name:*ATP* OR ligand_name:*inhibitor*)"
+    ],
+    "fl": [
+      "pdb_id",
+      "title",
+      "resolution",
+      "experimental_method",
+      "ligand_name"
+    ],
+    "sort": "resolution asc",
+    "rows": 20
+  },
+  "search_spec": {
+    "query": "EGFR T790M kinase domain drug resistance structures",
+    "experimental_methods": [
+      "X-ray diffraction",
+      "Electron microscopy"
+    ],
+    "max_resolution": 3.5,
+    "ligands": [
+      "ATP",
+      "inhibitor"
+    ],
+    "rows": 20
+  },
+  "structures": [
+    {
+      "pdb_id": "2JIT",
+      "title": "EGFR kinase domain T790M mutant bound to inhibitor",
+      "experimental_method": "X-ray diffraction",
+      "resolution": 2.8,
+      "ligands": [
+        "inhibitor"
+      ],
+      "mutation_status": "T790M",
+      "apo_or_bound": "ligand-bound",
+      "source": "hpc_mock"
+    },
+    {
+      "pdb_id": "2ITY",
+      "title": "EGFR kinase domain reference inhibitor complex",
+      "experimental_method": "X-ray diffraction",
+      "resolution": 2.6,
+      "ligands": [
+        "inhibitor"
+      ],
+      "mutation_status": "WT",
+      "apo_or_bound": "ligand-bound",
+      "source": "hpc_mock"
+    }
+  ],
+  "residue_mappings": [
+    {
+      "pdb_id": "2JIT",
+      "chain_id": "A",
+      "auth_seq_id": "790",
+      "label_seq_id": 790,
+      "canonical_uniprot_accession": "P00533",
+      "canonical_uniprot_position": 790,
+      "pdb_residue_name": "MET",
+      "canonical_residue_name": "THR",
+      "observed": true
+    },
+    {
+      "pdb_id": "2ITY",
+      "chain_id": "A",
+      "auth_seq_id": "790",
+      "label_seq_id": 790,
+      "canonical_uniprot_accession": "P00533",
+      "canonical_uniprot_position": 790,
+      "pdb_residue_name": "THR",
+      "canonical_residue_name": "THR",
+      "observed": true
+    }
+  ],
+  "md_result": {
+    "trajectory_id": "hpc_demo",
+    "topology_hash": "365ec5a93e9a180f96b7f5ba49e7a9745298069e99eaadda202fdfcd07f9d2af",
+    "trajectory_hash": "5b197973f08c92adc83350b2f7ca157b353e131d108eb8f05af25a6a4d885b75",
+    "mapped_selection": "canonical EGFR residue 790 and ligand heavy atoms",
+    "frame_range": [
+      0,
+      1000
+    ],
+    "stride": 10,
+    "metrics": [
+      {
+        "name": "gatekeeper_to_pocket_min_distance",
+        "units": "angstrom",
+        "summary": {
+          "mean": 4.6,
+          "p05": 3.7,
+          "p95": 6.2
+        },
+        "source_selection": "canonical EGFR residue 790 and ligand heavy atoms",
+        "frame_range": [
+          0,
+          1000
+        ]
+      },
+      {
+        "name": "pocket_volume_proxy_key_distance",
+        "units": "angstrom",
+        "summary": {
+          "mean": 9.8,
+          "p05": 8.9,
+          "p95": 11.4
+        },
+        "source_selection": "canonical EGFR pocket key atoms",
+        "frame_range": [
+          0,
+          1000
+        ]
+      },
+      {
+        "name": "gatekeeper_region_rmsf",
+        "units": "angstrom",
+        "summary": {
+          "mean": 1.2,
+          "max": 1.8
+        },
+        "source_selection": "canonical EGFR 785-795",
+        "frame_range": [
+          0,
+          1000
+        ]
+      },
+      {
+        "name": "key_contact_occupancy",
+        "units": "fraction",
+        "summary": {
+          "M790_contact": 0.73,
+          "hinge_contact": 0.64
+        },
+        "source_selection": "canonical EGFR 790 and ligand heavy atoms",
+        "frame_range": [
+          0,
+          1000
+        ]
+      }
+    ],
+    "job_metadata": {
+      "runner": "hpc_ssh_direct",
+      "schema_version": "0.1.0",
+      "host": "compbioasia-cpu-32-student3"
+    },
+    "stdout": "HPC PoC completed",
+    "stderr": ""
+  },
+  "claims": [
+    {
+      "claim": "EGFR T790M plausibly changes inhibitor-pocket dynamics near the gatekeeper site; this is a hypothesis, not a causal proof.",
+      "evidence_type": "inference",
+      "source": "PDB:2JIT,2ITY; Trajectory:hpc_demo",
+      "confidence": "Medium",
+      "confidence_reason": "Structure context plus trajectory metrics support local contact changes, but matched real WT/T790M trajectories are still required.",
+      "limitations": "HPC run currently uses schema-valid demo metrics."
+    },
+    {
+      "claim": "Residue 790 is represented in canonical EGFR UniProt numbering, enabling structure-to-trajectory comparison.",
+      "evidence_type": "structure",
+      "source": "PDB:2JIT,2ITY",
+      "confidence": "High",
+      "confidence_reason": "Both candidates map to canonical EGFR P00533 position 790.",
+      "limitations": "Replace mock mapping with PDBe-SIFTS CSV when real structures are pulled."
+    }
+  ],
+  "literature_pmids": [
+    "18227510"
+  ],
+  "critic_findings": [
+    "No critical consistency issues detected in HPC PoC."
+  ]
+}

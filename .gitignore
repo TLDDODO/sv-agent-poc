@@ -3,3 +3,8 @@ __pycache__/
 .venv/
 .env
 .DS_Store
+
+# audio_llm_mental_health: generated manifests and training checkpoints
+audio_llm_mental_health/data/*.jsonl
+audio_llm_mental_health/outputs/*
+!audio_llm_mental_health/outputs/.gitkeep

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Structural Biology Copilot — Poster</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0b1220; display:flex; align-items:center; justify-content:center; min-height:100vh;
+         font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif; }
+  .poster { width:1280px; height:720px; background:linear-gradient(160deg,#0f172a 0%,#111d36 60%,#0b1220 100%);
+            color:#e9eef7; padding:54px 60px 44px; position:relative; overflow:hidden;
+            box-shadow:0 24px 70px rgba(0,0,0,.5); }
+  .poster::before { content:""; position:absolute; top:-120px; right:-120px; width:380px; height:380px;
+                    background:radial-gradient(circle,#1d4ed833,transparent 70%); }
+  .poster::after { content:""; position:absolute; bottom:-140px; left:-100px; width:380px; height:380px;
+                   background:radial-gradient(circle,#06b6d422,transparent 70%); }
+
+  .kicker { font-size:14px; letter-spacing:3px; text-transform:uppercase; color:#5eead4; font-weight:700; }
+  h1 { font-size:54px; line-height:1.05; font-weight:800; margin:8px 0 10px;
+       background:linear-gradient(90deg,#e9eef7,#7dd3fc); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .lede { font-size:20px; color:#aebbd4; max-width:880px; font-weight:400; }
+  .lede b { color:#e9eef7; font-weight:600; }
+
+  /* contrast strip */
+  .contrast { display:flex; gap:16px; margin:30px 0 26px; }
+  .chip { flex:1; border-radius:14px; padding:16px 22px; position:relative; }
+  .before { background:rgba(244,63,94,.10); border:1px solid rgba(244,63,94,.35); }
+  .after  { background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.40); }
+  .chip .lab { font-size:13px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; }
+  .before .lab { color:#fb7185; } .after .lab { color:#34d399; }
+  .chip .big { font-size:30px; font-weight:800; margin:2px 0 1px; }
+  .chip .sub { font-size:14px; color:#93a3bf; }
+  .arrowx { align-self:center; font-size:30px; color:#475569; }
+
+  /* pipeline hero */
+  .flow { display:flex; align-items:stretch; gap:0; margin-top:4px; }
+  .node { flex:1; text-align:center; position:relative; padding:6px 6px; }
+  .ic { width:62px; height:62px; margin:0 auto 10px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+        font-size:28px; background:rgba(125,211,252,.08); border:1px solid rgba(125,211,252,.28); }
+  .node h3 { font-size:16px; font-weight:700; color:#e9eef7; }
+  .node p { font-size:12.5px; color:#8aa0c2; margin-top:3px; line-height:1.35; }
+  .conn { align-self:flex-start; margin-top:25px; color:#3b82f6; font-size:24px; font-weight:700; }
+  .node.audit .ic { background:rgba(94,234,212,.10); border-color:rgba(94,234,212,.45); }
+  .node.out .ic   { background:rgba(52,211,153,.12); border-color:rgba(52,211,153,.5); }
+
+  /* footer */
+  .foot { position:absolute; left:0; right:0; bottom:0; display:flex; align-items:center; }
+  .proof { flex:1; background:#0a1730; border-top:1px solid #1e3a5f; padding:16px 60px;
+           font-size:14px; color:#cbd8ef; display:flex; align-items:center; gap:14px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:#34d399; box-shadow:0 0 0 4px rgba(52,211,153,.18); }
+  .proof b { color:#7dd3fc; }
+  .anchor { background:#1d4ed8; color:#fff; padding:16px 40px; font-size:15px; font-weight:700; white-space:nowrap; }
+  .anchor span { color:#bfdbfe; font-weight:500; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="kicker">AI Agent × Structural Biology · running on HPC</div>
+  <h1>Structural Biology Copilot</h1>
+  <div class="lede">One question in plain English &rarr; a <b>sourced, auditable mechanism brief</b> for a disease mutation. <b>MD stays the engine</b>; the agent wires the infrastructure around it.</div>
+
+  <div class="contrast">
+    <div class="chip before">
+      <div class="lab">Today</div>
+      <div class="big">~ 2&ndash;3 days</div>
+      <div class="sub">manual hops across PDBe · UniProt · papers · MD scripts</div>
+    </div>
+    <div class="arrowx">&rarr;</div>
+    <div class="chip after">
+      <div class="lab">With the copilot</div>
+      <div class="big">~ minutes</div>
+      <div class="sub">one pipeline · every claim traceable to a source</div>
+    </div>
+  </div>
+
+  <div class="flow">
+    <div class="node"><div class="ic">&#128172;</div><h3>Ask</h3><p>natural-language<br>mutation question</p></div>
+    <div class="conn">&rarr;</div>
+    <div class="node"><div class="ic">&#128269;</div><h3>Search</h3><p>official PDBe MCP<br>real structures</p></div>
+    <div class="conn">&rarr;</div>
+    <div class="node"><div class="ic">&#129517;</div><h3>Map</h3><p>SIFTS canonical<br>residue 790</p></div>
+    <div class="conn">&rarr;</div>
+    <div class="node"><div class="ic">&#9883;</div><h3>Simulate</h3><p>MD metrics<br>dist · RMSF · contacts</p></div>
+    <div class="conn">&rarr;</div>
+    <div class="node audit"><div class="ic">&#128270;</div><h3>Audit</h3><p>critic checks<br>consistency &amp; causality</p></div>
+    <div class="conn">&rarr;</div>
+    <div class="node out"><div class="ic">&#128203;</div><h3>Brief</h3><p>bilingual report<br>JSON + Markdown</p></div>
+  </div>
+
+  <div class="foot">
+    <div class="proof">
+      <span class="dot"></span>
+      <span><b>Already real, not mock:</b> live PDBe MCP run on EGFR T790M &nbsp;·&nbsp; top hit <b>5UG9 @ 1.33&Aring;</b> &nbsp;·&nbsp; critic: no critical issues</span>
+    </div>
+    <div class="anchor">MD is the engine.<br><span>The agent orchestrates it.</span></div>
+  </div>
+</div>
+</body>
+</html>

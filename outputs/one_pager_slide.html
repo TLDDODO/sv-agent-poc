@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Structural Biology Copilot — One Pager</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0f172a; display:flex; align-items:center; justify-content:center; min-height:100vh;
+         font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+  .slide { width:1280px; height:720px; background:#fff; padding:46px 56px; position:relative;
+           color:#1e293b; box-shadow:0 20px 60px rgba(0,0,0,.4); overflow:hidden; }
+  .tag { display:inline-block; background:#e0f2fe; color:#0369a1; font-size:14px; font-weight:600;
+         padding:4px 12px; border-radius:20px; letter-spacing:.5px; }
+  h1 { font-size:34px; margin:12px 0 4px; color:#0f172a; }
+  .sub { font-size:17px; color:#475569; margin-bottom:22px; }
+  .cols { display:flex; gap:30px; }
+  .col { flex:1; }
+  h2 { font-size:15px; color:#0369a1; text-transform:uppercase; letter-spacing:1px;
+       border-bottom:2px solid #bae6fd; padding-bottom:6px; margin-bottom:12px; }
+  .pain li, .have li { font-size:14.5px; line-height:1.85; list-style:none; padding-left:22px; position:relative; }
+  .pain li::before { content:"✕"; color:#dc2626; position:absolute; left:0; font-weight:700; }
+  .have li::before { content:"✓"; color:#16a34a; position:absolute; left:0; font-weight:700; }
+  .flow { background:#f1f5f9; border-radius:12px; padding:16px 18px; margin:14px 0 0;
+          font-size:13.5px; line-height:2; color:#334155; }
+  .flow b { color:#0369a1; }
+  .arrow { color:#94a3b8; }
+  .footer { position:absolute; bottom:0; left:0; right:0; display:flex; }
+  .fbox { flex:1; padding:14px 56px; font-size:13.5px; }
+  .fbox.demo { background:#0f172a; color:#e2e8f0; }
+  .fbox.demo b { color:#7dd3fc; }
+  .fbox.next { background:#0369a1; color:#fff; }
+  .fbox.next b { color:#bae6fd; }
+  .md { display:inline-block; background:#fef3c7; color:#92400e; font-size:12px; font-weight:600;
+        padding:2px 10px; border-radius:6px; margin-top:8px; }
+  code { background:#1e293b; color:#7dd3fc; padding:1px 6px; border-radius:4px; font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="slide">
+  <span class="tag">AI Agent × Structural Biology · HPC PoC（已跑通）</span>
+  <h1>Structural Biology Copilot：突变解读的 Agent 编排层</h1>
+  <div class="sub">把"跨数据库 + 本地 MD"几天的人工流程，压缩成几分钟、可溯源、可审计的机制解读 —— MD 仍是核心引擎，Agent 负责前后端编排。</div>
+
+  <div class="cols">
+    <div class="col">
+      <h2>痛点：碎片化工作流</h2>
+      <ul class="pain">
+        <li>PDBe / UniProt / AlphaFold / 文献 / 本地脚本来回切换</li>
+        <li>不同结构的链 ID、残基编号、构建边界都不一致</li>
+        <li>耗时数天、难复现，实验背景同学几乎做不动</li>
+      </ul>
+      <h2 style="margin-top:18px;">已经跑通（真数据，非 mock）</h2>
+      <ul class="have">
+        <li>官方 <b>PDBe MCP server</b> 真实查询 EGFR T790M</li>
+        <li>抓回高分辨率结构：<code>5UG9 1.33Å</code>、5HG8、6TG0…</li>
+        <li>映射到 EGFR 标准残基编号 <b>790 位</b></li>
+        <li><b>Critic agent</b> 自审证据链：无关键一致性问题</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h2>Agent 流水线</h2>
+      <div class="flow">
+        自然语言问题<br>
+        <span class="arrow">↓</span> <b>PDBe MCP</b> 真实 Solr 查询<br>
+        <span class="arrow">↓</span> 真实结构候选解析<br>
+        <span class="arrow">↓</span> canonical 残基编号映射<br>
+        <span class="arrow">↓</span> <b>MD 指标 schema</b>（距离 / RMSF / 接触占据率）<br>
+        <span class="arrow">↓</span> 带来源的 evidence claim（PDB / 轨迹 / PMID）<br>
+        <span class="arrow">↓</span> <b>Critic 审计</b>（编号一致？apo/bound？过度因果？）<br>
+        <span class="arrow">↓</span> JSON + Markdown 机制报告
+      </div>
+      <div class="md">↳ 与大组衔接：MD 模拟是引擎，Agent 是它的自动化前后端</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="fbox demo">
+      <b>Demo 验证 · EGFR T790M（肺癌经典耐药突变）</b><br>
+      Top hit 5UG9 @1.33Å ｜ Critic：No critical issues ｜ 输出 evidence JSON + 报告
+    </div>
+    <div class="fbox next">
+      <b>下一步</b><br>
+      接真实 MDAnalysis 轨迹指标 ｜ SIFTS 残基级映射 ｜ 文献 PMID 引用核查
+    </div>
+  </div>
+</div>
+</body>
+</html>

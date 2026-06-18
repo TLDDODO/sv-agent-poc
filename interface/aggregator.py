@@ -32,14 +32,14 @@ def aggregate(predictions: list[ToolPrediction], verdicts: list[ToolVerdict], ll
         if spread > _DISPUTE:
             status = "disputed"
             disputed.append(r)
-            callers = [t for t in tools if vals[t] >= _HI]
-            decliners = [t for t in tools if vals[t] < _HI]
+            leans_iface = [t for t in tools if vals[t] > _LO]
+            leans_against = [t for t in tools if vals[t] <= _LO]
             exchanges.append(DebateExchange(
-                speaker=", ".join(callers) or "none", responds_to=", ".join(decliners) or "none",
+                speaker=", ".join(leans_iface) or "none", responds_to=", ".join(leans_against) or "none",
                 residue=r, agreement="disagree",
                 comment=(f"{r}: {', '.join(f'{t}={vals[t]:.2f}' for t in tools)}. "
-                         f"[{', '.join(callers) or 'none'}] call it interface; "
-                         f"[{', '.join(decliners) or 'none'}] do not.")))
+                         f"[{', '.join(leans_iface) or 'none'}] lean interface; "
+                         f"[{', '.join(leans_against) or 'none'}] lean against.")))
         elif mean >= _HI:
             status = "consensus-interface"
             consensus_iface.append(r)

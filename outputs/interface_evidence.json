@@ -86,18 +86,18 @@
       "comment": "F46: all tools ~0.72; agreed interface residue."
     },
     {
-      "speaker": "none",
-      "responds_to": "AlphaFold-Multimer, HADDOCK, PISA-contacts",
+      "speaker": "HADDOCK",
+      "responds_to": "AlphaFold-Multimer, PISA-contacts",
       "residue": "V64",
       "agreement": "disagree",
-      "comment": "V64: AlphaFold-Multimer=0.20, HADDOCK=0.55, PISA-contacts=0.25. [none] call it interface; [AlphaFold-Multimer, HADDOCK, PISA-contacts] do not."
+      "comment": "V64: AlphaFold-Multimer=0.20, HADDOCK=0.55, PISA-contacts=0.25. [HADDOCK] lean interface; [AlphaFold-Multimer, PISA-contacts] lean against."
     },
     {
       "speaker": "AlphaFold-Multimer, PISA-contacts",
       "responds_to": "HADDOCK",
       "residue": "D66",
       "agreement": "disagree",
-      "comment": "D66: AlphaFold-Multimer=0.65, HADDOCK=0.25, PISA-contacts=0.60. [AlphaFold-Multimer, PISA-contacts] call it interface; [HADDOCK] do not."
+      "comment": "D66: AlphaFold-Multimer=0.65, HADDOCK=0.25, PISA-contacts=0.60. [AlphaFold-Multimer, PISA-contacts] lean interface; [HADDOCK] lean against."
     }
   ],
   "aggregate_interface": {

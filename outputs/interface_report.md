@@ -38,8 +38,8 @@ Called interface: **I7, L9, Y22, K24, F46, D66**
 - **AlphaFold-Multimer, HADDOCK, PISA-contacts** vs **all** on *Y22* [agree]: Y22: all tools ~0.68; agreed interface residue.
 - **AlphaFold-Multimer, HADDOCK, PISA-contacts** vs **all** on *K24* [agree]: K24: all tools ~0.82; agreed interface residue.
 - **AlphaFold-Multimer, HADDOCK, PISA-contacts** vs **all** on *F46* [agree]: F46: all tools ~0.72; agreed interface residue.
-- **none** vs **AlphaFold-Multimer, HADDOCK, PISA-contacts** on *V64* [disagree]: V64: AlphaFold-Multimer=0.20, HADDOCK=0.55, PISA-contacts=0.25. [none] call it interface; [AlphaFold-Multimer, HADDOCK, PISA-contacts] do not.
-- **AlphaFold-Multimer, PISA-contacts** vs **HADDOCK** on *D66* [disagree]: D66: AlphaFold-Multimer=0.65, HADDOCK=0.25, PISA-contacts=0.60. [AlphaFold-Multimer, PISA-contacts] call it interface; [HADDOCK] do not.
+- **HADDOCK** vs **AlphaFold-Multimer, PISA-contacts** on *V64* [disagree]: V64: AlphaFold-Multimer=0.20, HADDOCK=0.55, PISA-contacts=0.25. [HADDOCK] lean interface; [AlphaFold-Multimer, PISA-contacts] lean against.
+- **AlphaFold-Multimer, PISA-contacts** vs **HADDOCK** on *D66* [disagree]: D66: AlphaFold-Multimer=0.65, HADDOCK=0.25, PISA-contacts=0.60. [AlphaFold-Multimer, PISA-contacts] lean interface; [HADDOCK] lean against.
 
 ## 4. Adjudicated Interface
 - **Consensus interface residues (use for the MD interface model):** I7, L9, Y22, K24, F46

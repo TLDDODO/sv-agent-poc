@@ -45,9 +45,51 @@ do not provide, independent of whether raw classification accuracy matches the S
 
 ## Preliminary Result
 
-None yet. This proposal accompanies a code skeleton (`audio_llm_mental_health/` in this repo) —
-directory layout, data loaders, LoRA config, and training/inference scripts — written in a
-GPU-less sandbox and intended to be copied to the H100 environment to actually run.
+The pipeline runs end to end on the H100: `prepare_meld_manifest.py` -> `train_lora.py` (LoRA SFT
+on `Qwen2-Audio-7B-Instruct`, 9,988 MELD train utterances, 3 epochs / 1,872 steps) ->
+`outputs/meld_lora/final`, then `infer.py` / `batch_infer.py` produce a CoT + label for a held-out
+clip. Phase 1's plumbing goal (audio loading -> prompting -> LoRA SFT -> CoT decoding, see
+"Approach") is met.
+
+The mental-state-assessment goal is not, and three controlled interventions
+(`scripts/audio_ablation.py`; `scripts/eval_accuracy.py --silence` / `--hide-transcript`;
+`scripts/compare_audio_contribution.py` — all on a random 200-row sample of
+`data/meld_dev_manifest.jsonl`, greedy decoding) show why, precisely:
+
+| Input given to the fine-tuned model              | Accuracy vs. gold emotion | vs. majority baseline (0.370) |
+|---------------------------------------------------|----------------------------|----------------------------------|
+| Audio + transcript (the trained setting)           | 0.645                       | +0.275                            |
+| **Silence** + transcript (audio removed)           | 0.670                       | **+0.300**                        |
+| Audio + **placeholder text** (transcript hidden)   | 0.515                       | +0.145                            |
+
+Read together: removing the audio entirely scores *higher* than giving the model the real clip
+(delta -0.025; row by row, the real audio actively hurts more rows (19/200) than it helps
+(14/200)), and swapping in an emotionally-contrasting donor clip changes the predicted label to
+that donor's emotion only 2/15 times — chance level for 7-way classification. Audio is not just
+underused here, it is closer to noise for this trained model. Yet with the transcript hidden and
+only the real audio given, accuracy is still 0.515 — clearly above baseline and spread across
+most classes (recall 0.88 neutral / 0.52 anger / 0.37 surprise / 0.26 joy) — so the audio channel
+does carry usable emotion signal; the jointly-trained model simply never learns to rely on it.
+
+This is a quantified instance of *modality collapse / text dominance*, a known failure mode in
+multimodal sentiment analysis (see e.g. the self-supervised modality-disentangled representation
+learning approach of Chang et al., IEEE JBHI 2026, and the LIME-440K semantic-acoustic decoupling
+in CogAudio-LLM, arXiv:2606.06940). The proximate cause here is specific to this skeleton's
+Phase-1 simplification: `build_synthetic_cot_target` (`data/prompts.py`) generates the CoT
+supervision target as a deterministic function of the gold label (a per-emotion cue-phrase
+template), not from anything extracted from the audio itself, so gradient descent has no
+incentive to route information through the audio encoder once the transcript offers an easier
+path to the label. The model's CoT text consequently *looks* like audio-grounded reasoning (it
+names a plausible-sounding acoustic cue) but is post-hoc rationalization of a transcript-driven
+decision — exactly the failure README.md's "EIPS-depth check" warns manual CoT review to watch
+for, now confirmed quantitatively rather than only by inspection.
+
+The phase's actual contribution is therefore not "explainable mental-state assessment achieved,"
+but a working pipeline plus a quantified diagnosis of *when and why* label-templated CoT
+supervision fails to ground an audio-LLM in the audio signal it is given — evidence for why
+approaches like LIME-440K-style data decoupling, dual-encoder architectures, or self-supervised
+modality-disentanglement supervision exist, reproduced as a measured effect on this project's own
+model and data rather than taken on faith from the cited papers.
 
 ## Expected Impact / Contribution
 

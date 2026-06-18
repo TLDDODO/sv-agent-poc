@@ -5,8 +5,10 @@ chain-of-thought (CoT) before its final judgment. See `RP.md` for the full propo
 
 ## Status
 
-Code skeleton only. Written in a GPU-less, network-restricted sandbox -- nothing here has been
-run yet. Copy this directory to the H100/JupyterHub environment to actually execute it.
+Smoke-tested end to end on an H100: model download, LoRA init, audio actually reaching the
+model, masked-loss SFT step, checkpoint save/load, and CoT+label decoding via `infer.py` all
+ran without errors on a 16-example slice. A full run over the MELD train split is in progress.
+See "Known simplifications" below for what this does and doesn't validate.
 
 ## Why this can't run in this sandbox
 
@@ -33,6 +35,8 @@ audio_llm_mental_health/
     prepare_meld_manifest.py     MELD CSV + audio dir -> JSONL manifest
     train_lora.py                LoRA SFT loop
     infer.py                     run a tuned checkpoint on one clip
+    batch_infer.py               run a tuned checkpoint over several manifest rows, dump a report
+    find_conflict_candidates.py  surface text/label mismatches for conflict-robustness testing
   outputs/                       checkpoints land here (gitignored except .gitkeep)
 ```
 
@@ -91,6 +95,33 @@ pip install -r requirements.txt
 MELD's emotion/sentiment labels are a stand-in task here, used only to validate that audio
 loading, prompting, LoRA SFT, and CoT decoding work end to end. This is not a mental-health
 result -- see RP.md.
+
+## Evaluation
+
+Loss going down confirms the mechanics run; it says nothing about whether the CoT is actually
+grounded in the audio rather than just paraphrasing the transcript. Two manual checks, run after
+a real training pass (not the smoke checkpoint, which has seen far too little data to have
+learned anything):
+
+1. **Acoustic-text congruence.** Pick a handful of dev rows, generate with `batch_infer.py`,
+   and for each one that cites a concrete acoustic cue ("shaky voice", "raised pitch"), listen
+   to the clip and check whether the cue is actually audible -- or whether the model is just
+   inferring tone from the transcript's wording.
+2. **Conflict robustness.** Find rows where the literal wording and the gold label disagree
+   (MELD's labels were assigned by watching the full scene, audio and video, so a mismatch
+   between bare wording and the gold label is a proxy for "the words alone are misleading"):
+   ```bash
+   python scripts/find_conflict_candidates.py --manifest data/meld_dev_manifest.jsonl
+   ```
+   Confirm a couple of candidates by listening, then run them through the model:
+   ```bash
+   python scripts/batch_infer.py --adapter outputs/meld_lora/final \
+     --manifest data/meld_dev_manifest.jsonl --indices <comma-separated indices> \
+     --out outputs/review_conflict.jsonl
+   ```
+   If the CoT explains its answer purely from the words ("said 'get out', so angry") despite
+   audio that actually sounds playful, the model is leaning on text and ignoring the audio
+   tower's signal -- worth knowing before trusting any of its explanations.
 
 ## Phase 2: MMPsy
 

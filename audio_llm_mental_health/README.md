@@ -23,6 +23,7 @@ audio_llm_mental_health/
   configs/
     lora_config.yaml             PEFT LoraConfig
     train_config.yaml            paths + training hyperparameters
+    train_config_smoke.yaml      same, pointed at a tiny manifest subset for a quick sanity run
   data/
     prompts.py                   chat prompt + synthetic CoT target templates
     meld_dataset.py              Phase 1: MELD pipeline-validation dataset
@@ -69,11 +70,19 @@ pip install -r requirements.txt
      --audio-dir MELD.Raw/dev_audio \
      --out data/meld_dev_manifest.jsonl
    ```
-4. Train:
+4. Smoke-test the training loop on a tiny subset before a full run:
+   ```bash
+   head -n 16 data/meld_train_manifest.jsonl > data/meld_train_manifest_smoke.jsonl
+   head -n 8 data/meld_dev_manifest.jsonl > data/meld_dev_manifest_smoke.jsonl
+   python scripts/train_lora.py --config configs/train_config_smoke.yaml
+   ```
+   Confirms the multimodal batching, masking, and LoRA SFT step run end to end (and that loss
+   is finite and moving) without committing to a multi-hour full run.
+5. Train:
    ```bash
    python scripts/train_lora.py --config configs/train_config.yaml
    ```
-5. Try a checkpoint:
+6. Try a checkpoint:
    ```bash
    python scripts/infer.py --adapter outputs/meld_lora/final \
      --audio path/to/clip.wav --transcript "..."

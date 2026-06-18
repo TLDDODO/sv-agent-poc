@@ -67,6 +67,13 @@ def main() -> None:
         "--out dumps with compare_audio_contribution.py to isolate audio's contribution to "
         "accuracy from the transcript's.",
     )
+    parser.add_argument(
+        "--hide-transcript", action="store_true",
+        help="Replace the transcript with a content-free placeholder (keep the real audio). "
+        "The complement of --silence: tests whether the audio channel alone, as currently "
+        "consumed by this model, carries usable emotion signal -- independent of whether "
+        "training currently lets the model ignore it in favor of the transcript.",
+    )
     args = parser.parse_args()
 
     rows = load_manifest(args.manifest)
@@ -88,9 +95,11 @@ def main() -> None:
     pred_counts: Counter[str] = Counter()
     correct = evaluable = 0
 
+    placeholder_transcript = "[transcript unavailable]"
     for i, row in enumerate(rows):
         gold = (row.get("emotion") or "").lower()
-        conversation = build_conversation(row["audio_path"], row["transcript"], ANSWER_KEY)
+        transcript = placeholder_transcript if args.hide_transcript else row["transcript"]
+        conversation = build_conversation(row["audio_path"], transcript, ANSWER_KEY)
         prompt_text = processor.apply_chat_template(
             conversation, add_generation_prompt=True, tokenize=False
         )

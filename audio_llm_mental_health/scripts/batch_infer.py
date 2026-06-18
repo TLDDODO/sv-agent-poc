@@ -39,11 +39,12 @@ def main() -> None:
     parser.add_argument("--max-new-tokens", type=int, default=200)
     args = parser.parse_args()
 
-    rows = [
-        json.loads(line)
-        for line in Path(args.manifest).read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+    rows = []
+    with open(args.manifest, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
     if args.indices is not None:
         wanted = [int(i) for i in args.indices.split(",")]
         rows = [rows[i] for i in wanted]

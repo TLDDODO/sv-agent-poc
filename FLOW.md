@@ -8,9 +8,12 @@ agree (use for MD) and where they disagree (flag for MD / experiment).
 flowchart TD
     Q["Question:<br/>which FAT10 residues bind MAD2?"]
 
-    Q --> T1["AlphaFold-Multimer"]
-    Q --> T2["HADDOCK"]
-    Q --> T3["PISA-contacts"]
+    Q --> PDBE["PDBe retrieval<br/>FAT10 O15205 / MAD2 Q13257"]
+    PDBE --> MAP["Canonical mapping<br/>residues to UniProt numbering<br/>(in N-term ubl 1-80?)"]
+
+    MAP --> T1["AlphaFold-Multimer"]
+    MAP --> T2["HADDOCK"]
+    MAP --> T3["PISA-contacts"]
 
     T1 --> A1["Agent: interpret AFM<br/>(called residues + caveat)"]
     T2 --> A2["Agent: interpret HADDOCK<br/>(called residues + caveat)"]
@@ -27,10 +30,12 @@ flowchart TD
     DIS --> CRIT
     CRIT --> REP["Report<br/>interface_report.md + .json"]
 
+    classDef src fill:#ede9fe,stroke:#6d28d9,color:#0f2440;
     classDef tool fill:#e0f2fe,stroke:#0369a1,color:#0f2440;
     classDef agent fill:#eef5ff,stroke:#1d4ed8,color:#0f2440;
     classDef good fill:#d5f2e5,stroke:#0f9d6b,color:#0f2440;
     classDef warn fill:#fde9c8,stroke:#b45309,color:#0f2440;
+    class PDBE,MAP src;
     class T1,T2,T3 tool;
     class A1,A2,A3,AGG agent;
     class CON,REP good;

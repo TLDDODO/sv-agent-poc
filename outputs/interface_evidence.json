@@ -2,7 +2,67 @@
   "system": "FAT10 N-terminal ubl domain : MAD2",
   "fat10_uniprot": "O15205",
   "mad2_uniprot": "Q13257",
+  "source": "offline",
   "llm_mode": "mock",
+  "structures": [],
+  "residue_mappings": [
+    {
+      "residue_label": "I7",
+      "residue_name": "ILE",
+      "canonical_uniprot_accession": "O15205",
+      "canonical_uniprot_position": 7,
+      "in_nterm_ubl": true
+    },
+    {
+      "residue_label": "L9",
+      "residue_name": "LEU",
+      "canonical_uniprot_accession": "O15205",
+      "canonical_uniprot_position": 9,
+      "in_nterm_ubl": true
+    },
+    {
+      "residue_label": "Y22",
+      "residue_name": "TYR",
+      "canonical_uniprot_accession": "O15205",
+      "canonical_uniprot_position": 22,
+      "in_nterm_ubl": true
+    },
+    {
+      "residue_label": "K24",
+      "residue_name": "LYS",
+      "canonical_uniprot_accession": "O15205",
+      "canonical_uniprot_position": 24,
+      "in_nterm_ubl": true
+    },
+    {
+      "residue_label": "F46",
+      "residue_name": "PHE",
+      "canonical_uniprot_accession": "O15205",
+      "canonical_uniprot_position": 46,
+      "in_nterm_ubl": true
+    },
+    {
+      "residue_label": "R48",
+      "residue_name": "ARG",
+      "canonical_uniprot_accession": "O15205",
+      "canonical_uniprot_position": 48,
+      "in_nterm_ubl": true
+    },
+    {
+      "residue_label": "V64",
+      "residue_name": "VAL",
+      "canonical_uniprot_accession": "O15205",
+      "canonical_uniprot_position": 64,
+      "in_nterm_ubl": true
+    },
+    {
+      "residue_label": "D66",
+      "residue_name": "ASP",
+      "canonical_uniprot_accession": "O15205",
+      "canonical_uniprot_position": 66,
+      "in_nterm_ubl": true
+    }
+  ],
   "tool_verdicts": [
     {
       "tool": "AlphaFold-Multimer",

@@ -1,6 +1,8 @@
 from __future__ import annotations
 import json
 import os
+import re
+import urllib.request
 from dataclasses import asdict
 
 from interface.structures import offline_structures, canonical_map
@@ -41,11 +43,39 @@ def map_residues(residues: list, uniprot: str, domain_lo: int = 1, domain_hi: in
     return {"mappings": [asdict(m) for m in ms]}
 
 
+def validate_residues(uniprot: str, residues: list) -> dict:
+    """Ground-truth check: fetch the real UniProt sequence and verify each
+    predicted residue label (e.g. 'L9') matches the actual amino acid at that
+    position. Catches wrong numbering or fabricated residues."""
+    url = f"https://rest.uniprot.org/uniprotkb/{uniprot}.fasta"
+    try:
+        with urllib.request.urlopen(url, timeout=20) as resp:
+            fasta = resp.read().decode()
+    except Exception as exc:
+        return {"error": f"could not fetch UniProt {uniprot}: {type(exc).__name__}",
+                "validated": [], "note": "residues are NOT grounded against a real sequence"}
+    seq = "".join(l.strip() for l in fasta.splitlines() if l and not l.startswith(">"))
+    out = []
+    for lab in residues:
+        m = re.match(r"([A-Z])(\d+)$", lab)
+        if not m:
+            out.append({"residue": lab, "valid": False, "reason": "unparseable label"})
+            continue
+        aa, pos = m.group(1), int(m.group(2))
+        actual = seq[pos - 1] if 1 <= pos <= len(seq) else None
+        out.append({"residue": lab, "expected": aa, "actual_in_sequence": actual,
+                    "valid": actual == aa})
+    n_bad = sum(1 for v in out if not v.get("valid"))
+    return {"uniprot": uniprot, "sequence_length": len(seq),
+            "n_mismatches": n_bad, "validated": out}
+
+
 DISPATCH = {
     "fetch_structures": fetch_structures,
     "list_interface_tools": list_interface_tools,
     "get_tool_prediction": get_tool_prediction,
     "map_residues": map_residues,
+    "validate_residues": validate_residues,
 }
 
 # --- tool schemas (OpenAI / DeepSeek function-calling format) -----------------
@@ -75,6 +105,13 @@ TOOLS = [
             "domain_lo": {"type": "integer"},
             "domain_hi": {"type": "integer"}},
             "required": ["residues", "uniprot"]}}},
+    {"type": "function", "function": {
+        "name": "validate_residues",
+        "description": "Ground-truth check: verify each predicted residue label against the real UniProt sequence (does position 9 really hold Leu for 'L9'?). Use this to catch fabricated or mis-numbered residues before trusting any prediction.",
+        "parameters": {"type": "object", "properties": {
+            "uniprot": {"type": "string"},
+            "residues": {"type": "array", "items": {"type": "string"}}},
+            "required": ["uniprot", "residues"]}}},
     {"type": "function", "function": {
         "name": "submit_adjudication",
         "description": "Submit the final interface adjudication and end the task. Call this once you have reasoned over all tools.",

@@ -13,16 +13,24 @@ adjudicate them.
 Drive the whole task by calling tools, in whatever order you judge best:
 - list the available interface-prediction tools,
 - get each tool's per-residue scores,
+- VALIDATE the predicted residues against the real UniProt sequence
+  (validate_residues): any residue that does not match the real sequence is a
+  numbering/identity error - do NOT call it interface; surface it as a flag,
 - fetch the PDB structures to confirm the system,
-- map the predicted residues to canonical UniProt numbering and check they fall
-  inside the binding domain,
-- then REASON over the per-residue scores: residues all tools score high are the
-  consensus interface; residues where tools strongly disagree are disputed and
-  must be flagged for MD/experiment; lower your confidence when disputes are
-  unresolved.
+- map residues to canonical numbering and check they fall in the binding domain,
+- then REASON over the per-residue scores of the VALIDATED residues: residues all
+  tools score high are the consensus interface; residues where tools strongly
+  disagree are disputed and must be flagged for MD/experiment; lower confidence
+  when disputes or validation failures are unresolved.
 
-Rules: use ONLY values returned by tools - never invent residues or scores. When
-done, call submit_adjudication exactly once."""
+Hard rules:
+- Use ONLY the UniProt accession explicitly given in the task. Do NOT assume or
+  invent a protein. If none is given, say so and do not fetch structures for an
+  arbitrary accession.
+- Use ONLY values returned by tools - never invent residues or scores.
+- If validate_residues reports mismatches, your confidence must reflect that the
+  underlying data may not correspond to the real protein.
+When done, call submit_adjudication exactly once."""
 
 
 def run(user_goal: str, max_steps: int = 16, verbose: bool = True):

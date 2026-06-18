@@ -50,9 +50,9 @@ pip install -r requirements.txt
    containing `.mp4` clips named `dia{Dialogue_ID}_utt{Utterance_ID}.mp4`, inside
    split-specific subfolders that are named inconsistently across splits
    (`train_splits/` for train, `dev_splits_complete/` for dev). `dev_sent_emo.csv` and
-   `test_sent_emo.csv` ship at the top level of the raw archive; `train_sent_emo.csv` does
-   not -- fetch it from the dataset's GitHub repo (https://github.com/declare-lab/MELD,
-   `data/MELD/train_sent_emo.csv`) instead.
+   `test_sent_emo.csv` ship at the top level of the raw archive; `train_sent_emo.csv` is
+   bundled inside `train.tar.gz` itself, alongside `train_splits/` -- extracting that
+   tarball (next step) produces it.
 2. Extract per-utterance audio from the video clips (requires `ffmpeg`):
    ```bash
    python scripts/extract_meld_audio.py --video-dir MELD.Raw/train_splits --out-dir MELD.Raw/train_audio

@@ -122,12 +122,13 @@ def mcp_structures(uvx: str = "/home/ychen/.local/bin/uvx") -> list[StructureHit
     return _parse(asyncio.run(_run()))
 
 
-def canonical_map(residue_labels: list[str]) -> list[ResidueMapping]:
-    """Map each predicted interface residue (e.g. 'L9') to canonical FAT10
-    (UniProt O15205) numbering, and check it sits in the MAD2-binding domain.
-    This guarantees all three tools' residue numbers refer to the same positions."""
+def canonical_map(residue_labels: list[str], uniprot: str = FAT10_UNIPROT,
+                  domain: tuple[int, int] = NTERM_UBL_RANGE) -> list[ResidueMapping]:
+    """Map each predicted interface residue (e.g. 'L9') to canonical UniProt
+    numbering, and check it sits in the given domain range. This guarantees all
+    tools' residue numbers refer to the same positions. Works for any protein."""
     out = []
-    lo, hi = NTERM_UBL_RANGE
+    lo, hi = domain
     for lab in residue_labels:
         m = re.match(r"([A-Z])(\d+)$", lab)
         if not m:
@@ -136,7 +137,7 @@ def canonical_map(residue_labels: list[str]) -> list[ResidueMapping]:
         out.append(ResidueMapping(
             residue_label=lab,
             residue_name=_THREE.get(aa, "UNK"),
-            canonical_uniprot_accession=FAT10_UNIPROT,
+            canonical_uniprot_accession=uniprot,
             canonical_uniprot_position=num,
             in_nterm_ubl=lo <= num <= hi,
         ))

@@ -12,6 +12,7 @@ import argparse
 import sys
 from pathlib import Path
 
+import librosa
 import torch
 import yaml
 from peft import LoraConfig, get_peft_model
@@ -29,16 +30,18 @@ def build_batch(processor, examples):
     Each example's prompt portion is masked out (-100) so loss is computed only over the
     CoT + final-answer target tokens, not the instruction itself.
     """
-    texts, audios, prompt_lens = [], [], []
+    texts, audio_arrays, prompt_lens = [], [], []
     for ex in examples:
         prompt_text = processor.apply_chat_template(
             ex["conversation"], add_generation_prompt=True, tokenize=False
         )
         texts.append(prompt_text + ex["target"] + processor.tokenizer.eos_token)
-        audios.append(ex["audio_path"])
+        audio_arrays.append(
+            librosa.load(ex["audio_path"], sr=processor.feature_extractor.sampling_rate)[0]
+        )
         prompt_lens.append(len(processor.tokenizer(prompt_text)["input_ids"]))
 
-    batch = processor(text=texts, audios=audios, return_tensors="pt", padding=True)
+    batch = processor(text=texts, audio=audio_arrays, return_tensors="pt", padding=True)
     labels = batch["input_ids"].clone()
     for i, plen in enumerate(prompt_lens):
         labels[i, :plen] = -100

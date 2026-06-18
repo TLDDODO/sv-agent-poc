@@ -1,6 +1,12 @@
 # Install on the H100 environment, not in this sandbox (no GPU / no network here).
+# torch: pick a build matching the H100's NVIDIA driver's max supported CUDA version
+# (check `nvidia-smi`'s "CUDA Version" field), e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu121
 torch>=2.2
-transformers>=4.45
+# Pinned exactly: Qwen2AudioProcessor's call signature changed across transformers majors
+# (5.12.1 takes audio=<np.ndarray|list[np.ndarray]>, not the audios=<path> used by older
+# releases) -- see scripts/train_lora.py and scripts/infer.py, which target this version.
+transformers==5.12.1
 accelerate>=0.34
 peft>=0.12
 datasets>=2.20

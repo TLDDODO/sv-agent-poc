@@ -28,6 +28,7 @@ audio_llm_mental_health/
     meld_dataset.py              Phase 1: MELD pipeline-validation dataset
     mmpsy_dataset.py             Phase 2 stub (blocked on raw-audio-vs-adapter decision)
   scripts/
+    extract_meld_audio.py        MELD .mp4 clips -> per-utterance .wav (needs ffmpeg)
     prepare_meld_manifest.py     MELD CSV + audio dir -> JSONL manifest
     train_lora.py                LoRA SFT loop
     infer.py                     run a tuned checkpoint on one clip
@@ -44,24 +45,35 @@ pip install -r requirements.txt
 
 ## Phase 1: MELD pipeline validation
 
-1. Download MELD (https://affective-meld.github.io/) and extract per-utterance audio per
-   MELD's own instructions.
-2. Build manifests:
+1. Download `MELD.Raw.tar.gz` (https://affective-meld.github.io/) and extract it. The raw
+   archive ships per-split video tarballs (`train.tar.gz`, `dev.tar.gz`, `test.tar.gz`)
+   containing `.mp4` clips named `dia{Dialogue_ID}_utt{Utterance_ID}.mp4`, inside
+   split-specific subfolders that are named inconsistently across splits
+   (`train_splits/` for train, `dev_splits_complete/` for dev). `dev_sent_emo.csv` and
+   `test_sent_emo.csv` ship at the top level of the raw archive; `train_sent_emo.csv` does
+   not -- fetch it from the dataset's GitHub repo (https://github.com/declare-lab/MELD,
+   `data/MELD/train_sent_emo.csv`) instead.
+2. Extract per-utterance audio from the video clips (requires `ffmpeg`):
+   ```bash
+   python scripts/extract_meld_audio.py --video-dir MELD.Raw/train_splits --out-dir MELD.Raw/train_audio
+   python scripts/extract_meld_audio.py --video-dir MELD.Raw/dev_splits_complete --out-dir MELD.Raw/dev_audio
+   ```
+3. Build manifests:
    ```bash
    python scripts/prepare_meld_manifest.py \
      --csv path/to/train_sent_emo.csv \
-     --audio-dir path/to/train_audio \
+     --audio-dir MELD.Raw/train_audio \
      --out data/meld_train_manifest.jsonl
    python scripts/prepare_meld_manifest.py \
      --csv path/to/dev_sent_emo.csv \
-     --audio-dir path/to/dev_audio \
+     --audio-dir MELD.Raw/dev_audio \
      --out data/meld_dev_manifest.jsonl
    ```
-3. Train:
+4. Train:
    ```bash
    python scripts/train_lora.py --config configs/train_config.yaml
    ```
-4. Try a checkpoint:
+5. Try a checkpoint:
    ```bash
    python scripts/infer.py --adapter outputs/meld_lora/final \
      --audio path/to/clip.wav --transcript "..."

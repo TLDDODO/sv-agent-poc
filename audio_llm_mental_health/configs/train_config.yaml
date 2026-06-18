@@ -2,11 +2,17 @@
 model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
 lora_config_path: configs/lora_config.yaml
 
-# Phase 1: MELD manifest produced by scripts/prepare_meld_manifest.py
-train_manifest: data/meld_train_manifest.jsonl
-eval_manifest: data/meld_dev_manifest.jsonl
+# Phase 1: MELD manifest produced by scripts/prepare_meld_manifest.py, then augmented with real
+# acoustic priors by scripts/extract_acoustic_priors.py (adds an 'acoustic' field). Point these
+# at the *_acoustic.jsonl outputs to train the audio-grounded, text-dominance-resistant variant;
+# point them back at the plain manifests to reproduce the original Phase-1 run.
+train_manifest: data/meld_train_manifest_acoustic.jsonl
+eval_manifest: data/meld_dev_manifest_acoustic.jsonl
 
-output_dir: outputs/meld_lora
+output_dir: outputs/meld_lora_grounded
+# Fraction of training examples with the transcript dropped (audio-only task), to fight text
+# dominance. 0.0 = original behavior. See data/meld_dataset.py and RP.md "Preliminary Result".
+text_mask_prob: 0.3
 num_train_epochs: 3
 per_device_train_batch_size: 2
 gradient_accumulation_steps: 8

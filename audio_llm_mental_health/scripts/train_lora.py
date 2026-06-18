@@ -73,7 +73,11 @@ def main() -> None:
     model = get_peft_model(model, LoraConfig(**lora_cfg_dict))
     model.print_trainable_parameters()
 
-    train_dataset = MELDDataset(config["train_manifest"])
+    train_dataset = MELDDataset(
+        config["train_manifest"],
+        text_mask_prob=config.get("text_mask_prob", 0.0),
+        seed=config["seed"],
+    )
     train_loader = DataLoader(
         train_dataset,
         batch_size=config["per_device_train_batch_size"],

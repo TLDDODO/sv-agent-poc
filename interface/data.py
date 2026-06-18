@@ -7,25 +7,27 @@ MAD2_UNIPROT = "Q13257"         # MAD2L1
 SYSTEM = "FAT10 N-terminal ubl domain : MAD2"
 
 # Candidate interface residues on FAT10's N-terminal ubiquitin-like domain.
-# (Mock residue set for the demo; replace with real tool outputs on HPC.)
-_RESIDUES = ["I7", "L9", "Y22", "K24", "F46", "R48", "V64", "D66"]
+# Residue identities are REAL FAT10 (UniProt O15205) amino acids at these
+# positions, so they pass validate_residues. The interface SCORES below are
+# still placeholders until real AF-Multimer / HADDOCK / PISA output is plugged in.
+_RESIDUES = ["C7", "C9", "F22", "A24", "Q46", "Q48", "S64", "Y66"]
 
 # Mock per-residue interface propensity (0..1) from three tools, with built-in
 # consensus AND two genuine disagreements:
-#   - V64: HADDOCK calls it interface; AFM and PISA do not.
-#   - D66: AFM and PISA call it interface; HADDOCK does not.
+#   - S64: HADDOCK calls it interface; AFM and PISA do not.
+#   - Y66: AFM and PISA call it interface; HADDOCK does not.
 _TOOLS = {
     "AlphaFold-Multimer": {
-        "I7": 0.80, "L9": 0.90, "Y22": 0.70, "K24": 0.85,
-        "F46": 0.75, "R48": 0.30, "V64": 0.20, "D66": 0.65,
+        "C7": 0.80, "C9": 0.90, "F22": 0.70, "A24": 0.85,
+        "Q46": 0.75, "Q48": 0.30, "S64": 0.20, "Y66": 0.65,
     },
     "HADDOCK": {
-        "I7": 0.75, "L9": 0.85, "Y22": 0.65, "K24": 0.80,
-        "F46": 0.70, "R48": 0.35, "V64": 0.55, "D66": 0.25,
+        "C7": 0.75, "C9": 0.85, "F22": 0.65, "A24": 0.80,
+        "Q46": 0.70, "Q48": 0.35, "S64": 0.55, "Y66": 0.25,
     },
     "PISA-contacts": {
-        "I7": 0.82, "L9": 0.88, "Y22": 0.68, "K24": 0.82,
-        "F46": 0.72, "R48": 0.28, "V64": 0.25, "D66": 0.60,
+        "C7": 0.82, "C9": 0.88, "F22": 0.68, "A24": 0.82,
+        "Q46": 0.72, "Q48": 0.28, "S64": 0.25, "Y66": 0.60,
     },
 }
 

@@ -53,7 +53,11 @@ def main() -> None:
     ).to(model.device)
 
     with torch.no_grad():
-        generated = model.generate(**inputs, max_new_tokens=args.max_new_tokens)
+        # Greedy decoding for reproducible review output (the base model's default
+        # generation_config.json has do_sample=True, meant for varied chit-chat).
+        generated = model.generate(
+            **inputs, max_new_tokens=args.max_new_tokens, do_sample=False, num_beams=1
+        )
 
     completion = processor.tokenizer.decode(
         generated[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True

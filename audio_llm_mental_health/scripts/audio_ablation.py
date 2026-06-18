@@ -114,7 +114,12 @@ def main() -> None:
             text=prompt_text, audio=[audio_array], sampling_rate=sr, return_tensors="pt"
         ).to(model.device)
         with torch.no_grad():
-            generated = model.generate(**inputs, max_new_tokens=args.max_new_tokens)
+            # Greedy decoding: any label difference between conditions must come from the
+            # audio change, not from the base model's default sampling (do_sample=True in its
+            # generation_config.json, intended for varied chit-chat, not a controlled ablation).
+            generated = model.generate(
+                **inputs, max_new_tokens=args.max_new_tokens, do_sample=False, num_beams=1
+            )
         return processor.tokenizer.decode(
             generated[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
         )

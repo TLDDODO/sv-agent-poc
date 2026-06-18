@@ -41,10 +41,11 @@ def offline_structures() -> list[StructureHit]:
 
 # --- Real PDBe MCP query (HPC / online) --------------------------------------
 def _pdbe_payload() -> dict:
+    # Filter by UniProt accession (reliable) rather than a free-text molecule name,
+    # which Solr treated as match-all and returned the whole PDB by resolution.
     return {
-        "query": "molecule_name:*FAT10* OR molecule_name:*ubiquitin-like protein 1*",
+        "query": f"uniprot_accession:{FAT10_UNIPROT}",
         "fl": ["pdb_id", "title", "resolution", "experimental_method"],
-        "sort": "resolution asc",
         "rows": 10,
     }
 

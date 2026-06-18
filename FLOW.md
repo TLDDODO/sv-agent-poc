@@ -6,29 +6,29 @@ agree (use for MD) and where they disagree (flag for MD / experiment).
 
 ```mermaid
 flowchart TD
-    Q["Question:<br/>which FAT10 residues bind MAD2?"]
+    Q["Question - which FAT10 residues bind MAD2"]
 
-    Q --> PDBE["PDBe retrieval<br/>FAT10 O15205 / MAD2 Q13257"]
-    PDBE --> MAP["Canonical mapping<br/>residues to UniProt numbering<br/>(in N-term ubl 1-80?)"]
+    Q --> PDBE["PDBe retrieval<br/>FAT10 O15205 and MAD2 Q13257"]
+    PDBE --> MAP["Canonical mapping<br/>residues to UniProt numbering<br/>check N-term ubl 1 to 80"]
 
     MAP --> T1["AlphaFold-Multimer"]
     MAP --> T2["HADDOCK"]
     MAP --> T3["PISA-contacts"]
 
-    T1 --> A1["Agent: interpret AFM<br/>(called residues + caveat)"]
-    T2 --> A2["Agent: interpret HADDOCK<br/>(called residues + caveat)"]
-    T3 --> A3["Agent: interpret PISA<br/>(called residues + caveat)"]
+    T1 --> A1["Agent interprets AFM<br/>called residues plus caveat"]
+    T2 --> A2["Agent interprets HADDOCK<br/>called residues plus caveat"]
+    T3 --> A3["Agent interprets PISA<br/>called residues plus caveat"]
 
-    A1 --> AGG["Aggregator<br/>per-residue: consensus vs dispute<br/>agreement + confidence"]
+    A1 --> AGG["Aggregator<br/>consensus vs dispute<br/>agreement plus confidence"]
     A2 --> AGG
     A3 --> AGG
 
-    AGG --> CON["Consensus interface<br/>I7 L9 Y22 K24 F46<br/>→ MD interface model"]
-    AGG --> DIS["Disputed<br/>V64 D66<br/>→ flag for MD / experiment"]
+    AGG --> CON["Consensus interface<br/>I7 L9 Y22 K24 F46<br/>use for MD model"]
+    AGG --> DIS["Disputed<br/>V64 D66<br/>flag for MD or experiment"]
 
-    CON --> CRIT["Critic<br/>reliability audit"]
+    CON --> CRIT["Critic reliability audit"]
     DIS --> CRIT
-    CRIT --> REP["Report<br/>interface_report.md + .json"]
+    CRIT --> REP["Report md plus json"]
 
     classDef src fill:#ede9fe,stroke:#6d28d9,color:#0f2440;
     classDef tool fill:#e0f2fe,stroke:#0369a1,color:#0f2440;

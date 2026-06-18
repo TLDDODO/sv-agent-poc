@@ -122,6 +122,25 @@ learned anything):
    If the CoT explains its answer purely from the words ("said 'get out', so angry") despite
    audio that actually sounds playful, the model is leaning on text and ignoring the audio
    tower's signal -- worth knowing before trusting any of its explanations.
+3. **EIPS-depth check.** Score each CoT on how many of these stages it actually articulates,
+   instead of collapsing straight from transcript to label:
+   - *Perception*: names a specific acoustic cue (pitch, pace, voice quality), not just "the tone".
+   - *Semantic check*: explicitly notes whether the literal wording agrees or conflicts with that cue.
+   - *Psychological inference*: connects the cue and the semantic check to an emotional/mental
+     state, rather than just restating the label.
+
+   A CoT that jumps straight from transcript to label without any of these stages is shallow
+   evidence of audio grounding, regardless of whether the label happens to be correct. If most
+   outputs from a real (non-smoke) training pass are shallow, the place to add this structure is
+   the templated synthetic CoT targets in `data/prompts.py` (`build_synthetic_cot_target`), for a
+   future training round -- not a reason to redo the current pass.
+
+   This check is adapted from the "EIPS" 4-step (Perception -> Intent -> Psychology -> Strategy)
+   chain-of-thought framework described in CogAudio-LLM (arXiv:2606.06940, 2026) and from a
+   multi-task reasoning-augmented-supervision approach described in a 2026 A\*STAR Singapore
+   speech-emotion-reasoning paper. Both postdate this model's training data, so their specific
+   claims are taken as the source's transcription, not independently verified -- used here only
+   as a qualitative rubric, not a benchmark to match.
 
 ## Phase 2: MMPsy
 

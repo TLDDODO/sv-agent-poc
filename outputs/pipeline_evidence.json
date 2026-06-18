@@ -1,0 +1,344 @@
+{
+  "system": "EGFR T790M",
+  "source": "offline",
+  "llm_mode": "mock",
+  "structures": [
+    {
+      "pdb_id": "5ug9",
+      "title": "EGFR L858R/T790M/V948R kinase domain in complex with inhibitor",
+      "experimental_method": "X-ray diffraction",
+      "resolution": 1.33,
+      "mutation_status": "T790M",
+      "apo_or_bound": "ligand-bound",
+      "source": "offline:verified_pdbe_snapshot"
+    },
+    {
+      "pdb_id": "5hg8",
+      "title": "EGFR T790M kinase domain bound to covalent inhibitor",
+      "experimental_method": "X-ray diffraction",
+      "resolution": 1.42,
+      "mutation_status": "T790M",
+      "apo_or_bound": "ligand-bound",
+      "source": "offline:verified_pdbe_snapshot"
+    },
+    {
+      "pdb_id": "5ug8",
+      "title": "EGFR T790M kinase domain inhibitor complex",
+      "experimental_method": "X-ray diffraction",
+      "resolution": 1.46,
+      "mutation_status": "T790M",
+      "apo_or_bound": "ligand-bound",
+      "source": "offline:verified_pdbe_snapshot"
+    },
+    {
+      "pdb_id": "6tg0",
+      "title": "EGFR T790M kinase domain with ATP-competitive inhibitor",
+      "experimental_method": "X-ray diffraction",
+      "resolution": 1.5,
+      "mutation_status": "T790M",
+      "apo_or_bound": "ligand-bound",
+      "source": "offline:verified_pdbe_snapshot"
+    },
+    {
+      "pdb_id": "6tfv",
+      "title": "EGFR T790M kinase domain inhibitor complex",
+      "experimental_method": "X-ray diffraction",
+      "resolution": 1.5,
+      "mutation_status": "T790M",
+      "apo_or_bound": "ligand-bound",
+      "source": "offline:verified_pdbe_snapshot"
+    }
+  ],
+  "residue_mappings": [
+    {
+      "pdb_id": "5ug9",
+      "chain_id": "A",
+      "auth_seq_id": "790",
+      "canonical_uniprot_accession": "P00533",
+      "canonical_uniprot_position": 790,
+      "pdb_residue_name": "MET",
+      "canonical_residue_name": "THR",
+      "observed": true
+    },
+    {
+      "pdb_id": "5hg8",
+      "chain_id": "A",
+      "auth_seq_id": "790",
+      "canonical_uniprot_accession": "P00533",
+      "canonical_uniprot_position": 790,
+      "pdb_residue_name": "MET",
+      "canonical_residue_name": "THR",
+      "observed": true
+    },
+    {
+      "pdb_id": "5ug8",
+      "chain_id": "A",
+      "auth_seq_id": "790",
+      "canonical_uniprot_accession": "P00533",
+      "canonical_uniprot_position": 790,
+      "pdb_residue_name": "MET",
+      "canonical_residue_name": "THR",
+      "observed": true
+    },
+    {
+      "pdb_id": "6tg0",
+      "chain_id": "A",
+      "auth_seq_id": "790",
+      "canonical_uniprot_accession": "P00533",
+      "canonical_uniprot_position": 790,
+      "pdb_residue_name": "MET",
+      "canonical_residue_name": "THR",
+      "observed": true
+    },
+    {
+      "pdb_id": "6tfv",
+      "chain_id": "A",
+      "auth_seq_id": "790",
+      "canonical_uniprot_accession": "P00533",
+      "canonical_uniprot_position": 790,
+      "pdb_residue_name": "MET",
+      "canonical_residue_name": "THR",
+      "observed": true
+    }
+  ],
+  "expert_verdicts": [
+    {
+      "expert": "MD-view",
+      "method": "MD",
+      "source_id": "traj:egfr_t790m_demo",
+      "overall": "MD flags [P-loop, activation-loop] as flexible; core [hinge, gatekeeper(T790), N-lobe beta-sheet, C-lobe core] stays rigid.",
+      "region_verdicts": [
+        {
+          "region": "P-loop",
+          "stance": "flexible",
+          "value": 0.7,
+          "note": "P-loop (718-725) flexibility=0.70"
+        },
+        {
+          "region": "alphaC-helix",
+          "stance": "intermediate",
+          "value": 0.45,
+          "note": "alphaC-helix (755-765) flexibility=0.45"
+        },
+        {
+          "region": "hinge",
+          "stance": "rigid",
+          "value": 0.3,
+          "note": "hinge (790-797) flexibility=0.30"
+        },
+        {
+          "region": "gatekeeper(T790)",
+          "stance": "rigid",
+          "value": 0.25,
+          "note": "gatekeeper(T790) (788-792) flexibility=0.25"
+        },
+        {
+          "region": "activation-loop",
+          "stance": "flexible",
+          "value": 0.85,
+          "note": "activation-loop (855-883) flexibility=0.85"
+        },
+        {
+          "region": "N-lobe beta-sheet",
+          "stance": "rigid",
+          "value": 0.32,
+          "note": "N-lobe beta-sheet (700-718) flexibility=0.32"
+        },
+        {
+          "region": "C-lobe core",
+          "stance": "rigid",
+          "value": 0.2,
+          "note": "C-lobe core (900-920) flexibility=0.20"
+        }
+      ],
+      "evidence_type": "dynamics",
+      "confidence": 0.82,
+      "limitations": "MD captures anharmonic and solvent-coupled motion but depends on sampling and convergence (here a 400 ns demo).",
+      "rationale": "MD flags [P-loop, activation-loop] as flexible; core [hinge, gatekeeper(T790), N-lobe beta-sheet, C-lobe core] stays rigid. Interpretation constrained by: MD captures anharmonic and solvent-coupled motion but depends on sampling and convergence (here a 400 ns demo)."
+    },
+    {
+      "expert": "NMA-view",
+      "method": "NMA",
+      "source_id": "enm:egfr_t790m_anm",
+      "overall": "NMA flags [P-loop, N-lobe beta-sheet] as flexible; core [hinge, gatekeeper(T790), C-lobe core] stays rigid.",
+      "region_verdicts": [
+        {
+          "region": "P-loop",
+          "stance": "flexible",
+          "value": 0.65,
+          "note": "P-loop (718-725) flexibility=0.65"
+        },
+        {
+          "region": "alphaC-helix",
+          "stance": "intermediate",
+          "value": 0.5,
+          "note": "alphaC-helix (755-765) flexibility=0.50"
+        },
+        {
+          "region": "hinge",
+          "stance": "rigid",
+          "value": 0.35,
+          "note": "hinge (790-797) flexibility=0.35"
+        },
+        {
+          "region": "gatekeeper(T790)",
+          "stance": "rigid",
+          "value": 0.2,
+          "note": "gatekeeper(T790) (788-792) flexibility=0.20"
+        },
+        {
+          "region": "activation-loop",
+          "stance": "intermediate",
+          "value": 0.4,
+          "note": "activation-loop (855-883) flexibility=0.40"
+        },
+        {
+          "region": "N-lobe beta-sheet",
+          "stance": "flexible",
+          "value": 0.6,
+          "note": "N-lobe beta-sheet (700-718) flexibility=0.60"
+        },
+        {
+          "region": "C-lobe core",
+          "stance": "rigid",
+          "value": 0.15,
+          "note": "C-lobe core (900-920) flexibility=0.15"
+        }
+      ],
+      "evidence_type": "normal-modes",
+      "confidence": 0.75,
+      "limitations": "ENM/NMA captures slow collective modes cheaply but is harmonic, solvent-free, and tends to underestimate large anharmonic loop motions.",
+      "rationale": "NMA flags [P-loop, N-lobe beta-sheet] as flexible; core [hinge, gatekeeper(T790), C-lobe core] stays rigid. Interpretation constrained by: ENM/NMA captures slow collective modes cheaply but is harmonic, solvent-free, and tends to underestimate large anharmonic loop motions."
+    }
+  ],
+  "debate": [
+    {
+      "speaker": "NMA-view",
+      "responds_to": "MD-view",
+      "region": "P-loop",
+      "agreement": "agree",
+      "comment": "P-loop: both ~0.68; methods concur."
+    },
+    {
+      "speaker": "NMA-view",
+      "responds_to": "MD-view",
+      "region": "alphaC-helix",
+      "agreement": "agree",
+      "comment": "alphaC-helix: both ~0.47; methods concur."
+    },
+    {
+      "speaker": "NMA-view",
+      "responds_to": "MD-view",
+      "region": "hinge",
+      "agreement": "agree",
+      "comment": "hinge: both ~0.32; methods concur."
+    },
+    {
+      "speaker": "NMA-view",
+      "responds_to": "MD-view",
+      "region": "gatekeeper(T790)",
+      "agreement": "agree",
+      "comment": "gatekeeper(T790): both ~0.23; methods concur."
+    },
+    {
+      "speaker": "MD-view",
+      "responds_to": "NMA-view",
+      "region": "activation-loop",
+      "agreement": "disagree",
+      "comment": "activation-loop: MD=0.85 vs NMA=0.40; MD sees more motion, likely anharmonic loop motion that MD captures but harmonic NMA flattens."
+    },
+    {
+      "speaker": "MD-view",
+      "responds_to": "NMA-view",
+      "region": "N-lobe beta-sheet",
+      "agreement": "disagree",
+      "comment": "N-lobe beta-sheet: MD=0.32 vs NMA=0.60; NMA sees more motion, likely a slow collective mode NMA resolves but the trajectory under-samples."
+    },
+    {
+      "speaker": "NMA-view",
+      "responds_to": "MD-view",
+      "region": "C-lobe core",
+      "agreement": "agree",
+      "comment": "C-lobe core: both ~0.17; methods concur."
+    }
+  ],
+  "aggregate_judgment": {
+    "verdict": "MD and NMA agree on the rigid core and shared flexible regions, but DISAGREE on [activation-loop, N-lobe beta-sheet] \u2014 treat those as method-dependent, not settled.",
+    "confidence": 0.61,
+    "agreement_score": 0.52,
+    "consensus_regions": [
+      "P-loop",
+      "alphaC-helix",
+      "hinge",
+      "gatekeeper(T790)",
+      "C-lobe core"
+    ],
+    "conflict_regions": [
+      "activation-loop",
+      "N-lobe beta-sheet"
+    ],
+    "region_table": [
+      {
+        "region": "P-loop",
+        "md_value": 0.7,
+        "nma_value": 0.65,
+        "delta": 0.05,
+        "status": "consensus"
+      },
+      {
+        "region": "alphaC-helix",
+        "md_value": 0.45,
+        "nma_value": 0.5,
+        "delta": 0.05,
+        "status": "consensus"
+      },
+      {
+        "region": "hinge",
+        "md_value": 0.3,
+        "nma_value": 0.35,
+        "delta": 0.05,
+        "status": "consensus"
+      },
+      {
+        "region": "gatekeeper(T790)",
+        "md_value": 0.25,
+        "nma_value": 0.2,
+        "delta": 0.05,
+        "status": "consensus"
+      },
+      {
+        "region": "activation-loop",
+        "md_value": 0.85,
+        "nma_value": 0.4,
+        "delta": 0.45,
+        "status": "conflict"
+      },
+      {
+        "region": "N-lobe beta-sheet",
+        "md_value": 0.32,
+        "nma_value": 0.6,
+        "delta": 0.28,
+        "status": "conflict"
+      },
+      {
+        "region": "C-lobe core",
+        "md_value": 0.2,
+        "nma_value": 0.15,
+        "delta": 0.05,
+        "status": "consensus"
+      }
+    ],
+    "evidence_ids": [
+      "traj:egfr_t790m_demo",
+      "enm:egfr_t790m_anm"
+    ],
+    "dissent": [
+      "activation-loop: unresolved MD/NMA conflict (delta=0.45)",
+      "N-lobe beta-sheet: unresolved MD/NMA conflict (delta=0.28)"
+    ]
+  },
+  "combined_audit": [
+    "Flag for human / experimental check: activation-loop (MD vs NMA disagree).",
+    "Flag for human / experimental check: N-lobe beta-sheet (MD vs NMA disagree)."
+  ]
+}

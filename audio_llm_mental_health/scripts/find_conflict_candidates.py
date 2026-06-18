@@ -39,7 +39,11 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=20)
     args = parser.parse_args()
 
-    rows = [json.loads(line) for line in Path(args.manifest).read_text().splitlines() if line.strip()]
+    rows = [
+        json.loads(line)
+        for line in Path(args.manifest).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
     found = 0
     for i, row in enumerate(rows):

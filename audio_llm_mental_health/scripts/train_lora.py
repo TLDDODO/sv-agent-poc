@@ -41,7 +41,13 @@ def build_batch(processor, examples):
         )
         prompt_lens.append(len(processor.tokenizer(prompt_text)["input_ids"]))
 
-    batch = processor(text=texts, audio=audio_arrays, return_tensors="pt", padding=True)
+    batch = processor(
+        text=texts,
+        audio=audio_arrays,
+        sampling_rate=processor.feature_extractor.sampling_rate,
+        return_tensors="pt",
+        padding=True,
+    )
     labels = batch["input_ids"].clone()
     for i, plen in enumerate(prompt_lens):
         labels[i, :plen] = -100

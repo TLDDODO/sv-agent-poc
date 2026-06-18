@@ -45,7 +45,12 @@ def main() -> None:
         conversation, add_generation_prompt=True, tokenize=False
     )
     audio_array = librosa.load(args.audio, sr=processor.feature_extractor.sampling_rate)[0]
-    inputs = processor(text=prompt_text, audio=[audio_array], return_tensors="pt").to(model.device)
+    inputs = processor(
+        text=prompt_text,
+        audio=[audio_array],
+        sampling_rate=processor.feature_extractor.sampling_rate,
+        return_tensors="pt",
+    ).to(model.device)
 
     with torch.no_grad():
         generated = model.generate(**inputs, max_new_tokens=args.max_new_tokens)

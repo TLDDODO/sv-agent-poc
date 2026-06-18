@@ -30,7 +30,9 @@ def main() -> None:
 
     videos = sorted(video_dir.glob("*.mp4"))
     converted, skipped, failed = 0, 0, 0
-    for video_path in videos:
+    for i, video_path in enumerate(videos, start=1):
+        if i % 200 == 0:
+            print(f"... {i}/{len(videos)} processed")
         wav_path = out_dir / (video_path.stem + ".wav")
         if wav_path.exists():
             skipped += 1

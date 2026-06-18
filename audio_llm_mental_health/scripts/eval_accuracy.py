@@ -23,6 +23,7 @@ from collections import Counter
 from pathlib import Path
 
 import librosa
+import numpy as np
 import torch
 from peft import PeftModel
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
@@ -59,6 +60,13 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-new-tokens", type=int, default=200)
     parser.add_argument("--out", default=None, help="Optional JSONL dump of per-row predictions.")
+    parser.add_argument(
+        "--silence", action="store_true",
+        help="Replace the loaded audio with equal-length silence (keep the transcript). Run "
+        "twice with the same --seed/--sample, with and without this flag, then diff the two "
+        "--out dumps with compare_audio_contribution.py to isolate audio's contribution to "
+        "accuracy from the transcript's.",
+    )
     args = parser.parse_args()
 
     rows = load_manifest(args.manifest)
@@ -87,6 +95,8 @@ def main() -> None:
             conversation, add_generation_prompt=True, tokenize=False
         )
         audio_array = librosa.load(row["audio_path"], sr=sr)[0]
+        if args.silence:
+            audio_array = np.zeros_like(audio_array)
         inputs = processor(
             text=prompt_text, audio=[audio_array], sampling_rate=sr, return_tensors="pt"
         ).to(model.device)

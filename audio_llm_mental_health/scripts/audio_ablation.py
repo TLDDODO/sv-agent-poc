@@ -24,6 +24,7 @@ the audio, that is real evidence of audio grounding.
 
 import argparse
 import json
+import random
 import re
 import sys
 from pathlib import Path
@@ -58,13 +59,16 @@ def parse_label(completion: str, answer_key: str = ANSWER_KEY) -> str | None:
     return matches[-1].strip().split("\n")[0].strip().lower()
 
 
-def pick_swap_donor(target: dict, rows: list[dict]) -> dict | None:
-    """First row whose gold emotion differs from the target's (a contrasting clip)."""
+def pick_swap_donor(target: dict, rows: list[dict], rng: random.Random) -> dict | None:
+    """A RANDOM row whose gold emotion differs from the target's (a contrasting clip).
+
+    Random (seeded) rather than "first match" so different targets borrow different donor
+    clips -- otherwise every swap reuses the same clip and the test collapses to a single
+    audio sample biased toward one emotion.
+    """
     target_emotion = (target.get("emotion") or "").lower()
-    for cand in rows:
-        if (cand.get("emotion") or "").lower() != target_emotion:
-            return cand
-    return None
+    candidates = [c for c in rows if (c.get("emotion") or "").lower() != target_emotion]
+    return rng.choice(candidates) if candidates else None
 
 
 def main() -> None:
@@ -82,9 +86,11 @@ def main() -> None:
         "--conditions", default="original,silence,swap",
         help="Comma-separated subset of: original, silence, swap.",
     )
+    parser.add_argument("--seed", type=int, default=42, help="Seed for random swap-donor choice.")
     args = parser.parse_args()
 
     conditions = [c.strip() for c in args.conditions.split(",") if c.strip()]
+    rng = random.Random(args.seed)
     all_rows = load_manifest(args.manifest)
     if args.indices is not None:
         wanted = [int(i) for i in args.indices.split(",")]
@@ -116,8 +122,13 @@ def main() -> None:
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    n_audio_sensitive = 0
-    n_evaluable = 0
+    # Three distinct signals, reported separately (a single "audio-sensitive" count conflates them):
+    n_silence_changed = 0   # label changed when audio was REMOVED (silence)
+    n_silence_eval = 0
+    n_swap_changed = 0      # label changed when audio was SUBSTITUTED (swap)
+    n_swap_eval = 0
+    n_swap_followed = 0     # swap label == donor's gold emotion (does the label TRACK the audio)
+    n_swap_follow_eval = 0
     with open(out_path, "w", encoding="utf-8") as out_f:
         for i, row in enumerate(target_rows):
             # Transcript is held FIXED across conditions -- only the audio changes.
@@ -131,7 +142,7 @@ def main() -> None:
                 audio_variants["silence"] = np.zeros_like(original_audio)
             swap_donor = None
             if "swap" in conditions:
-                swap_donor = pick_swap_donor(row, all_rows)
+                swap_donor = pick_swap_donor(row, all_rows, rng)
                 if swap_donor is not None:
                     audio_variants["swap"] = librosa.load(swap_donor["audio_path"], sr=sr)[0]
 
@@ -144,13 +155,21 @@ def main() -> None:
                 }
 
             base_label = per_condition.get("original", {}).get("label")
-            varied = [c for c in ("silence", "swap") if c in per_condition]
-            changed = None
-            if base_label is not None and varied:
-                n_evaluable += 1
-                changed = any(per_condition[c]["label"] != base_label for c in varied)
-                if changed:
-                    n_audio_sensitive += 1
+            silence_changed = swap_changed = swap_followed = None
+            if base_label is not None and "silence" in per_condition:
+                n_silence_eval += 1
+                silence_changed = per_condition["silence"]["label"] != base_label
+                n_silence_changed += int(silence_changed)
+            if base_label is not None and "swap" in per_condition:
+                n_swap_eval += 1
+                swap_changed = per_condition["swap"]["label"] != base_label
+                n_swap_changed += int(swap_changed)
+            if swap_donor is not None and "swap" in per_condition:
+                donor_emotion = (swap_donor.get("emotion") or "").lower()
+                if donor_emotion:
+                    n_swap_follow_eval += 1
+                    swap_followed = per_condition["swap"]["label"] == donor_emotion
+                    n_swap_followed += int(swap_followed)
 
             result = {
                 "audio_path": row["audio_path"],
@@ -158,31 +177,35 @@ def main() -> None:
                 "gold_emotion": row.get("emotion"),
                 "swap_donor_emotion": (swap_donor or {}).get("emotion"),
                 "conditions": per_condition,
-                "label_changed_when_audio_varied": changed,
+                "silence_changed_label": silence_changed,
+                "swap_changed_label": swap_changed,
+                "swap_label_followed_donor_emotion": swap_followed,
             }
             out_f.write(json.dumps(result, ensure_ascii=False) + "\n")
 
             labels_str = "  ".join(f"{c}={per_condition[c]['label']!r}" for c in per_condition)
-            verdict = "" if changed is None else ("  <- AUDIO-SENSITIVE" if changed else "  (label unchanged)")
-            print(f"[{i + 1}/{len(target_rows)}] {Path(row['audio_path']).name}: {labels_str}{verdict}")
+            donor = f" (donor={swap_donor['emotion']})" if swap_donor else ""
+            print(f"[{i + 1}/{len(target_rows)}] {Path(row['audio_path']).name}: {labels_str}{donor}")
 
     print(f"\nWrote {len(target_rows)} rows to {out_path}")
-    if n_evaluable:
+    if n_silence_eval:
         print(
-            f"{n_audio_sensitive}/{n_evaluable} rows changed their label when the audio was "
-            f"removed/swapped (transcript held fixed)."
+            f"silence:  {n_silence_changed}/{n_silence_eval} rows changed label when audio was "
+            f"REMOVED. 0 => the model falls back to a transcript-driven answer; high => the "
+            f"original prediction leaned on the audio."
         )
-        if n_audio_sensitive == 0:
-            print(
-                "  -> 0 means the label is invariant to the audio on this sample: the model is "
-                "reading the transcript, not listening. The CoT's acoustic cues are post-hoc."
-            )
-        else:
-            print(
-                "  -> non-zero means the label tracks the audio on at least some rows: evidence "
-                "the model is using the waveform, not just the transcript."
-            )
-    else:
+    if n_swap_eval:
+        print(
+            f"swap:     {n_swap_changed}/{n_swap_eval} rows changed label when audio was "
+            f"SUBSTITUTED with a contrasting clip."
+        )
+    if n_swap_follow_eval:
+        print(
+            f"tracking: {n_swap_followed}/{n_swap_follow_eval} swap labels MATCHED the donor "
+            f"clip's emotion. This is the strongest grounding signal: high => the label follows "
+            f"whatever the audio says, low => the audio only nudges and the transcript dominates."
+        )
+    if not (n_silence_eval or n_swap_eval):
         print("No evaluable rows (need the 'original' condition plus 'silence' and/or 'swap').")
 
 

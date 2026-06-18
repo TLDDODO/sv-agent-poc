@@ -32,11 +32,30 @@ class ResidueMapping:
     in_nterm_ubl: bool              # falls inside the MAD2-binding domain?
 
 
+# Snapshot of the verified live PDBe query (uniprot_accession:O15205) for offline use.
+_VERIFIED_FAT10 = [
+    ("6GF1", 1.925, "X-ray diffraction",
+     "The structure of the ubiquitin-like modifier FAT10 reveals a novel targeting "
+     "mechanism for degradation by the 26S proteasome"),
+    ("6GF2", None, "Solution NMR",
+     "The structure of the ubiquitin-like modifier FAT10 reveals a novel targeting "
+     "mechanism for degradation by the 26S proteasome"),
+    ("2MBE", None, "Solution NMR",
+     "Backbone 1H and 15N Chemical Shift Assignments for the first domain of FAT10"),
+    ("7PYV", 3.27, "X-ray diffraction",
+     "Crystal structure of human UBA6 in complex with the ubiquitin-like modifier FAT10"),
+]
+
+
 def offline_structures() -> list[StructureHit]:
-    """Offline mode does not fabricate PDB IDs. Real structures come from a live
-    PDBe query (--source mcp on HPC). The retrieval step's offline value is the
-    canonical residue mapping below, which anchors all tools to UniProt numbering."""
-    return []
+    """Verified snapshot of the live PDBe query (uniprot_accession:O15205), so the
+    offline demo shows the real FAT10 structures. 2MBE is the N-terminal (MAD2-binding)
+    domain; 6GF1/6GF2 are full FAT10. Use --source mcp for a fresh live query."""
+    return [
+        StructureHit(pdb_id=p.lower(), title=t, experimental_method=m,
+                     resolution=r, source="offline:verified_pdbe_snapshot")
+        for p, r, m, t in _VERIFIED_FAT10
+    ]
 
 
 # --- Real PDBe MCP query (HPC / online) --------------------------------------

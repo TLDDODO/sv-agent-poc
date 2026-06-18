@@ -4,7 +4,36 @@
   "mad2_uniprot": "Q13257",
   "source": "offline",
   "llm_mode": "mock",
-  "structures": [],
+  "structures": [
+    {
+      "pdb_id": "6gf1",
+      "title": "The structure of the ubiquitin-like modifier FAT10 reveals a novel targeting mechanism for degradation by the 26S proteasome",
+      "experimental_method": "X-ray diffraction",
+      "resolution": 1.925,
+      "source": "offline:verified_pdbe_snapshot"
+    },
+    {
+      "pdb_id": "6gf2",
+      "title": "The structure of the ubiquitin-like modifier FAT10 reveals a novel targeting mechanism for degradation by the 26S proteasome",
+      "experimental_method": "Solution NMR",
+      "resolution": null,
+      "source": "offline:verified_pdbe_snapshot"
+    },
+    {
+      "pdb_id": "2mbe",
+      "title": "Backbone 1H and 15N Chemical Shift Assignments for the first domain of FAT10",
+      "experimental_method": "Solution NMR",
+      "resolution": null,
+      "source": "offline:verified_pdbe_snapshot"
+    },
+    {
+      "pdb_id": "7pyv",
+      "title": "Crystal structure of human UBA6 in complex with the ubiquitin-like modifier FAT10",
+      "experimental_method": "X-ray diffraction",
+      "resolution": 3.27,
+      "source": "offline:verified_pdbe_snapshot"
+    }
+  ],
   "residue_mappings": [
     {
       "residue_label": "I7",

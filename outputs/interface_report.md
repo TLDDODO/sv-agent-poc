@@ -5,7 +5,12 @@
 agree, and which residues are too disputed to commit to an MD interface model?
 
 ## 1. Structure Retrieval (PDBe)
-_No PDB structures pulled in offline mode. Run `--source mcp` on HPC for a live PDBe query. System identity is fixed by UniProt accessions above; the canonical mapping below anchors the tools' residue numbers._
+| PDB | Resolution | Method | Title |
+| --- | --- | --- | --- |
+| 6GF1 | 1.925 | X-ray diffraction | The structure of the ubiquitin-like modifier FAT10 reveals a novel targeting mechanism for degradation by the 26S proteasome |
+| 6GF2 | - | Solution NMR | The structure of the ubiquitin-like modifier FAT10 reveals a novel targeting mechanism for degradation by the 26S proteasome |
+| 2MBE | - | Solution NMR | Backbone 1H and 15N Chemical Shift Assignments for the first domain of FAT10 |
+| 7PYV | 3.27 | X-ray diffraction | Crystal structure of human UBA6 in complex with the ubiquitin-like modifier FAT10 |
 
 ## 2. Canonical Residue Mapping (FAT10 / UniProt O15205)
 Every predicted interface residue is anchored to canonical numbering and checked

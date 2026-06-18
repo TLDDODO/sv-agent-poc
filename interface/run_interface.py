@@ -19,7 +19,8 @@ def render(predictions, structures, mappings, verdicts, exchanges, agg, findings
 
     if structures:
         struct_rows = "\n".join(
-            f"| {s.pdb_id.upper()} | {s.resolution} | {s.experimental_method} | {s.title} |"
+            f"| {s.pdb_id.upper()} | {s.resolution if s.resolution is not None else '-'} "
+            f"| {s.experimental_method} | {s.title} |"
             for s in structures)
         struct_block = ("| PDB | Resolution | Method | Title |\n| --- | --- | --- | --- |\n"
                         + struct_rows)

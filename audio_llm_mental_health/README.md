@@ -37,6 +37,7 @@ audio_llm_mental_health/
     infer.py                     run a tuned checkpoint on one clip
     batch_infer.py               run a tuned checkpoint over several manifest rows, dump a report
     find_conflict_candidates.py  surface text/label mismatches for conflict-robustness testing
+    probe_lime_partB.py          JSON-only check of LIME-440K's text-identical/multi-emotion grouping claim
   outputs/                       checkpoints land here (gitignored except .gitkeep)
 ```
 

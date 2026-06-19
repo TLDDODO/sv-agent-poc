@@ -15,33 +15,53 @@ the genuine agentic loop and the audit.
 ## 1. Agentic loop (the LLM drives, in a loop)
 
 ```mermaid
-flowchart TD
-    G["Goal in plain English<br/>FAT10 O15205 N-term ubl vs MAD2 Q13257"]
-    G --> AG["LLM agent (DeepSeek)<br/>plans and calls tools in a loop"]
+flowchart LR
+    G["Goal in plain English:
+    FAT10 O15205 N-term ubl
+    vs MAD2 Q13257"] 
+    
+    G --> AG["LLM agent (DeepSeek)
+    plans & calls tools
+    in a loop"]
 
-    AG -->|calls| T1["list_interface_tools"]
-    AG -->|calls| T2["get_tool_prediction<br/>per-residue scores (PLACEHOLDER)"]
-    AG -->|calls| T3["validate_residues<br/>vs real UniProt sequence"]
-    AG -->|calls| T4["fetch_structures<br/>PDBe (live-verified): 6GF1 6GF2 2MBE 7PYV<br/>FAT10 structures — none are FAT10:MAD2 complexes"]
-    AG -->|calls| T5["map_residues<br/>canonical numbering + domain check"]
+    %% 工具调用并联流向（改用横向结构，避免宽度爆炸）
+    AG ====> T1["list_interface_tools"]
+    AG ====> T2["get_tool_prediction
+    per-residue scores
+    (PLACEHOLDER)"]
+    AG ====> T3["validate_residues
+    vs real UniProt sequence"]
+    AG ====> T4["fetch_structures
+    PDBe (live-verified):
+    6GF1 6GF2 2MBE 7PYV
+    (No FAT10:MAD2 complexes)"]
+    AG ====> T5["map_residues
+    canonical numbering
+    + domain check"]
 
-    T1 --> AG
-    T2 --> AG
-    T3 --> AG
-    T4 --> AG
-    T5 --> AG
+    T1 ----> AG
+    T2 ----> AG
+    T3 ----> AG
+    T4 ----> AG
+    T5 ----> AG
 
-    AG --> SUB["submit_adjudication<br/>consensus / disputed / weak / confidence<br/>+ recorded step-by-step reasoning"]
-    SUB --> REP["agent_report.md + agent_trace.json"]
+    AG --> SUB["submit_adjudication
+    consensus / disputed
+    weak / confidence
+    + recorded reasoning"]
+    
+    SUB --> REP["agent_report.md
+    + agent_trace.json"]
 
-    classDef agent fill:#eef5ff,stroke:#1d4ed8,color:#0f2440;
-    classDef tool fill:#e0f2fe,stroke:#0369a1,color:#0f2440;
-    classDef warn fill:#fde9c8,stroke:#b45309,color:#0f2440;
-    classDef good fill:#d5f2e5,stroke:#0f9d6b,color:#0f2440;
-    class AG agent;
-    class T1,T3,T4,T5 tool;
-    class T2 warn;
-    class SUB,REP good;
+    classDef agent fill:#eef5ff,stroke:#1d4ed8,color:#0f2440;
+    classDef tool fill:#e0f2fe,stroke:#0369a1,color:#0f2440;
+    classDef warn fill:#fde9c8,stroke:#b45309,color:#0f2440;
+    classDef good fill:#d5f2e5,stroke:#0f9d6b,color:#0f2440;
+    
+    class AG agent;
+    class T1,T3,T4,T5 tool;
+    class T2 warn;
+    class SUB,REP good;
 ```
 
 ## 2. Reliability audit — weak vs strong model

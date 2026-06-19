@@ -2,7 +2,7 @@
 
 The agent does **not** predict interfaces. Prediction tools do that; the agent
 **compares, validates, adjudicates, and audits** them. The diagrams below show
-the genuine agentic loop and the weak-vs-strong audit.
+the genuine agentic loop and the audit.
 
 > **Honest status:** every box below is real *machinery* (LLM loop, PDBe
 > retrieval, UniProt sequence validation, model comparison) **except the tool

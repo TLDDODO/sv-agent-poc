@@ -8,7 +8,8 @@ the genuine agentic loop and the weak-vs-strong audit.
 > retrieval, UniProt sequence validation, model comparison) **except the tool
 > interface scores, which are placeholder/demo numbers.** Any FAT10 conclusion is
 > therefore a method demo, not a real result, until real tool scores are plugged
-> in (`INTERFACE_SCORES`).
+> in (`INTERFACE_SCORES`). The PDB IDs shown are an offline **snapshot**; re-confirm
+> them with a live query (`--source mcp`) before presenting.
 
 ## 1. Agentic loop (the LLM drives, in a loop)
 
@@ -20,7 +21,7 @@ flowchart TD
     AG -->|calls| T1["list_interface_tools"]
     AG -->|calls| T2["get_tool_prediction<br/>per-residue scores (PLACEHOLDER)"]
     AG -->|calls| T3["validate_residues<br/>vs real UniProt sequence"]
-    AG -->|calls| T4["fetch_structures<br/>real PDBe (6GF1 6GF2 2MBE 7PYV)"]
+    AG -->|calls| T4["fetch_structures<br/>PDBe query (snapshot: 6GF1 6GF2 2MBE 7PYV<br/>— re-confirm live via --source mcp)"]
     AG -->|calls| T5["map_residues<br/>canonical numbering + domain check"]
 
     T1 --> AG
@@ -51,7 +52,7 @@ flowchart TD
     EV --> S["Strong baseline<br/>deepseek-reasoner"]
     W --> D["diff adjudications"]
     S --> D
-    D --> OUT["agent_compare.md<br/>where the weak model over-claims / is overconfident"]
+    D --> OUT["agent_compare.md<br/>residues where weak & strong models DISAGREE<br/>→ flag as low-confidence (no winner declared)"]
 
     classDef agent fill:#eef5ff,stroke:#1d4ed8,color:#0f2440;
     classDef warn fill:#fde9c8,stroke:#b45309,color:#0f2440;

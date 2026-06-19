@@ -109,25 +109,28 @@ def render(goal, weak, strong, d) -> str:
                 f"- reasoning: {a.get('reasoning', '-')}{cot}")
     where = []
     if d["consensus_only_weak"]:
-        where.append(f"- Weak model **over-claims** as interface (strong does not): "
-                     f"{', '.join(d['consensus_only_weak'])}")
+        where.append(f"- Called interface by the weak model but NOT the strong one "
+                     f"(disagreement → flag): {', '.join(d['consensus_only_weak'])}")
     if d["consensus_only_strong"]:
-        where.append(f"- Weak model **misses** interface residues the strong model keeps: "
-                     f"{', '.join(d['consensus_only_strong'])}")
+        where.append(f"- Called interface by the strong model but NOT the weak one "
+                     f"(disagreement → flag): {', '.join(d['consensus_only_strong'])}")
     if d["disputed_only_weak"] or d["disputed_only_strong"]:
         where.append(f"- Disputed-set differs: weak-only {d['disputed_only_weak'] or '-'}, "
                      f"strong-only {d['disputed_only_strong'] or '-'}")
     if d["confidence_weak"] != d["confidence_strong"]:
-        where.append(f"- Confidence: weak={d['confidence_weak']} vs strong={d['confidence_strong']}")
+        where.append(f"- Confidence differs: weak={d['confidence_weak']} vs "
+                     f"strong={d['confidence_strong']} (which is correct is unknown)")
     if not where:
-        where.append("- No divergence on this case (weak model matched the strong baseline).")
+        where.append("- The two models agree on this case.")
 
     return f"""# Weak-vs-Strong Adjudication Comparison
 
 **Goal:** {goal}
 
-Same evidence, two interpreters. The strong model is the baseline; divergences
-show where the cheap/weak model's judgement is risky.
+Same evidence, two interpreters. There is NO ground truth here, so neither model
+is declared correct. Where the two models DISAGREE, that residue is treated as
+low-confidence and flagged for a human / MD / experiment — disagreement is the
+signal, not a verdict on which model is right.
 
 ## Weak model (`{weak['model']}`)
 {block(weak)}
@@ -135,7 +138,7 @@ show where the cheap/weak model's judgement is risky.
 ## Strong model (`{strong['model']}`)
 {block(strong)}
 
-## Where the weak model diverges
+## Where the two models disagree (= low-confidence flags)
 {chr(10).join(where)}
 
 ---

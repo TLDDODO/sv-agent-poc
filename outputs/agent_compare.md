@@ -2,8 +2,10 @@
 
 **Goal:** Adjudicate the FAT10 (O15205) N-terminal ubl interface with MAD2.
 
-Same evidence, two interpreters. The strong model is the baseline; divergences
-show where the cheap/weak model's judgement is risky.
+Same evidence, two interpreters. There is **no ground truth** here, so neither
+model is declared correct. Where the two models **disagree**, that residue is
+treated as low-confidence and flagged for a human / MD / experiment. Disagreement
+is the signal — not a verdict on which model is right.
 
 ## Weak model (`deepseek-chat`)
 - consensus: C7, C9, F22, A24, Q46, Y66
@@ -21,16 +23,22 @@ show where the cheap/weak model's judgement is risky.
 
 _chain-of-thought (deepseek-reasoner):_ Score-by-score, the reasoner computed per-residue spreads — C7 0.07, C9 0.05, F22 0.05, A24 0.05, Q46 0.05, Q48 0.07, **S64 0.35, Y66 0.40** — and concluded that S64 and Y66 both exceed the 0.30 spread threshold and are therefore *disputed*, not consensus. It explicitly noted Y66 has two tools >=0.6 (AF 0.65, PISA 0.60) but HADDOCK at 0.25, so the disagreement is real. Validation showed no UniProt mismatches; confidence was lowered only for the unresolved disputes.
 
-## Where the weak model diverges
-- Weak model **over-claims** as interface (strong does not): **Y66**
-- Disputed-set differs: weak-only -, strong-only ['Y66']
-- Confidence: weak=0.85 vs strong=0.80 (weak is more confident while being more wrong)
+## Where the two models disagree (= low-confidence flags)
+- **Y66**: called consensus interface by the weak model, but disputed by the
+  strong model. The models disagree → Y66 is flagged low-confidence, to be
+  resolved by a human / MD / experiment. We do NOT claim which model is right.
+- Confidence differs: weak=0.85 vs strong=0.80 (which is correct is unknown).
 
-**Takeaway:** the cheap model would have told the team "Y66 is a confident
-interface residue — build the MD model on it." The data disagrees (HADDOCK scores
-Y66 at 0.25 vs ~0.6 for the others, spread 0.40), and the strong baseline caught
-it. This is the concrete case for using a stronger model as an audit baseline
-rather than trusting a single cheap model.
+**Method takeaway:** disagreement between two independent interpreters of the
+same evidence is itself a reliability signal — it marks Y66 as not-to-be-trusted
+without further evidence. The point is *not* that the strong model is the truth;
+it is that a single model's confident answer can hide an unresolved call.
+
+*Side note (this case only):* the weak model's own stated reasoning claimed "Y66
+has all three tool scores >= 0.6," but HADDOCK scores Y66 at 0.25 in the evidence
+— an internal inconsistency that is checkable against the input, independent of
+the strong model. This is a per-case observation on placeholder data, not a
+general guarantee that the weak model can always be caught this way.
 
 ---
 *Evidence (tool scores, UniProt validation, mapping, structures) was gathered once

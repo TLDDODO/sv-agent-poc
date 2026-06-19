@@ -15,7 +15,7 @@ adjudicates, and audits. Current target system: **FAT10 N-terminal ubl domain
 | --- | --- |
 | Agent loop (LLM plans, calls tools, reasons, in a loop) | ✅ real |
 | `validate_residues` — checks residues against the real UniProt sequence | ✅ real (catches fabricated/mis-numbered residues) |
-| PDBe structure retrieval (6GF1, 6GF2, 2MBE, 7PYV) | ✅ real |
+| PDBe structure retrieval mechanism | ✅ real (live `--source mcp`); shipped IDs are an offline snapshot — re-confirm live before presenting |
 | Canonical residue mapping + domain check | ✅ real |
 | Weak-vs-strong model comparison (deepseek-chat vs deepseek-reasoner) | ✅ real mechanism |
 | Residue identities (C7, C9, F22 … real FAT10 amino acids) | ✅ real |
@@ -68,5 +68,5 @@ into the FAT10 interface-adjudication agent above.
 ## See also
 
 - `FLOW.md` — flow diagrams (agent loop + weak-vs-strong audit).
-- `outputs/agent_compare.md` — a concrete case where the weak model over-claims a
-  residue the strong baseline correctly flags as disputed.
+- `outputs/agent_compare.md` — a concrete case where two models disagree on a
+  residue (Y66), so it is flagged low-confidence rather than declared either way.

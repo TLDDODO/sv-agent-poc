@@ -51,6 +51,7 @@ audio_llm_mental_health/
     audio_ablation.py            silence/swap intervention: does the label track the audio?
     find_conflict_candidates.py  surface text/label mismatches for conflict-robustness testing
     probe_lime_partB.py          JSON-only check of LIME-440K's text-identical/multi-emotion grouping claim
+    build_lime_manifest.py       LIME-440K Part B -> per-utterance .wav + JSONL manifest (group-level train/dev split)
   outputs/                       checkpoints land here (gitignored except .gitkeep)
 ```
 
@@ -205,6 +206,11 @@ comparison (see `RP.md`): the same dual-encoder + disentanglement architecture r
 both English, to test whether data-level and objective-level interventions reduce collapse by
 the same amount. `scripts/probe_lime_partB.py` is the first gate -- it confirms by direct read
 that LIME's same-text/different-emotion grouping holds before any download of its 52 GB audio.
+`scripts/build_lime_manifest.py` is staged to follow it: it materializes per-utterance audio and
+writes a MELD-shaped JSONL manifest, splitting train/dev by GROUP (not by row) so identical-text
+rows from the same group never land on both sides of the split. Its field-name flags
+(`--group-field` etc.) are educated guesses pending the real schema from `--dump-schema` above --
+do not run it for real until that schema is confirmed.
 
 The earlier MMPsy plan is parked: it ships mel-spectrograms/embeddings rather than raw waveform
 (a tower mismatch documented in `data/mmpsy_dataset.py`), and LIME Part B is the cleaner

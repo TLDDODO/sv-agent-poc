@@ -15,7 +15,7 @@ adjudicates, and audits. Current target system: **FAT10 N-terminal ubl domain
 | --- | --- |
 | Agent loop (LLM plans, calls tools, reasons, in a loop) | ✅ real |
 | `validate_residues` — checks residues against the real UniProt sequence | ✅ real (catches fabricated/mis-numbered residues) |
-| PDBe structure retrieval mechanism | ✅ real (live `--source mcp`); shipped IDs are an offline snapshot — re-confirm live before presenting |
+| PDBe structure retrieval (6GF1, 6GF2, 2MBE, 7PYV) | ✅ real — confirmed via live PDBe query; all genuine FAT10 structures. Note: none are FAT10:MAD2 complexes (none exist), so they confirm the protein, not the interface |
 | Canonical residue mapping + domain check | ✅ real |
 | Weak-vs-strong model comparison (deepseek-chat vs deepseek-reasoner) | ✅ real mechanism |
 | Residue identities (C7, C9, F22 … real FAT10 amino acids) | ✅ real |

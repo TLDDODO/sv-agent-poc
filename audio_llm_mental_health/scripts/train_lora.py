@@ -30,7 +30,7 @@ def build_batch(processor, examples):
     Each example's prompt portion is masked out (-100) so loss is computed only over the
     CoT + final-answer target tokens, not the instruction itself.
     """
-    texts, audio_arrays, prompt_lens = [], [], []
+    texts, audio_arrays, raw_prompt_lens = [], [], []
     for ex in examples:
         prompt_text = processor.apply_chat_template(
             ex["conversation"], add_generation_prompt=True, tokenize=False
@@ -39,7 +39,10 @@ def build_batch(processor, examples):
         audio_arrays.append(
             librosa.load(ex["audio_path"], sr=processor.feature_extractor.sampling_rate)[0]
         )
-        prompt_lens.append(len(processor.tokenizer(prompt_text)["input_ids"]))
+        # Counts the literal, un-expanded "<|AUDIO|>" placeholder in prompt_text as a single
+        # token; Qwen2AudioProcessor expands it below into `num_audio_tokens` placeholder
+        # tokens (a function of the audio length), so this raw count is corrected afterwards.
+        raw_prompt_lens.append(len(processor.tokenizer(prompt_text)["input_ids"]))
 
     batch = processor(
         text=texts,
@@ -48,6 +51,18 @@ def build_batch(processor, examples):
         return_tensors="pt",
         padding=True,
     )
+
+    # Mirror Qwen2AudioProcessor's own placeholder-count formula (processing_qwen2_audio.py)
+    # to find how many tokens each audio was expanded to. Without this correction the labels
+    # mask boundary is off by (num_audio_tokens - 1) per example -- audio clips a few seconds
+    # long expand to dozens of placeholder tokens, so this left a large block of audio
+    # placeholder / trailing-prompt tokens unmasked and supervised as if they were the CoT
+    # target, diluting the actual reasoning/answer loss with unlearnable boilerplate.
+    audio_lengths = batch["feature_attention_mask"].sum(-1)
+    input_lengths = (audio_lengths - 1) // 2 + 1
+    num_audio_tokens = (input_lengths - 2) // 2 + 1
+    prompt_lens = [raw + (int(n) - 1) for raw, n in zip(raw_prompt_lens, num_audio_tokens)]
+
     labels = batch["input_ids"].clone()
     for i, plen in enumerate(prompt_lens):
         labels[i, :plen] = -100

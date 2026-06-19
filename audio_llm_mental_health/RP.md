@@ -1,124 +1,50 @@
-# One-Page Research Proposal
-
-## Title
-
-**Explainable Mental-State Assessment via Audio-LLM with Chain-of-Thought Reasoning**
+# Diagnosing and Mitigating Modality Collapse in Audio-LLMs: A Controlled Study Across Naturally-Coupled and Synthetically-Decoupled Speech
 
 ## Problem
 
-Existing multimodal mental-health prediction systems (e.g. MMPsy, Mental-Perceiver) are almost
-all discriminative classifiers: they consume speech features and emit a label such as
-"depressed" or "anxious" with no explanation of *why*. Clinicians and downstream users cannot
-audit the reasoning, which limits trust and clinical usefulness. The 2026 trend in multimodal
-speech understanding is shifting toward audio-native generative LLMs (Qwen2-Audio-class models)
-that can read raw audio directly and produce free-text reasoning, not just a softmax over labels.
+Audio-LLMs (Qwen2-Audio-class) are built on text-native LLMs, so their latent space is biased toward textual semantics; in emotion-from-speech tasks they ride the transcript and underuse the acoustic channel — *modality collapse*. That this collapse has **both data-level and architecture-level origins is now well established**: noisy features of one modality entangle with the predictive features of another in shared fusion neurons and get masked [cite — VERIFY: arXiv 2505.22483, "A Closer Look at Multimodal Representation Collapse," Chaudhuri et al., ICML 2025], while on the architecture side the modal information is *not* lost in the encoder (speaker identity and emotion remain linearly decodable) — the decoder simply exploits only the text-aligned directions and treats the rest as noise, a bottleneck shown to be governed by the decoder's training objective / scoring rule (a generalized-mutual-information limit) rather than by the projection or adapter choice [cite — VERIFY: arXiv 2602.23136, "Modality Collapse as Mismatched Decoding," Billa, 2026]. The same work reports that changing the training objective (e.g. adding an emotion task) raises modal accessibility (+7.5%), confirming the objective — not the architecture per se — gates which modalities get used.
+
+What remains **unaddressed is whether these two families of intervention are equivalent**. Data-level interventions (removing the transcript shortcut) and objective/architecture-level interventions (a dedicated emotion path with a disentanglement objective) have each been shown to reduce collapse *in isolation*, but no study compares them on a single ruler with coupling as the only manipulated variable. Whether removing the cause at the data level and counteracting it at the objective level reduce collapse by the same amount is an open question with no published systematic control.
+
+## Core Finding (already obtained)
+
+A LoRA-fine-tuned `Qwen2-Audio-7B-Instruct` baseline (MELD; audio + transcript → CoT + emotion label, 9,988 utterances) exhibits the expected collapse. On a 200-row dev sample (greedy decoding): audio + transcript = 0.645; **silence** + transcript = 0.670; audio + placeholder transcript = 0.515 (majority baseline 0.370). Removing audio raises accuracy; a donor-clip swap changes the predicted label to the donor's emotion only 2/15 times (chance for 7-way). Diagnosed proximate cause: the CoT supervision target is a deterministic function of the gold label, giving gradient descent no reason to use the audio encoder once the transcript offers an easier path. This baseline is the fixed measurement instrument; the same ablation is re-run under every condition below.
 
 ## Hypothesis
 
-An audio-LLM, LoRA-fine-tuned to emit a short chain-of-thought (CoT) before its final judgment,
-can produce mental-state assessments that are not only competitive in signal but also
-inspectable: the rationale names the acoustic/linguistic cues (tone, pacing, word choice) that
-drove the prediction. This explainability is a dimension that purely discriminative classifiers
-do not provide, independent of whether raw classification accuracy matches the SOTA.
+Modality collapse is gated by the presence of a transcript shortcut and by the decoder's training objective. Removing the shortcut at the data level (a lexically-identical, multi-emotion corpus) and counteracting it at the objective/architecture level (a dedicated emotion encoder with a disentanglement objective) are *distinct* mechanisms whose effects can be measured on a single, fixed ruler. Holding language constant, a coupled vs. decoupled comparison should reveal how much of the collapse is data-attributable vs. architecture-correctable.
 
-## Approach
+## Approach: interventions measured on one ruler
 
-1. **Base model:** an off-the-shelf audio-LLM in the Qwen-Audio family (e.g.
-   `Qwen2-Audio-7B-Instruct`), which natively accepts raw waveform + text and is fine-tuned with
-   LoRA rather than full-parameter training (fits a single H100).
-2. **Input:** paired audio + transcript (dual-modality prompt).
-3. **Output:** a CoT narrative grounded in observable cues, followed by a final mental-state
-   judgment (e.g. depression / anxiety indicator).
-4. **Data, phased:**
-   - **Phase 1 — MELD.** Has real raw audio per utterance. Used purely to validate the
-     mechanics of the pipeline (audio loading -> prompting -> LoRA SFT -> CoT decoding) before
-     touching the target domain. Emotion/sentiment labels stand in as a proxy task; this is a
-     plumbing test, not a mental-health benchmark result.
-   - **Phase 2 — MMPsy.** The actual target domain (depression/anxiety-relevant speech), but the
-     public release only ships mel-spectrograms and embeddings, not raw waveform. Qwen2-Audio's
-     audio tower expects raw audio (Whisper-style frontend), so MMPsy needs either (a) sourcing
-     raw audio out-of-band, or (b) a separate projection adapter that feeds precomputed
-     mel/embedding features directly into the language model, bypassing the raw-audio encoder.
-     This is a known constraint, deferred to Phase 2 by design.
-5. **Training:** LoRA adapters on the language-model decoder, single H100, via
-   `transformers` + `peft`.
+The silence-vs-audio delta (and conflict-subset accuracy) is the fixed ruler across all conditions.
 
-## Preliminary Result
+1. **Architecture/objective-level.** Add an emotion-centric encoder (Emotion2Vec / HuBERT) as a second tower beside the Whisper-style semantic path, with a modality-specific adapter and an orthogonality / disparity loss forcing the emotion tower to carry signal the semantic tower does not. Adapts the dual-encoder design of Zhang et al. (I2R/A\*STAR 2025) and the disentanglement losses of Chang et al. (IEEE JBHI 2026) to an audio-LLM.
+2. **Data-level.** Train and evaluate on LIME-Core Part B (English, ~96k utterances; Zhao et al., INTERSPEECH 2026), a "lexically-identical, multi-emotion" synthetic corpus where the same text maps to multiple emotions, so the transcript carries no label signal by construction.
 
-The pipeline runs end to end on the H100: `prepare_meld_manifest.py` -> `train_lora.py` (LoRA SFT
-on `Qwen2-Audio-7B-Instruct`, 9,988 MELD train utterances, 3 epochs / 1,872 steps) ->
-`outputs/meld_lora/final`, then `infer.py` / `batch_infer.py` produce a CoT + label for a held-out
-clip. Phase 1's plumbing goal (audio loading -> prompting -> LoRA SFT -> CoT decoding, see
-"Approach") is met.
+(A lighter supervision-level intervention — feature-anchored CoT targets computed from real acoustics plus transcript-masking — is already implemented as a staged baseline and is reported alongside.)
 
-The mental-state-assessment goal is not, and three controlled interventions
-(`scripts/audio_ablation.py`; `scripts/eval_accuracy.py --silence` / `--hide-transcript`;
-`scripts/compare_audio_contribution.py` — all on a random 200-row sample of
-`data/meld_dev_manifest.jsonl`, greedy decoding) show why, precisely:
+## The controlled comparison (contribution)
 
-| Input given to the fine-tuned model              | Accuracy vs. gold emotion | vs. majority baseline (0.370) |
-|---------------------------------------------------|----------------------------|----------------------------------|
-| Audio + transcript (the trained setting)           | 0.645                       | +0.275                            |
-| **Silence** + transcript (audio removed)           | 0.670                       | **+0.300**                        |
-| Audio + **placeholder text** (transcript hidden)   | 0.515                       | +0.145                            |
+The same dual-encoder + disentanglement architecture is run on **MELD** (natural speech, text-acoustic *coupled*, transcript shortcut available) and on **LIME Part B** (synthetic speech, *decoupled*, no shortcut) — both English, so language is held constant and coupling is the only manipulated variable. This **directly tests the equivalence of data-level vs. objective-level interventions**: when the transcript shortcut is removed at the data level versus counteracted at the architecture/objective level, does modality collapse change by the same amount? It supplies the systematic control that the cited works — each operating within a single data regime and testing one intervention family in isolation — do not provide.
 
-Read together: removing the audio entirely scores *higher* than giving the model the real clip
-(delta -0.025; row by row, the real audio actively hurts more rows (19/200) than it helps
-(14/200)), and swapping in an emotionally-contrasting donor clip changes the predicted label to
-that donor's emotion only 2/15 times — chance level for 7-way classification. Audio is not just
-underused here, it is closer to noise for this trained model. Yet with the transcript hidden and
-only the real audio given, accuracy is still 0.515 — clearly above baseline and spread across
-most classes (recall 0.88 neutral / 0.52 anger / 0.37 surprise / 0.26 joy) — so the audio channel
-does carry usable emotion signal; the jointly-trained model simply never learns to rely on it.
+## Open premises to verify (honest)
 
-This is a quantified instance of *modality collapse / text dominance*, a known failure mode in
-multimodal sentiment analysis (see e.g. the self-supervised modality-disentangled representation
-learning approach of Chang et al., IEEE JBHI 2026, and the LIME-440K semantic-acoustic decoupling
-in CogAudio-LLM, arXiv:2606.06940). The proximate cause here is specific to this skeleton's
-Phase-1 simplification: `build_synthetic_cot_target` (`data/prompts.py`) generates the CoT
-supervision target as a deterministic function of the gold label (a per-emotion cue-phrase
-template), not from anything extracted from the audio itself, so gradient descent has no
-incentive to route information through the audio encoder once the transcript offers an easier
-path to the label. The model's CoT text consequently *looks* like audio-grounded reasoning (it
-names a plausible-sounding acoustic cue) but is post-hoc rationalization of a transcript-driven
-decision — exactly the failure README.md's "EIPS-depth check" warns manual CoT review to watch
-for, now confirmed quantitatively rather than only by inspection.
+- LIME Part B's decoupling is taken from the paper; a JSON-only probe must confirm that within each `group` the text is genuinely identical while emotion varies, and how many such groups exist (HF dataset viewer is currently broken; verified by direct read, not assumed).
+- LIME is TTS-synthesized; a residual TTS-vs-spontaneous prosody gap is a known limitation, reported rather than hidden.
+- The two framing citations (arXiv 2505.22483, 2602.23136) and the +7.5% accessibility figure must be confirmed against the source papers before submission, not taken from secondhand summary.
 
-The phase's actual contribution is therefore not "explainable mental-state assessment achieved,"
-but a working pipeline plus a quantified diagnosis of *when and why* label-templated CoT
-supervision fails to ground an audio-LLM in the audio signal it is given — evidence for why
-approaches like LIME-440K-style data decoupling, dual-encoder architectures, or self-supervised
-modality-disentanglement supervision exist, reproduced as a measured effect on this project's own
-model and data rather than taken on faith from the cited papers.
+## Expected Contribution
 
-## Expected Impact / Contribution
-
-The goal is not to beat discriminative SOTA on classification accuracy. The contribution is
-demonstrating that audio-LLM + CoT can add an explainability dimension to mental-state
-assessment that discriminative models structurally cannot offer — a inspectable rationale tied
-to specific acoustic/linguistic evidence in the input.
-
-## Next Milestones (1.5-week deliverable)
-
-- Get the minimal chain running end-to-end on MELD: audio + text -> LoRA-tuned audio-LLM -> CoT
-  + label, on a small slice of data, on the H100.
-- Inspect generated CoT outputs by hand for plausibility (do the cited cues actually match the
-  audio?).
-- Decide the MMPsy raw-audio-vs-adapter question based on what's actually available, then port
-  the same pipeline to MMPsy.
+Not beating SOTA on emotion accuracy. Rather: a clean, reproducible, single-GPU study that (1) measures modality collapse on a fixed ablation ruler, (2) applies mechanistically distinct interventions, and (3) compares coupled vs. decoupled speech under one language to directly test whether data-level and objective-level interventions are equivalent — a control absent from prior work, each of which establishes one intervention in isolation. Every claim ties to a re-runnable ablation rather than to the cited papers.
 
 ## Success Criterion
 
-Given a held-out MELD (then MMPsy) audio clip + transcript, the fine-tuned model should produce
-a short CoT that references concrete cues in the input and a final label, end to end, runnable
-on the H100 with the scripts in this directory.
+For each condition, re-running the silence-vs-audio ablation yields a measurable, reported shift; the coupled-vs-decoupled contrast yields an interpretable difference in collapse magnitude. A partial outcome on natural MELD (collapse reduced, not eliminated) is a valid result and the stated motivation for data-level decoupling.
 
-## Environment Notes
+## Future Work
 
-- This skeleton was authored in an isolated, ephemeral cloud sandbox with **no GPU and no
-  outbound access to model/dataset hosts** (verified: no `nvidia-smi`, no `torch` installed,
-  `huggingface.co` blocked). It cannot run training or inference itself.
-- It never had access to, and does not need access to, any local machine's files.
-- All actual training/inference must run on the H100/JupyterHub workshop environment — copy this
-  directory there, create a fresh virtualenv, `pip install -r requirements.txt`, then proceed
-  per `README.md` in this directory.
+The same evidence-grounded CoT mechanism — a model that states the acoustic cues behind its emotion judgment — could serve as a case-level interpretable layer atop existing classical pipelines in clinical speech assessment, complementing rather than competing with feature-based methods. Pursuing this in a UHR / clinical setting would require not only data access and ethics approval but genuine domain grounding in the clinical construct, which is a prerequisite to be built, not an asset already in hand. Out of scope here.
+
+## Environment
+
+All training/inference on the GPU cluster (H100). Login/transfer node for downloads (compute nodes offline); `$SCRATCH`, not `$HOME`, for the 52 GB LIME audio and HF caches.

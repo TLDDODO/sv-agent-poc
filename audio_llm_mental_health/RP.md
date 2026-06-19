@@ -19,7 +19,7 @@ Modality collapse is gated by the presence of a transcript shortcut and by the d
 The silence-vs-audio delta (and conflict-subset accuracy) is the fixed ruler across all conditions.
 
 1. **Architecture/objective-level.** Add an emotion-centric encoder (Emotion2Vec / HuBERT) as a second tower beside the Whisper-style semantic path, with a modality-specific adapter and an orthogonality / disparity loss forcing the emotion tower to carry signal the semantic tower does not. Adapts the dual-encoder design of Zhang et al. (I2R/A\*STAR 2025) and the disentanglement losses of Chang et al. (IEEE JBHI 2026) to an audio-LLM.
-2. **Data-level.** Train and evaluate on LIME-Core Part B (English, ~96k utterances; Zhao et al., INTERSPEECH 2026), a "lexically-identical, multi-emotion" synthetic corpus where the same text maps to multiple emotions, so the transcript carries no label signal by construction.
+2. **Data-level.** Train and evaluate on LIME-Core Part B (English, ~200 speakers, 96,000 utterances, 113.8 h; `zhaoxiaoxian/LIME-440K_CogAudio-LLM` on Hugging Face) [cite — VERIFY: arXiv 2606.06940, "Beyond Semantic Dominance: Cognitive Affective Reasoning and Empathetic Response Alignment in Audio Language Models," Zhao et al., ASLP@NPU, posted Jun 2026 — INTERSPEECH 2026 acceptance not independently confirmed], a "lexically-identical, multi-emotion" synthetic corpus where the same text maps to multiple emotions, so the transcript carries no label signal by construction.
 
 (A lighter supervision-level intervention — feature-anchored CoT targets computed from real acoustics plus transcript-masking — is already implemented as a staged baseline and is reported alongside.)
 
@@ -29,9 +29,9 @@ The same dual-encoder + disentanglement architecture is run on **MELD** (natural
 
 ## Open premises to verify (honest)
 
-- LIME Part B's decoupling is taken from the paper; a JSON-only probe must confirm that within each `group` the text is genuinely identical while emotion varies, and how many such groups exist (HF dataset viewer is currently broken; verified by direct read, not assumed).
+- LIME Part B's decoupling is taken from the paper; a JSON-only probe must confirm that within each grouping field the text is genuinely identical while emotion varies, and how many such groups exist. The Part A/B utterance counts (223,884 / 96,000) are confirmed via a direct read of the dataset card (`zhaoxiaoxian/LIME-440K_CogAudio-LLM`); the exact column/field names for the text-identity grouping are not yet confirmed and must come from the same direct read, not assumed from the paper's prose.
 - LIME is TTS-synthesized; a residual TTS-vs-spontaneous prosody gap is a known limitation, reported rather than hidden.
-- The two framing citations (arXiv 2505.22483, 2602.23136) and the +7.5% accessibility figure must be confirmed against the source papers before submission, not taken from secondhand summary.
+- The two framing citations (arXiv 2505.22483, 2602.23136) and the +7.5% accessibility figure, and the LIME-440K citation (arXiv 2606.06940) and its claimed INTERSPEECH 2026 venue, must be confirmed against the source papers before submission, not taken from secondhand summary.
 
 ## Expected Contribution
 

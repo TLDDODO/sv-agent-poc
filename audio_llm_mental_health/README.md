@@ -1,14 +1,23 @@
-# Audio-LLM Mental-State Assessment (CoT)
+# Diagnosing and Mitigating Modality Collapse in Audio-LLMs
 
-Explainable mental-state assessment via an audio-LLM fine-tuned with LoRA to emit a
-chain-of-thought (CoT) before its final judgment. See `RP.md` for the full proposal.
+A controlled study of *modality collapse* (text dominance) in a LoRA-fine-tuned
+`Qwen2-Audio-7B-Instruct`: the model rides the transcript and underuses the acoustic channel on
+emotion-from-speech. The MELD pipeline here is the fixed measurement instrument (a silence/
+hide-transcript/donor-swap ablation ruler); interventions are measured against it. See `RP.md`
+for the full proposal, hypothesis, and the controlled coupled-vs-decoupled comparison.
 
 ## Status
 
-Smoke-tested end to end on an H100: model download, LoRA init, audio actually reaching the
-model, masked-loss SFT step, checkpoint save/load, and CoT+label decoding via `infer.py` all
-ran without errors on a 16-example slice. A full run over the MELD train split is in progress.
-See "Known simplifications" below for what this does and doesn't validate.
+- **Baseline + collapse, established.** LoRA SFT on MELD runs end to end on an H100 (model
+  download, LoRA init, masked-loss SFT, checkpoint save/load, CoT+label decoding). The ablation
+  trio confirms collapse: removing audio does not hurt (and slightly helps) accuracy, and a
+  donor-clip swap rarely moves the label. Numbers in `RP.md` "Core Finding".
+- **Data-side fix, staged (running).** `extract_acoustic_priors.py` measures real per-clip
+  acoustics and buckets them by corpus tertiles; `data/prompts.py` turns those buckets into a
+  CoT target that can only be produced by listening, plus `text_mask_prob` transcript dropout.
+  A `train_config.yaml`-driven retrain on the `*_acoustic.jsonl` manifests is the current run;
+  the same ablation trio is re-run on the result to measure whether collapse moved.
+- See "Known simplifications" for what this does and doesn't validate.
 
 ## Why this can't run in this sandbox
 
@@ -27,15 +36,19 @@ audio_llm_mental_health/
     train_config.yaml            paths + training hyperparameters
     train_config_smoke.yaml      same, pointed at a tiny manifest subset for a quick sanity run
   data/
-    prompts.py                   chat prompt + synthetic CoT target templates
-    meld_dataset.py              Phase 1: MELD pipeline-validation dataset
-    mmpsy_dataset.py             Phase 2 stub (blocked on raw-audio-vs-adapter decision)
+    prompts.py                   chat prompt + acoustic-grounded / synthetic CoT target templates
+    meld_dataset.py              MELD dataset: the baseline measurement instrument
+    mmpsy_dataset.py             parked stub (superseded by the LIME data-level intervention; see RP.md)
   scripts/
     extract_meld_audio.py        MELD .mp4 clips -> per-utterance .wav (needs ffmpeg)
     prepare_meld_manifest.py     MELD CSV + audio dir -> JSONL manifest
+    extract_acoustic_priors.py   measure real acoustics, bucket by corpus tertiles -> *_acoustic.jsonl
     train_lora.py                LoRA SFT loop
     infer.py                     run a tuned checkpoint on one clip
     batch_infer.py               run a tuned checkpoint over several manifest rows, dump a report
+    eval_accuracy.py             emotion accuracy vs gold (supports --silence / --hide-transcript)
+    compare_audio_contribution.py  diff two eval dumps to isolate audio's marginal contribution
+    audio_ablation.py            silence/swap intervention: does the label track the audio?
     find_conflict_candidates.py  surface text/label mismatches for conflict-robustness testing
     probe_lime_partB.py          JSON-only check of LIME-440K's text-identical/multi-emotion grouping claim
   outputs/                       checkpoints land here (gitignored except .gitkeep)
@@ -49,7 +62,11 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Phase 1: MELD pipeline validation
+## MELD: building the baseline instrument
+
+MELD is the naturally-coupled (text-acoustic) arm of the study and the fixed ablation ruler.
+These steps build the manifests, add acoustic priors, and run the LoRA SFT that the ablation
+trio is then measured against.
 
 1. Download `MELD.Raw.tar.gz` (https://affective-meld.github.io/) and extract it. The raw
    archive ships per-split video tarballs (`train.tar.gz`, `dev.tar.gz`, `test.tar.gz`)
@@ -75,7 +92,17 @@ pip install -r requirements.txt
      --audio-dir MELD.Raw/dev_audio \
      --out data/meld_dev_manifest.jsonl
    ```
-4. Smoke-test the training loop on a tiny subset before a full run:
+4. Add acoustic priors (the data-side fix). Reads raw audio once per split and writes
+   `*_acoustic.jsonl` with a tertile-bucketed `acoustic` field; `train_config.yaml` points at
+   these. Note the printed corpus tertile thresholds -- if a feature's t33 and t67 collapse
+   together it has no discriminating power and the bucketing degrades:
+   ```bash
+   python scripts/extract_acoustic_priors.py \
+     --in data/meld_train_manifest.jsonl --out data/meld_train_manifest_acoustic.jsonl
+   python scripts/extract_acoustic_priors.py \
+     --in data/meld_dev_manifest.jsonl   --out data/meld_dev_manifest_acoustic.jsonl
+   ```
+5. Smoke-test the training loop on a tiny subset before a full run:
    ```bash
    head -n 16 data/meld_train_manifest.jsonl > data/meld_train_manifest_smoke.jsonl
    head -n 8 data/meld_dev_manifest.jsonl > data/meld_dev_manifest_smoke.jsonl
@@ -83,26 +110,53 @@ pip install -r requirements.txt
    ```
    Confirms the multimodal batching, masking, and LoRA SFT step run end to end (and that loss
    is finite and moving) without committing to a multi-hour full run.
-5. Train:
+6. Train (`train_config.yaml` points at the `*_acoustic.jsonl` manifests, `text_mask_prob=0.3`,
+   output to `outputs/meld_lora_grounded`):
    ```bash
    python scripts/train_lora.py --config configs/train_config.yaml
    ```
-6. Try a checkpoint:
+7. Try a checkpoint:
    ```bash
-   python scripts/infer.py --adapter outputs/meld_lora/final \
+   python scripts/infer.py --adapter outputs/meld_lora_grounded/final \
      --audio path/to/clip.wav --transcript "..."
    ```
 
-MELD's emotion/sentiment labels are a stand-in task here, used only to validate that audio
-loading, prompting, LoRA SFT, and CoT decoding work end to end. This is not a mental-health
-result -- see RP.md.
+MELD's emotion labels are not the point; emotion accuracy is the surface on which collapse is
+measured. The acoustic-grounded CoT + transcript dropout is the data-level intervention, and
+the silence-vs-audio ablation is re-run on the result to test whether collapse moved. This is
+not a mental-health result -- see RP.md.
 
 ## Evaluation
 
 Loss going down confirms the mechanics run; it says nothing about whether the CoT is actually
-grounded in the audio rather than just paraphrasing the transcript. Two manual checks, run after
-a real training pass (not the smoke checkpoint, which has seen far too little data to have
-learned anything):
+grounded in the audio rather than just paraphrasing the transcript.
+
+**The ablation ruler (primary, quantitative).** The same trio is run on every condition; use a
+fixed `--seed`/`--sample` and a recorded `--indices` set so runs are comparable across
+conditions:
+
+```bash
+# (a) three-condition accuracy: real audio vs silenced (transcript kept), same seed/sample
+python scripts/eval_accuracy.py --adapter outputs/meld_lora_grounded/final \
+    --manifest data/meld_dev_manifest_acoustic.jsonl --sample 200 --seed 42 \
+    --out outputs/eval_grounded.jsonl
+python scripts/eval_accuracy.py --adapter outputs/meld_lora_grounded/final \
+    --manifest data/meld_dev_manifest_acoustic.jsonl --sample 200 --seed 42 \
+    --silence --out outputs/eval_grounded_silence.jsonl
+python scripts/compare_audio_contribution.py \
+    --with-audio outputs/eval_grounded.jsonl --silenced outputs/eval_grounded_silence.jsonl
+
+# (b) silence/swap intervention on a fixed recorded index set (does the label track the audio?)
+python scripts/audio_ablation.py --adapter outputs/meld_lora_grounded/final \
+    --manifest data/meld_dev_manifest_acoustic.jsonl --indices "$IDX" \
+    --out outputs/ablation_grounded.jsonl
+```
+
+A silence-vs-audio delta that has risen from the baseline (where removing audio did *not* hurt)
+is the signal that the data-side fix moved collapse. Record the `$IDX` set used so the swap/
+tracking numbers are reproducible.
+
+**Qualitative checks (after a real, non-smoke training pass):**
 
 1. **Acoustic-text congruence.** Pick a handful of dev rows, generate with `batch_infer.py`,
    and for each one that cites a concrete acoustic cue ("shaky voice", "raised pitch"), listen
@@ -116,8 +170,8 @@ learned anything):
    ```
    Confirm a couple of candidates by listening, then run them through the model:
    ```bash
-   python scripts/batch_infer.py --adapter outputs/meld_lora/final \
-     --manifest data/meld_dev_manifest.jsonl --indices <comma-separated indices> \
+   python scripts/batch_infer.py --adapter outputs/meld_lora_grounded/final \
+     --manifest data/meld_dev_manifest_acoustic.jsonl --indices <comma-separated indices> \
      --out outputs/review_conflict.jsonl
    ```
    If the CoT explains its answer purely from the words ("said 'get out', so angry") despite
@@ -143,11 +197,18 @@ learned anything):
    claims are taken as the source's transcription, not independently verified -- used here only
    as a qualitative rubric, not a benchmark to match.
 
-## Phase 2: MMPsy
+## Next: the controlled comparison
 
-Blocked on a design decision: MMPsy ships mel-spectrograms/embeddings, not raw audio, and
-Qwen2-Audio's audio tower expects raw waveform. See `data/mmpsy_dataset.py` for the two options.
-Decide once Phase 1 is validated.
+Once the data-side fix is measured on MELD, the study's contribution is the coupled-vs-decoupled
+comparison (see `RP.md`): the same dual-encoder + disentanglement architecture run on **MELD**
+(natural, coupled) and on **LIME-Core Part B** (synthetic, decoupled, no transcript shortcut),
+both English, to test whether data-level and objective-level interventions reduce collapse by
+the same amount. `scripts/probe_lime_partB.py` is the first gate -- it confirms by direct read
+that LIME's same-text/different-emotion grouping holds before any download of its 52 GB audio.
+
+The earlier MMPsy plan is parked: it ships mel-spectrograms/embeddings rather than raw waveform
+(a tower mismatch documented in `data/mmpsy_dataset.py`), and LIME Part B is the cleaner
+data-level decoupling. Revisit only if a clinical raw-audio corpus becomes available.
 
 ## Known simplifications
 

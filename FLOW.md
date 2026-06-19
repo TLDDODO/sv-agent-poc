@@ -68,20 +68,31 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    EV["Gather evidence ONCE<br/>tool scores + validation + mapping + structures"]
-    EV --> W["Weak model<br/>deepseek-chat"]
-    EV --> S["Strong baseline<br/>deepseek-reasoner"]
-    W --> D["diff adjudications"]
-    S --> D
-    D --> OUT["agent_compare.md<br/>residues where weak & strong models DISAGREE<br/>→ flag as low-confidence (no winner declared)"]
+    EV["Gather evidence ONCE
+    tool scores + validation
+    + mapping + structures"]
+    
+    EV --> W["Weak model
+    deepseek-chat"]
+    EV --> S["Strong baseline
+    deepseek-reasoner"]
+    
+    W --> D["diff adjudications"]
+    S --> D
+    
+    D --> OUT["agent_compare.md
+    residues where weak &
+    strong models DISAGREE
+    → flag as low-confidence"]
 
-    classDef agent fill:#eef5ff,stroke:#1d4ed8,color:#0f2440;
-    classDef warn fill:#fde9c8,stroke:#b45309,color:#0f2440;
-    classDef good fill:#d5f2e5,stroke:#0f9d6b,color:#0f2440;
-    class EV agent;
-    class W warn;
-    class S,OUT good;
-    class D agent;
+    classDef agent fill:#eef5ff,stroke:#1d4ed8,color:#0f2440;
+    classDef warn fill:#fde9c8,stroke:#b45309,color:#0f2440;
+    classDef good fill:#d5f2e5,stroke:#0f9d6b,color:#0f2440;
+    
+    class EV agent;
+    class W warn;
+    class S,OUT good;
+    class D agent;
 ```
 
 **Where this plugs into the team's plan:** the project flow is *compare

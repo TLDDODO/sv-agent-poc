@@ -49,27 +49,6 @@ flowchart TD
     classDef good fill:#d5f2e5,stroke:#0f9d6b,color:#0f2440;
     
     class AG agent;
-    class T1, T3, T4, T5 tool;
+    class T1,T3,T4,T5 tool;
     class T2 warn;
-    class SUB, REP good;
-flowchart TD
-    EV["Gather evidence ONCE
-    tool scores + validation + mapping + structures"]
-    EV --> W["Weak model
-    deepseek-chat"]
-    EV --> S["Strong baseline
-    deepseek-reasoner"]
-    W --> D["diff adjudications"]
-    S --> D
-    D --> OUT["agent_compare.md
-    residues where weak & strong models DISAGREE
-    → flag as low-confidence (no winner declared)"]
-
-    classDef agent fill:#eef5ff,stroke:#1d4ed8,color:#0f2440;
-    classDef warn fill:#fde9c8,stroke:#b45309,color:#0f2440;
-    classDef good fill:#d5f2e5,stroke:#0f9d6b,color:#0f2440;
-    
-    class EV agent;
-    class W warn;
-    class S, OUT good;
-    class D agent;
+    class SUB,REP good;

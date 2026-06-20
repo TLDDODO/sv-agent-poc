@@ -52,6 +52,7 @@ audio_llm_mental_health/
     find_conflict_candidates.py  surface text/label mismatches for conflict-robustness testing
     probe_lime_partB.py          JSON-only check of LIME-440K's text-identical/multi-emotion grouping claim
     build_lime_manifest.py       LIME-440K Part B -> per-utterance .wav + JSONL manifest (group-level train/dev split)
+    build_esd_manifest.py        ESD -> per-utterance .wav + JSONL manifest (real parallel-text decoupling, group-level split)
   outputs/                       checkpoints land here (gitignored except .gitkeep)
 ```
 
@@ -201,11 +202,43 @@ tracking numbers are reproducible.
 ## Next: the controlled comparison
 
 Once the data-side fix is measured on MELD, the study's contribution is the coupled-vs-decoupled
-comparison (see `RP.md`): the same dual-encoder + disentanglement architecture run on **MELD**
-(natural, coupled) and on **LIME-Core Part B** (synthetic, decoupled, no transcript shortcut),
-both English, to test whether data-level and objective-level interventions reduce collapse by
-the same amount. `scripts/probe_lime_partB.py` is the first gate -- it confirms by direct read
-that LIME's same-text/different-emotion grouping holds before any download of its 52 GB audio.
+comparison (see `RP.md`): the same dual-encoder + disentanglement architecture run on a
+three-tier gradient that varies only in how informative the transcript is about the label --
+**MELD** (natural, coupled, transcript predictive -- the baseline above), **ESD** (acted,
+decoupled but transcript present -- the primary condition), and **LIME-Core Part B** (synthetic,
+decoupled, no transcript at all -- the strictest supplementary condition) -- all English, to
+test whether data-level and objective-level interventions reduce collapse by the same amount,
+and whether the *form* of decoupling (uninformative-but-present text vs. no text at all) matters.
+
+### ESD (primary data-level corpus)
+
+Kun Zhou, Berrak Sisman, Rui Liu, Haizhou Li (NUS/SUTD), "Emotional Voice Conversion: Theory,
+Databases and ESD" (arXiv:2105.14762, later in *Speech Communication*). License-gated,
+research-only -- email the license form to `zhoukun@u.nus.edu`, then download via the Google
+Drive link in the dataset's own GitHub README (`HLTSingapore/Emotional-Speech-Data`). Confirmed
+by direct read of the extracted release (see `RP.md` "Open premises"): 10 English + 10 Mandarin
+speakers each read the same 350 sentences under 5 emotions (neutral/happy/angry/sad/surprise);
+for English speaker `0011`, the literal sentence text recurs at utt-id offsets of exactly 350
+across all 5 emotions, so the transcript is present but carries zero label signal by
+construction. Audio is already 16kHz mono PCM_16; the release ships flat per-speaker/per-emotion
+folders with no train/evaluation/test split.
+
+```bash
+python scripts/build_esd_manifest.py --root "/data/.../Emotion Speech Dataset" \
+    --audio-out-dir data/esd_audio --train-out data/esd_train_manifest.jsonl \
+    --dev-out data/esd_dev_manifest.jsonl --dev-frac 0.1
+```
+
+Defaults to the 10 English speakers (`0011`-`0020`); splits by `(speaker, sentence-index)` GROUP
+(derived from the utt-id numbering, since the source has no explicit group field) so a sentence's
+5 emotion-variants never land on both sides of the split. Because the transcript is present, both
+halves of the silence-vs-audio ablation ruler can be run on the result, exactly mirroring the
+MELD ablation.
+
+### LIME Part B (strictest supplementary corpus)
+
+`scripts/probe_lime_partB.py` is the first gate -- it confirms by direct read that LIME's
+same-group/different-emotion structure holds before any download of its 52 GB audio.
 
 The repo's real layout (confirmed by a direct `HfApi.list_repo_files` + `json.load()` read, not
 the paper's prose) splits by language-coded folder prefix rather than a HF `datasets` split:
@@ -216,13 +249,18 @@ JSON-Lines, so `datasets.load_dataset(...)` cannot read it directly; both script
 `huggingface_hub.hf_hub_download` + `json.load()` instead. The audio itself ships as one archive
 per part (`PartB_wav_en.tar.gz`), not per-row -- extract it once and point
 `build_lime_manifest.py --audio-root` at the extracted directory (see that script's docstring for
-the exact extraction command). `build_lime_manifest.py` resamples each clip to 16 kHz mono and
-writes a MELD-shaped JSONL manifest, splitting train/dev by GROUP (not by row) so identical-text
-rows from the same group never land on both sides of the split.
+the exact extraction command). **`text` is `null` for 100% of Part B's ~96,000 records in this
+public release** (confirmed by an exhaustive scan, not just the paper's "lexically-identical
+text" framing -- see `RP.md` "Open premises"), so `build_lime_manifest.py` writes
+`transcript: ""` for every row and the corpus trains/evals audio-only by construction -- the
+strictest decoupling in the gradient, but only the audio-only half of the ablation ruler can be
+run on it. `build_lime_manifest.py` resamples each clip to 16 kHz mono and writes a MELD-shaped
+JSONL manifest, splitting train/dev by GROUP (not by row) so rows from the same scenario/cluster
+group never land on both sides of the split.
 
 The earlier MMPsy plan is parked: it ships mel-spectrograms/embeddings rather than raw waveform
-(a tower mismatch documented in `data/mmpsy_dataset.py`), and LIME Part B is the cleaner
-data-level decoupling. Revisit only if a clinical raw-audio corpus becomes available.
+(a tower mismatch documented in `data/mmpsy_dataset.py`), and ESD/LIME Part B are the cleaner
+data-level decoupling corpora. Revisit only if a clinical raw-audio corpus becomes available.
 
 ## Known simplifications
 

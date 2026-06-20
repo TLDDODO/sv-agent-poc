@@ -206,11 +206,19 @@ comparison (see `RP.md`): the same dual-encoder + disentanglement architecture r
 both English, to test whether data-level and objective-level interventions reduce collapse by
 the same amount. `scripts/probe_lime_partB.py` is the first gate -- it confirms by direct read
 that LIME's same-text/different-emotion grouping holds before any download of its 52 GB audio.
-`scripts/build_lime_manifest.py` is staged to follow it: it materializes per-utterance audio and
+
+The repo's real layout (confirmed by a direct `HfApi.list_repo_files` + `json.load()` read, not
+the paper's prose) splits by language-coded folder prefix rather than a HF `datasets` split:
+`PartA_json_CN/*.json` (Chinese, 223,884 utterances) and `PartB_json_EN/*.json` (English, 96,000
+utterances -- the one this project trains/evals on). Each `*.json` file is a dict keyed by
+utterance id (`{"4_5_surprise": {"text", "emotion", "scenario", "group", "wav_path"}}`), not
+JSON-Lines, so `datasets.load_dataset(...)` cannot read it directly; both scripts use
+`huggingface_hub.hf_hub_download` + `json.load()` instead. The audio itself ships as one archive
+per part (`PartB_wav_en.tar.gz`), not per-row -- extract it once and point
+`build_lime_manifest.py --audio-root` at the extracted directory (see that script's docstring for
+the exact extraction command). `build_lime_manifest.py` resamples each clip to 16 kHz mono and
 writes a MELD-shaped JSONL manifest, splitting train/dev by GROUP (not by row) so identical-text
-rows from the same group never land on both sides of the split. Its field-name flags
-(`--group-field` etc.) are educated guesses pending the real schema from `--dump-schema` above --
-do not run it for real until that schema is confirmed.
+rows from the same group never land on both sides of the split.
 
 The earlier MMPsy plan is parked: it ships mel-spectrograms/embeddings rather than raw waveform
 (a tower mismatch documented in `data/mmpsy_dataset.py`), and LIME Part B is the cleaner

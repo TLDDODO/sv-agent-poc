@@ -1,108 +1,97 @@
 #!/usr/bin/env python
 """Build a JSONL training manifest from LIME-440K Part B (RP.md "Data-level" intervention).
 
-Field names below (group/text/emotion/audio/id) are EDUCATED GUESSES, not confirmed -- run
-probe_lime_partB.py --dump-schema first and pass the real names via the matching --*-field
-flag if they differ. Auto-detection here exists so this script can be drafted and reviewed
-before that real schema is in hand, not as a substitute for it.
+Real repo layout and field names, confirmed by a direct `HfApi.list_repo_files` + `json.load()`
+read (see RP.md "Open premises" and probe_lime_partB.py's docstring) --
 
-Unlike probe_lime_partB.py (read-only, drops audio), this script materializes audio to local
-.wav files, so it actually pulls the dataset rather than just streaming column names -- run it
-on the H100's login/transfer node (compute nodes offline, per RP.md "Environment").
+    PartB_json_EN/*.json   English Part B annotations: a dict of {utt_id: {text, emotion,
+                           scenario, group, wav_path}} per file, NOT JSON-Lines, so
+                           `datasets.load_dataset(...)` cannot read it directly.
+    PartB_wav_en.tar.gz    The actual audio, as ONE archive -- not fetched per-row from the
+                           Hub. Download and extract it yourself first (per the dataset card):
+
+                               python -c "from huggingface_hub import hf_hub_download as d; \\
+                                   print(d('zhaoxiaoxian/LIME-440K_CogAudio-LLM', \\
+                                   'PartB_wav_en.tar.gz', repo_type='dataset'))"
+                               mkdir -p PartB_wav_en && tar -xzvf <path printed above> -C PartB_wav_en/
+
+                           then pass that directory via --audio-root. Each record's wav_path
+                           (e.g. "/4/strong/4_5_surprise.wav") is relative to that root.
+
+This script re-encodes each extracted .wav to --sr (16 kHz mono, matching extract_meld_audio.py's
+convention for MELD) and writes the normalized copy to --audio-out-dir, so the manifest's
+audio_path always points to a known-good, already-resampled file rather than whatever sample
+rate the TTS happened to render at.
+
+emotion labels in the source data are upper-case English words (SURPRISE, HAPPY, SAD, ...).
+EMOTION_REMAP lowercases them and maps the ones that don't already match MELD's 7-class names
+(HAPPY->joy, SAD->sadness, ANGRY->anger) so MELD + LIME manifests can be combined later. The
+full LIME label set hasn't been enumerated yet, so unmapped labels are passed through lowercased
+and flagged in the run summary rather than silently guessed at.
 
 Splits by GROUP, not by row: LIME's whole design is multiple rows per group sharing identical
-text with different emotions (see RP.md "Open premises"). Splitting at the row level could put
-near-duplicate-text rows from the same group on both sides of train/dev, leaking the transcript
-across the split. Group-level split keeps that contamination out.
+text with different emotions (see RP.md "Open premises" -- in practice "identical" has held for
+the wording but not always the punctuation across emotions in the same group). Splitting at the
+row level could put near-duplicate-text rows from the same group on both sides of train/dev,
+leaking the transcript across the split. Group-level split keeps that contamination out.
 
 Usage:
     # Smoke test first (small slice, no group split):
-    python scripts/build_lime_manifest.py \
-        --dataset zhaoxiaoxian/LIME-440K_CogAudio-LLM --limit 50 \
+    python scripts/build_lime_manifest.py --audio-root PartB_wav_en/ --limit 50 \
         --audio-out-dir data/lime_audio_smoke --out data/lime_manifest_smoke.jsonl
 
-    # Full run, once the real field names are confirmed:
-    python scripts/build_lime_manifest.py \
-        --dataset zhaoxiaoxian/LIME-440K_CogAudio-LLM \
-        --group-field <real_name> --text-field <real_name> --emotion-field <real_name> \
+    # Full run:
+    python scripts/build_lime_manifest.py --audio-root PartB_wav_en/ \
         --audio-out-dir data/lime_audio --train-out data/lime_train_manifest.jsonl \
         --dev-out data/lime_dev_manifest.jsonl --dev-frac 0.1
 """
 
 import argparse
-import io
+import json
 import random
 from collections import defaultdict
-import json
 from pathlib import Path
 
 import librosa
-import numpy as np
 import soundfile as sf
-from datasets import load_dataset
+from huggingface_hub import HfApi, hf_hub_download
 
-TEXT_FIELD_CANDIDATES = ["text", "transcript", "sentence", "content", "utterance"]
-EMOTION_FIELD_CANDIDATES = ["emotion", "label", "emotion_label", "emo"]
-GROUP_FIELD_CANDIDATES = ["group", "group_id", "text_id", "sentence_id", "cluster_id", "pair_id"]
-AUDIO_FIELD_CANDIDATES = ["audio", "audio_path", "wav", "speech"]
-ID_FIELD_CANDIDATES = ["id", "utterance_id", "uid", "sample_id"]
+DEFAULT_DATASET = "zhaoxiaoxian/LIME-440K_CogAudio-LLM"
+DEFAULT_PREFIX = "PartB_json_EN/"
 
+EMOTION_REMAP = {
+    "happy": "joy",
+    "sad": "sadness",
+    "angry": "anger",
+}
 # Known MELD label set, for a sanity-check print only -- not used to remap LIME's labels.
 KNOWN_EMOTIONS = {"neutral", "anger", "joy", "sadness", "fear", "disgust", "surprise"}
 
 
-def pick_field(columns: list[str], candidates: list[str], kind: str) -> str:
-    for c in candidates:
-        if c in columns:
-            return c
-    raise SystemExit(
-        f"Could not auto-detect the {kind} field among columns {columns}. "
-        f"Pass --{kind}-field explicitly (run probe_lime_partB.py --dump-schema first)."
-    )
-
-
-def pick_field_optional(columns: list[str], candidates: list[str]) -> str | None:
-    for c in candidates:
-        if c in columns:
-            return c
-    return None
-
-
-def extract_audio_array(value, target_sr: int) -> np.ndarray:
-    """Handle the few shapes a HF `Audio` feature value can take. Defensive because the real
-    schema isn't confirmed yet (see module docstring)."""
-    if isinstance(value, dict) and value.get("array") is not None:
-        y, sr = np.asarray(value["array"], dtype=np.float32), value.get("sampling_rate", target_sr)
-    elif isinstance(value, dict) and value.get("bytes"):
-        y, sr = sf.read(io.BytesIO(value["bytes"]), dtype="float32")
-    elif isinstance(value, str):
-        y, sr = librosa.load(value, sr=None)
-    else:
-        raise ValueError(f"Unrecognized audio field value type: {type(value)}")
-    if sr != target_sr:
-        y = librosa.resample(y, orig_sr=sr, target_sr=target_sr)
-    return y
+def list_json_files(api: HfApi, dataset: str, prefix: str) -> list[str]:
+    files = api.list_repo_files(dataset, repo_type="dataset")
+    matches = sorted(f for f in files if f.startswith(prefix) and f.endswith(".json"))
+    if not matches:
+        raise SystemExit(f"No .json files under prefix {prefix!r} in {dataset}.")
+    return matches
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", default="zhaoxiaoxian/LIME-440K_CogAudio-LLM")
-    parser.add_argument("--config", default=None, help="HF dataset config name, if Part A/B are separate configs")
-    parser.add_argument("--split", default="train")
-    parser.add_argument("--language-field", default=None, help="Column to filter on, if Part A/B share one split")
-    parser.add_argument("--language-value", default="English")
-    parser.add_argument("--group-field", default=None)
-    parser.add_argument("--text-field", default=None)
-    parser.add_argument("--emotion-field", default=None)
-    parser.add_argument("--audio-field", default=None)
-    parser.add_argument("--id-field", default=None, help="Optional; falls back to a running index.")
-    parser.add_argument("--audio-out-dir", required=True, help="Directory to write extracted .wav files.")
+    parser.add_argument("--dataset", default=DEFAULT_DATASET)
+    parser.add_argument("--prefix", default=DEFAULT_PREFIX, help="Repo path prefix to scan, e.g. PartB_json_EN/")
+    parser.add_argument("--audio-root", required=True, help="Local dir where PartB_wav_en.tar.gz was extracted.")
+    parser.add_argument("--audio-out-dir", required=True, help="Directory to write resampled .wav files.")
+    parser.add_argument("--text-field", default="text")
+    parser.add_argument("--emotion-field", default="emotion")
+    parser.add_argument("--group-field", default="group")
+    parser.add_argument("--wav-field", default="wav_path")
     parser.add_argument("--out", default=None, help="Single manifest output (no group split).")
     parser.add_argument("--train-out", default=None, help="Train manifest output (use with --dev-out).")
     parser.add_argument("--dev-out", default=None, help="Dev manifest output (use with --train-out).")
     parser.add_argument("--dev-frac", type=float, default=0.1, help="Fraction of GROUPS sent to dev.")
     parser.add_argument("--sr", type=int, default=16000)
-    parser.add_argument("--limit", type=int, default=None, help="Cap rows scanned (omit to scan the full split).")
+    parser.add_argument("--limit", type=int, default=None, help="Cap records scanned (omit to scan every matching file).")
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
@@ -111,63 +100,83 @@ def main() -> None:
     if not args.out and not args.train_out:
         raise SystemExit("Pass either --out, or --train-out together with --dev-out.")
 
-    ds = load_dataset(args.dataset, name=args.config, split=args.split, streaming=True)
-    sample = next(iter(ds.take(1)))
-    columns = list(sample.keys())
-
-    group_field = args.group_field or pick_field(columns, GROUP_FIELD_CANDIDATES, "group")
-    text_field = args.text_field or pick_field(columns, TEXT_FIELD_CANDIDATES, "text")
-    emotion_field = args.emotion_field or pick_field(columns, EMOTION_FIELD_CANDIDATES, "emotion")
-    audio_field = args.audio_field or pick_field(columns, AUDIO_FIELD_CANDIDATES, "audio")
-    id_field = args.id_field or pick_field_optional(columns, ID_FIELD_CANDIDATES)
-    print(
-        f"Using fields: group={group_field!r} text={text_field!r} emotion={emotion_field!r} "
-        f"audio={audio_field!r} id={id_field!r}"
-    )
-
+    audio_root = Path(args.audio_root)
+    if not audio_root.is_dir():
+        raise SystemExit(
+            f"--audio-root {audio_root} doesn't exist. Extract PartB_wav_en.tar.gz there first "
+            f"(see module docstring)."
+        )
     audio_out_dir = Path(args.audio_out_dir)
     audio_out_dir.mkdir(parents=True, exist_ok=True)
 
+    api = HfApi()
+    json_files = list_json_files(api, args.dataset, args.prefix)
+    print(f"{len(json_files)} json files under prefix {args.prefix!r}")
+
     rows: list[dict] = []
     seen_emotions: set[str] = set()
-    n_scanned = n_filtered_out = n_failed = 0
-    for row in ds:
-        if args.language_field and row.get(args.language_field) != args.language_value:
-            n_filtered_out += 1
-            continue
-        idx = n_scanned
-        n_scanned += 1
-        if args.limit and n_scanned > args.limit:
+    n_scanned = n_missing_field = n_missing_audio = n_decode_failed = 0
+    done = False
+    for rel_path in json_files:
+        if done:
             break
+        local_path = hf_hub_download(args.dataset, rel_path, repo_type="dataset")
+        with open(local_path, encoding="utf-8") as f:
+            data = json.load(f)
+        for utt_id, record in data.items():
+            if args.limit and n_scanned >= args.limit:
+                done = True
+                break
 
-        stem = str(row[id_field]) if id_field else f"row{idx:06d}"
-        wav_path = audio_out_dir / f"{stem}.wav"
-        try:
-            y = extract_audio_array(row[audio_field], target_sr=args.sr)
-        except Exception as e:  # noqa: BLE001 -- one bad row shouldn't kill a 96k-row run.
-            n_failed += 1
-            print(f"  [skip] {stem}: failed to decode audio ({e})")
-            continue
-        sf.write(wav_path, y, args.sr)
+            text = record.get(args.text_field)
+            raw_emotion = record.get(args.emotion_field)
+            group = record.get(args.group_field)
+            wav_path = record.get(args.wav_field)
+            if text is None or raw_emotion is None or group is None or wav_path is None:
+                n_missing_field += 1
+                continue
 
-        emotion = str(row[emotion_field]).lower()
-        seen_emotions.add(emotion)
-        rows.append({
-            "audio_path": str(wav_path),
-            "transcript": row[text_field],
-            "emotion": emotion,
-            "group": row[group_field],
-        })
-        if n_scanned % 500 == 0:
-            print(f"  ...{n_scanned} rows processed")
+            src_path = audio_root / wav_path.lstrip("/")
+            if not src_path.is_file():
+                n_missing_audio += 1
+                print(f"  [skip] {utt_id}: audio not found at {src_path}")
+                continue
 
-    print(f"\nScanned {n_scanned} rows (filtered out {n_filtered_out}, decode failures {n_failed}).")
+            out_path = audio_out_dir / f"{utt_id}.wav"
+            try:
+                y, sr = librosa.load(src_path, sr=None)
+                if sr != args.sr:
+                    y = librosa.resample(y, orig_sr=sr, target_sr=args.sr)
+                sf.write(out_path, y, args.sr)
+            except Exception as e:  # noqa: BLE001 -- one bad row shouldn't kill a 96k-row run.
+                n_decode_failed += 1
+                print(f"  [skip] {utt_id}: failed to decode audio ({e})")
+                continue
+
+            emotion = str(raw_emotion).lower()
+            emotion = EMOTION_REMAP.get(emotion, emotion)
+            seen_emotions.add(emotion)
+            rows.append({
+                "audio_path": str(out_path),
+                "transcript": text,
+                "emotion": emotion,
+                "group": group,
+                "id": utt_id,
+            })
+            n_scanned += 1
+            if n_scanned % 2000 == 0:
+                print(f"  ...{n_scanned} records processed")
+
+    print(
+        f"\nScanned {n_scanned} usable records "
+        f"(missing fields: {n_missing_field}, missing audio: {n_missing_audio}, decode failures: {n_decode_failed})."
+    )
     unknown = seen_emotions - KNOWN_EMOTIONS
     print(f"Distinct emotion labels seen: {sorted(seen_emotions)}")
     if unknown:
         print(
             f"NOTE: {sorted(unknown)} are not in the MELD 7-class set {sorted(KNOWN_EMOTIONS)} -- "
-            f"check whether these need remapping before training on MELD + LIME together."
+            f"extend EMOTION_REMAP before training on MELD + LIME together."
         )
 
     if args.out:
@@ -193,10 +202,10 @@ def main() -> None:
     n_train = n_dev = 0
     with open(train_path, "w", encoding="utf-8") as train_f, open(dev_path, "w", encoding="utf-8") as dev_f:
         for gid, group_rows in groups.items():
-            target_f, counter = (dev_f, "dev") if gid in dev_group_ids else (train_f, "train")
+            target_f, bucket = (dev_f, "dev") if gid in dev_group_ids else (train_f, "train")
             for row in group_rows:
                 target_f.write(json.dumps(row, ensure_ascii=False) + "\n")
-            if counter == "dev":
+            if bucket == "dev":
                 n_dev += len(group_rows)
             else:
                 n_train += len(group_rows)

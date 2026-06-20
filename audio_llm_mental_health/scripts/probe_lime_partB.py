@@ -2,94 +2,118 @@
 """JSON-only probe of LIME-440K's claimed text/emotion decoupling (RP.md "Open premises").
 
 Confirms or refutes, by direct read rather than by trusting the paper's prose: within each
-grouping field, is the text genuinely identical while the emotion label varies? Only reads
-text + label columns and drops any audio column before iterating, so it does not require
-downloading the 52 GB audio payload -- run this on the login/transfer node, not on a GPU node.
+group, is the text genuinely identical while the emotion label varies? Only reads the JSON
+annotation files (text/emotion/group), never the audio .tar.gz archives, so this is cheap to
+run from the login/transfer node.
 
-The real schema (column names for the group/text/emotion fields, split names, and whether
-Part A/Part B are separate configs or a row-level field) is not yet known -- the HF dataset
-viewer is blocked from this sandbox (see ../README.md "Why this can't run in this sandbox").
-First run with --dump-schema to see the real column names, then rerun with --group-field /
---text-field / --emotion-field (and --language-field / --language-value if Part A and Part B
-share one split) set to whatever --dump-schema reports.
+Real repo layout, confirmed by a direct `HfApi.list_repo_files` + `json.load()` read (see
+RP.md "Open premises") -- annotations live under two language-coded prefixes, not as a single
+HF `datasets` split with a language column:
 
-    python scripts/probe_lime_partB.py --dataset zhaoxiaoxian/LIME-440K_CogAudio-LLM --dump-schema
-    python scripts/probe_lime_partB.py --dataset zhaoxiaoxian/LIME-440K_CogAudio-LLM \
-        --group-field group_id --text-field text --emotion-field emotion
+    PartA_json_CN/*.json   Chinese, Part A (223,884 utterances)
+    PartB_json_EN/*.json   English, Part B (96,000 utterances)  <- the one RP.md trains/evals on
+
+Each *.json file is a single dict keyed by utterance id (e.g. "4_5_surprise"), not JSON-Lines,
+so `datasets.load_dataset(..., streaming=True)` cannot read it directly -- it mis-detects the
+file as line-delimited JSON and throws a pyarrow parse error ("Column() changed from object to
+string" / "Expected object or value"). This script downloads each matching file with
+`hf_hub_download` and parses it as one JSON object instead.
+
+Confirmed sample record (PartA_json_CN/10.json):
+    {"10_1_surprise": {"text": "...", "emotion": "SURPRISE", "scenario": "...",
+                        "group": "10_g_0", "wav_path": "/10/medium/10_1_surprise.wav"}}
+Part B's schema is the same fields per the dataset card; only the language of "text" differs.
+
+Note: within a group, "identical text" has so far held for the wording but not always for
+punctuation (e.g. "...订好了？！" vs "...订好了......" vs "...订好了！" across three emotions in
+the same group) -- this script does an exact-string compare, deliberately not normalizing
+punctuation away, so that effect shows up in the non_identical_text count below rather than
+being hidden.
+
+    python scripts/probe_lime_partB.py --dump-schema
+    python scripts/probe_lime_partB.py --prefix PartB_json_EN/
 """
 
 import argparse
 import json
 from collections import defaultdict
 
-from datasets import load_dataset
+from huggingface_hub import HfApi, hf_hub_download
 
-TEXT_FIELD_CANDIDATES = ["text", "transcript", "sentence", "content", "utterance"]
-EMOTION_FIELD_CANDIDATES = ["emotion", "label", "emotion_label", "emo"]
-GROUP_FIELD_CANDIDATES = ["group", "group_id", "text_id", "sentence_id", "cluster_id", "pair_id"]
-AUDIO_FIELD_CANDIDATES = ["audio", "audio_path", "wav", "speech"]
+DEFAULT_DATASET = "zhaoxiaoxian/LIME-440K_CogAudio-LLM"
+DEFAULT_PREFIX = "PartB_json_EN/"  # RP.md's Data-level intervention trains/evals on Part B only.
 
 
-def pick_field(columns, candidates, kind):
-    for c in candidates:
-        if c in columns:
-            return c
-    raise SystemExit(
-        f"Could not auto-detect the {kind} field among columns {columns}. "
-        f"Pass --{kind}-field explicitly (run with --dump-schema first to see a sample row)."
-    )
+def list_json_files(api: HfApi, dataset: str, prefix: str) -> list[str]:
+    files = api.list_repo_files(dataset, repo_type="dataset")
+    matches = sorted(f for f in files if f.startswith(prefix) and f.endswith(".json"))
+    if not matches:
+        raise SystemExit(
+            f"No .json files under prefix {prefix!r} in {dataset}. "
+            f"Other top-level prefixes found: {sorted({f.split('/')[0] for f in files if '/' in f})}"
+        )
+    return matches
+
+
+def iter_records(dataset: str, json_files: list[str], limit: int | None):
+    n = 0
+    for rel_path in json_files:
+        local_path = hf_hub_download(dataset, rel_path, repo_type="dataset")
+        with open(local_path, encoding="utf-8") as f:
+            data = json.load(f)
+        for utt_id, record in data.items():
+            yield rel_path, utt_id, record
+            n += 1
+            if limit and n >= limit:
+                return
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", default="zhaoxiaoxian/LIME-440K_CogAudio-LLM")
-    parser.add_argument("--config", default=None, help="HF dataset config name, if Part A/B are separate configs")
-    parser.add_argument("--split", default="train")
-    parser.add_argument("--language-field", default=None, help="Column to filter on, if Part A/B share one split")
-    parser.add_argument("--language-value", default="English")
-    parser.add_argument("--group-field", default=None)
-    parser.add_argument("--text-field", default=None)
-    parser.add_argument("--emotion-field", default=None)
-    parser.add_argument("--limit", type=int, default=None, help="Cap rows scanned (omit to scan the full split)")
-    parser.add_argument("--dump-schema", action="store_true", help="Print column names and one sample row, then exit")
+    parser.add_argument("--dataset", default=DEFAULT_DATASET)
+    parser.add_argument("--prefix", default=DEFAULT_PREFIX, help="Repo path prefix to scan, e.g. PartB_json_EN/")
+    parser.add_argument("--text-field", default="text")
+    parser.add_argument("--emotion-field", default="emotion")
+    parser.add_argument("--group-field", default="group")
+    parser.add_argument("--limit", type=int, default=None, help="Cap records scanned (omit to scan every matching file)")
+    parser.add_argument(
+        "--dump-schema", action="store_true",
+        help="Print one file's record count, keys, and a sample record, then exit",
+    )
     args = parser.parse_args()
 
-    ds = load_dataset(args.dataset, name=args.config, split=args.split, streaming=True)
-    sample = next(iter(ds.take(1)))
-    columns = list(sample.keys())
+    api = HfApi()
+    json_files = list_json_files(api, args.dataset, args.prefix)
+    print(f"{len(json_files)} json files under prefix {args.prefix!r} (first 10): {json_files[:10]}")
 
     if args.dump_schema:
-        printable = {k: v for k, v in sample.items() if k not in AUDIO_FIELD_CANDIDATES}
-        print("columns:", columns)
-        print("sample row (audio field(s) omitted):")
-        print(json.dumps(printable, indent=2, default=str))
+        local_path = hf_hub_download(args.dataset, json_files[0], repo_type="dataset")
+        with open(local_path, encoding="utf-8") as f:
+            data = json.load(f)
+        print(f"\n{json_files[0]}: {len(data)} records")
+        print(f"keys across first 5 records: {[set(v.keys()) for v in list(data.values())[:5]]}")
+        sample_id, sample_record = next(iter(data.items()))
+        print(f"sample record ({sample_id!r}):")
+        print(json.dumps(sample_record, indent=2, ensure_ascii=False))
         return
-
-    group_field = args.group_field or pick_field(columns, GROUP_FIELD_CANDIDATES, "group")
-    text_field = args.text_field or pick_field(columns, TEXT_FIELD_CANDIDATES, "text")
-    emotion_field = args.emotion_field or pick_field(columns, EMOTION_FIELD_CANDIDATES, "emotion")
-
-    drop_cols = [c for c in AUDIO_FIELD_CANDIDATES if c in columns]
-    if drop_cols:
-        ds = ds.remove_columns(drop_cols)
 
     groups = defaultdict(list)
     n_scanned = 0
-    n_filtered_out = 0
-    for row in ds:
-        if args.language_field and row.get(args.language_field) != args.language_value:
-            n_filtered_out += 1
+    n_missing_field = 0
+    for _rel_path, _utt_id, record in iter_records(args.dataset, json_files, args.limit):
+        text = record.get(args.text_field)
+        emotion = record.get(args.emotion_field)
+        group = record.get(args.group_field)
+        if text is None or emotion is None or group is None:
+            n_missing_field += 1
             continue
-        groups[row[group_field]].append((row[text_field], row[emotion_field]))
+        groups[group].append((text, emotion))
         n_scanned += 1
-        if args.limit and n_scanned >= args.limit:
-            break
 
     if n_scanned == 0:
         raise SystemExit(
-            f"0 rows matched (filtered out {n_filtered_out}). "
-            f"--language-field {args.language_field!r} / --language-value {args.language_value!r} "
-            "likely doesn't match this dataset's actual values -- rerun --dump-schema and check."
+            f"0 usable records (missing-field skips: {n_missing_field}). "
+            f"Check --*-field names with --dump-schema."
         )
 
     identical_text_multi_emotion = 0
@@ -106,14 +130,14 @@ def main() -> None:
             identical_text_single_emotion += 1
 
     n_groups = len(groups)
-    print(f"rows scanned: {n_scanned} (filtered out: {n_filtered_out})")
+    print(f"\nrecords scanned: {n_scanned} (skipped for missing fields: {n_missing_field})")
     print(f"groups found: {n_groups}")
     print(
         f"  identical text, >1 emotion (claimed decoupling holds): "
         f"{identical_text_multi_emotion} ({identical_text_multi_emotion / n_groups:.1%})"
     )
     print(f"  identical text, 1 emotion only: {identical_text_single_emotion}")
-    print(f"  non-identical text within group (claim violated): {non_identical_text}")
+    print(f"  non-identical text within group (claim violated, incl. punctuation-only diffs): {non_identical_text}")
 
 
 if __name__ == "__main__":

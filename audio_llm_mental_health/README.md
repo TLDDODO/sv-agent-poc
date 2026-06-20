@@ -33,8 +33,9 @@ audio_llm_mental_health/
   RP.md                          research proposal
   configs/
     lora_config.yaml             PEFT LoraConfig
-    train_config.yaml            paths + training hyperparameters
+    train_config.yaml            paths + training hyperparameters (MELD)
     train_config_smoke.yaml      same, pointed at a tiny manifest subset for a quick sanity run
+    train_config_esd.yaml        same shape as train_config.yaml, pointed at the ESD manifests
   data/
     prompts.py                   chat prompt + acoustic-grounded / synthetic CoT target templates
     meld_dataset.py              MELD dataset: the baseline measurement instrument
@@ -234,6 +235,31 @@ Defaults to the 10 English speakers (`0011`-`0020`); splits by `(speaker, senten
 5 emotion-variants never land on both sides of the split. Because the transcript is present, both
 halves of the silence-vs-audio ablation ruler can be run on the result, exactly mirroring the
 MELD ablation.
+
+Two runs answer two different questions, both worth recording:
+
+1. **Plain baseline (data-level decoupling alone)**: train with the un-grounded manifests
+   (`text_mask_prob: 0.0`, templated CoT, point `configs/train_config_esd.yaml` at
+   `data/esd_train_manifest.jsonl` / `data/esd_dev_manifest.jsonl`). Since ESD's transcript is
+   already uninformative about the label by construction, this isolates whether *removing the
+   shortcut at the data level alone* -- with no acoustic-grounded CoT, no transcript masking --
+   stops the model from collapsing onto audio-irrelevant shortcuts (here, the templated
+   CoT-from-gold-label one diagnosed in MELD's Core Finding, since the transcript itself no
+   longer offers an easier path). Run the same ablation trio as MELD to measure it.
+2. **Acoustic-grounded fix (mirrors the MELD data-side fix)**:
+   ```bash
+   python scripts/extract_acoustic_priors.py \
+     --in data/esd_train_manifest.jsonl --out data/esd_train_manifest_acoustic.jsonl
+   python scripts/extract_acoustic_priors.py \
+     --in data/esd_dev_manifest.jsonl   --out data/esd_dev_manifest_acoustic.jsonl
+   python scripts/train_lora.py --config configs/train_config_esd.yaml
+   ```
+   `configs/train_config_esd.yaml` already points at the `*_acoustic.jsonl` manifests with
+   `text_mask_prob: 0.3`, the same hyperparameters as `train_config.yaml`, so the only variable
+   between the MELD and ESD grounded runs is the corpus. `eval_accuracy.py`,
+   `audio_ablation.py`, and `compare_audio_contribution.py` all take `--manifest` and need no
+   ESD-specific changes -- point them at the ESD manifests/checkpoint the same way the MELD
+   "Evaluation" section above does.
 
 ### LIME Part B (strictest supplementary corpus)
 

@@ -136,6 +136,18 @@ trio is then measured against.
      --audio path/to/clip.wav --transcript "..."
    ```
 
+If a run gets interrupted (SSH drop, reclaimed GPU slot -- a real risk on the MIG-sliced
+allocation, see RP.md "Environment"), resume from the last checkpoint instead of restarting from
+step 0. `train_lora.py` saves optimizer/scheduler/progress state alongside the adapter weights at
+every `save_steps` checkpoint, so:
+```bash
+python scripts/train_lora.py --config configs/train_config.yaml \
+    --resume-from outputs/meld_lora_grounded/checkpoint-200
+```
+picks up exactly where that checkpoint left off (same epoch, same point in that epoch's shuffled
+data). Checkpoints saved before this feature was added (just adapter weights, no
+`training_state.pt`) can't be resumed from -- only checkpoints written by the updated script can.
+
 MELD's emotion labels are not the point; emotion accuracy is the surface on which collapse is
 measured. The acoustic-grounded CoT + transcript dropout is the data-level intervention, and
 the silence-vs-audio ablation is re-run on the result to test whether collapse moved. This is
@@ -247,6 +259,10 @@ Defaults to the 10 English speakers (`0011`-`0020`); splits by `(speaker, senten
 5 emotion-variants never land on both sides of the split. Because the transcript is present, both
 halves of the silence-vs-audio ablation ruler can be run on the result, exactly mirroring the
 MELD ablation.
+
+These are multi-hour full-dataset runs on the MIG slice -- run them inside `tmux` (or `screen`)
+so an SSH drop doesn't kill them, and see "MELD" above for `--resume-from` if one gets
+interrupted anyway.
 
 Smoke-test the training loop first, same pattern as MELD:
 

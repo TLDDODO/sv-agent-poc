@@ -6,7 +6,12 @@ read (see RP.md "Open premises" and probe_lime_partB.py's docstring) --
 
     PartB_json_EN/*.json   English Part B annotations: a dict of {utt_id: {text, emotion,
                            scenario, group, wav_path}} per file, NOT JSON-Lines, so
-                           `datasets.load_dataset(...)` cannot read it directly.
+                           `datasets.load_dataset(...)` cannot read it directly. `text` is
+                           `null` in 100% of records in this public release (confirmed by an
+                           exhaustive scan of all 32 files, 96,000/96,000 records -- see RP.md
+                           "Open premises"), so every row here is written out with an empty
+                           transcript and trained/evaluated audio-only by construction, not via
+                           the probabilistic text_mask_prob masking used for MELD.
     PartB_wav_en.tar.gz    The actual audio, as ONE archive -- not fetched per-row from the
                            Hub. Download and extract it yourself first (per the dataset card):
 
@@ -29,11 +34,10 @@ EMOTION_REMAP lowercases them and maps the ones that don't already match MELD's 
 full LIME label set hasn't been enumerated yet, so unmapped labels are passed through lowercased
 and flagged in the run summary rather than silently guessed at.
 
-Splits by GROUP, not by row: LIME's whole design is multiple rows per group sharing identical
-text with different emotions (see RP.md "Open premises" -- in practice "identical" has held for
-the wording but not always the punctuation across emotions in the same group). Splitting at the
-row level could put near-duplicate-text rows from the same group on both sides of train/dev,
-leaking the transcript across the split. Group-level split keeps that contamination out.
+Splits by GROUP, not by row: LIME's whole design is multiple rows per group sharing one
+scenario/cluster with different emotions (the paper frames this as lexically-identical text per
+group; Part B's `text` being null means there's nothing to leak lexically, but the group-level
+split is kept anyway for consistency with Part A and in case a future release backfills text).
 
 Usage:
     # Smoke test first (small slice, no group split):
@@ -115,7 +119,7 @@ def main() -> None:
 
     rows: list[dict] = []
     seen_emotions: set[str] = set()
-    n_scanned = n_missing_field = n_missing_audio = n_decode_failed = 0
+    n_scanned = n_missing_field = n_missing_audio = n_decode_failed = n_empty_text = 0
     done = False
     for rel_path in json_files:
         if done:
@@ -132,7 +136,7 @@ def main() -> None:
             raw_emotion = record.get(args.emotion_field)
             group = record.get(args.group_field)
             wav_path = record.get(args.wav_field)
-            if text is None or raw_emotion is None or group is None or wav_path is None:
+            if raw_emotion is None or group is None or wav_path is None:
                 n_missing_field += 1
                 continue
 
@@ -156,9 +160,11 @@ def main() -> None:
             emotion = str(raw_emotion).lower()
             emotion = EMOTION_REMAP.get(emotion, emotion)
             seen_emotions.add(emotion)
+            if not text:
+                n_empty_text += 1
             rows.append({
                 "audio_path": str(out_path),
-                "transcript": text,
+                "transcript": text or "",
                 "emotion": emotion,
                 "group": group,
                 "id": utt_id,
@@ -171,6 +177,12 @@ def main() -> None:
         f"\nScanned {n_scanned} usable records "
         f"(missing fields: {n_missing_field}, missing audio: {n_missing_audio}, decode failures: {n_decode_failed})."
     )
+    if n_scanned:
+        print(
+            f"{n_empty_text}/{n_scanned} rows ({n_empty_text / n_scanned:.1%}) have an empty/null "
+            f"transcript -- those rows train/eval audio-only regardless of text_mask_prob "
+            f"(see RP.md \"Open premises\")."
+        )
     unknown = seen_emotions - KNOWN_EMOTIONS
     print(f"Distinct emotion labels seen: {sorted(seen_emotions)}")
     if unknown:

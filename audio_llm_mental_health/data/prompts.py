@@ -60,9 +60,9 @@ def build_synthetic_cot_target(transcript: str, cues: list[str], answer_key: str
     build_decoupled_cot_target is the audio-grounded replacement.
     """
     cue_text = "; ".join(cues) if cues else "the overall tone and pacing of the clip"
+    spoken_clause = f"The speaker says \"{transcript}\". " if transcript else ""
     reasoning = (
-        f"The speaker says \"{transcript}\". Based on {cue_text}, the delivery is "
-        f"consistent with {answer_value}."
+        f"{spoken_clause}Based on {cue_text}, the delivery is consistent with {answer_value}."
     )
     return f"{reasoning}\n{answer_key}: {answer_value}"
 

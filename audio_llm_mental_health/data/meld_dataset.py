@@ -25,6 +25,11 @@ class MELDDataset(Dataset):
         'acoustic' field from scripts/extract_acoustic_priors.py), this is the countermeasure to
         the text-dominance result in RP.md "Preliminary Result". Default 0.0 reproduces the
         original Phase-1 behavior.
+
+        Rows with no transcript at all (LIME Part B, whose public release ships `text: null` --
+        see RP.md "Open premises") are always treated as audio-only, independent of
+        `text_mask_prob`: there's nothing to probabilistically mask if the row never had a
+        transcript to begin with.
         """
         self.examples: list[dict[str, Any]] = []
         with open(manifest_path, encoding="utf-8") as f:
@@ -40,7 +45,7 @@ class MELDDataset(Dataset):
 
     def __getitem__(self, idx: int) -> dict[str, Any]:
         ex = self.examples[idx]
-        include_transcript = not (
+        include_transcript = bool(ex["transcript"]) and not (
             self.text_mask_prob > 0 and self.rng.random() < self.text_mask_prob
         )
         conversation = build_conversation(

@@ -15,7 +15,10 @@ or a reclaimed GPU slot -- see RP.md "Environment"):
 """
 
 import argparse
+import json
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import librosa
@@ -135,6 +138,19 @@ def main() -> None:
     output_dir = Path(config["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Run-level record of what was run and with what config -- appended to, not overwritten, so
+    # a run that gets interrupted and resumed (each `--resume-from` invocation is a separate
+    # process) keeps every prior launch's record instead of only the latest one.
+    with open(output_dir / "run_metadata.jsonl", "a") as f:
+        f.write(json.dumps({
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "config_path": args.config,
+            "config": config,
+            "lora_config": lora_cfg_dict,
+            "resume_from": args.resume_from,
+        }) + "\n")
+    metrics_path = output_dir / "metrics.jsonl"
+
     global_step, start_epoch, resume_step = 0, 0, -1
     if args.resume_from:
         state = torch.load(Path(args.resume_from) / "training_state.pt", map_location="cpu")
@@ -144,6 +160,7 @@ def main() -> None:
         print(f"Resumed from {args.resume_from}: global_step={global_step}, epoch={start_epoch}")
 
     model.train()
+    run_start = time.time()
     for epoch in range(start_epoch, config["num_train_epochs"]):
         for step, batch in enumerate(make_loader(epoch)):
             # Replays (audio-load + tokenize, no forward/backward) up to the exact raw batch the
@@ -165,6 +182,18 @@ def main() -> None:
 
                 if global_step % config["logging_steps"] == 0:
                     print(f"epoch {epoch} step {global_step} loss {loss.item():.4f}")
+                    with open(metrics_path, "a") as f:
+                        f.write(json.dumps({
+                            "global_step": global_step,
+                            "epoch": epoch,
+                            "loss": loss.item(),
+                            "lr": scheduler.get_last_lr()[0],
+                            # Wall-clock since this process started, not since the run as a
+                            # whole started -- resets across a --resume-from restart. Lets you
+                            # compute steps/sec or ETA from the file alone, no `ps -o etimes`.
+                            "elapsed_s": round(time.time() - run_start, 1),
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                        }) + "\n")
 
                 if global_step % config["save_steps"] == 0:
                     ckpt_dir = output_dir / f"checkpoint-{global_step}"

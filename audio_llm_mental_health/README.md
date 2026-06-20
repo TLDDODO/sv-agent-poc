@@ -148,6 +148,11 @@ picks up exactly where that checkpoint left off (same epoch, same point in that 
 data). Checkpoints saved before this feature was added (just adapter weights, no
 `training_state.pt`) can't be resumed from -- only checkpoints written by the updated script can.
 
+Every launch also appends to `<output_dir>/run_metadata.jsonl` (resolved config + LoRA config +
+resume source) and `<output_dir>/metrics.jsonl` (step/epoch/loss/lr/elapsed, one line per
+`logging_steps`), so a run's hyperparameters and loss trajectory survive even if the terminal or
+`tmux` scrollback doesn't.
+
 MELD's emotion labels are not the point; emotion accuracy is the surface on which collapse is
 measured. The acoustic-grounded CoT + transcript dropout is the data-level intervention, and
 the silence-vs-audio ablation is re-run on the result to test whether collapse moved. This is

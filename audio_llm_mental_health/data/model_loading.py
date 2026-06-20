@@ -11,6 +11,14 @@ LoRA adapter. See RP.md "Environment".
 import torch
 from transformers import BitsAndBytesConfig, Qwen2AudioForConditionalGeneration
 
+# Free speedup on the H100's tensor cores: the 4-bit base matmuls already run in
+# bnb_4bit_compute_dtype=bf16 regardless of this flag, but the LoRA adapter and any other
+# fp32 matmuls (e.g. the unquantized embeddings/lm_head/norms) benefit. No memory cost, so
+# unlike gradient checkpointing this isn't a tradeoff -- set once at import time for every
+# script that loads the model through this module.
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
+
 QUANTIZATION_CONFIG = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_compute_dtype=torch.bfloat16,

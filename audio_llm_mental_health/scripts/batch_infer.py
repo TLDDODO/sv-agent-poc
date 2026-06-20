@@ -18,9 +18,10 @@ from pathlib import Path
 import librosa
 import torch
 from peft import PeftModel
-from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
+from transformers import AutoProcessor
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+from data.model_loading import load_base_model  # noqa: E402
 from data.prompts import build_conversation  # noqa: E402
 
 ANSWER_KEY = "Emotion"
@@ -50,9 +51,7 @@ def main() -> None:
         rows = [rows[i] for i in wanted]
 
     processor = AutoProcessor.from_pretrained(args.base_model)
-    model = Qwen2AudioForConditionalGeneration.from_pretrained(
-        args.base_model, torch_dtype=torch.bfloat16, device_map="cuda"
-    )
+    model = load_base_model(args.base_model)
     model = PeftModel.from_pretrained(model, args.adapter)
     model.eval()
 

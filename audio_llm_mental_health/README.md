@@ -42,6 +42,7 @@ audio_llm_mental_health/
     prompts.py                   chat prompt + acoustic-grounded / synthetic CoT target templates
     meld_dataset.py              MELD dataset: the baseline measurement instrument
     mmpsy_dataset.py             parked stub (superseded by the LIME data-level intervention; see RP.md)
+    model_loading.py             shared 4-bit (QLoRA-style) base-model loader -- see "Setup" below
   scripts/
     extract_meld_audio.py        MELD .mp4 clips -> per-utterance .wav (needs ffmpeg)
     prepare_meld_manifest.py     MELD CSV + audio dir -> JSONL manifest
@@ -66,6 +67,15 @@ cd audio_llm_mental_health
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+Check `nvidia-smi` before training: if MIG is enabled, the per-student allocation may be a
+single `1g.10gb` (~9.75 GiB) slice of the physical 80GB card rather than the whole card. Qwen2-
+Audio-7B-Instruct needs ~16 GB for bf16 weights alone, which OOMs inside `from_pretrained` on
+such a slice regardless of batch size. All five scripts that load the base model
+(`train_lora.py`, `infer.py`, `batch_infer.py`, `eval_accuracy.py`, `audio_ablation.py`) go
+through `data/model_loading.py::load_base_model`, which loads it 4-bit-quantized
+(QLoRA-style nf4 via `bitsandbytes`) to fit this budget. See RP.md "Environment" for the
+`nvidia-smi` evidence and the open comparability caveat against earlier bf16 runs.
 
 ## MELD: building the baseline instrument
 

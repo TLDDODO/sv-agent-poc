@@ -15,13 +15,14 @@ from pathlib import Path
 import librosa
 import torch
 import yaml
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
-from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration, get_linear_schedule_with_warmup
+from transformers import AutoProcessor, get_linear_schedule_with_warmup
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from data.meld_dataset import MELDDataset  # noqa: E402
+from data.model_loading import load_base_model  # noqa: E402
 
 
 def build_batch(processor, examples):
@@ -82,9 +83,8 @@ def main() -> None:
     torch.manual_seed(config["seed"])
 
     processor = AutoProcessor.from_pretrained(config["model_name_or_path"])
-    model = Qwen2AudioForConditionalGeneration.from_pretrained(
-        config["model_name_or_path"], torch_dtype=torch.bfloat16, device_map="cuda"
-    )
+    model = load_base_model(config["model_name_or_path"])
+    model = prepare_model_for_kbit_training(model)
     model = get_peft_model(model, LoraConfig(**lora_cfg_dict))
     model.print_trainable_parameters()
 

@@ -28,3 +28,34 @@ logging_steps: 10
 save_steps: 200
 max_target_length: 256
 seed: 42
+
+# --------------------------------------------------------------------------------------------------
+# RUNBOOK -- 4-bit plain-baseline rerun and the bf16->4-bit comparison (run on the H100).
+#
+# The point of this run is ONE number: the bf16->4-bit precision delta on the fixed ablation ruler,
+# so we know whether the original bf16 baseline (0.645 / 0.670) can stand as the anchor for the
+# text_mask_prob=1.0 and ESD experiments, or must be replaced by a quantized re-baseline.
+#
+# 1. Train (writes outputs/meld_lora_4bit/final; the bf16 adapter at outputs/meld_lora is untouched):
+#      python scripts/train_lora.py --config configs/train_config_meld_plain_4bit.yaml
+#
+# 2. Same ruler as the bf16 baseline (RP.md "Core Finding"): 200-row dev sample, seed 42, greedy.
+#    Run all three conditions and compare each to the bf16 anchor in parentheses:
+#      python scripts/eval_accuracy.py --adapter outputs/meld_lora_4bit/final \
+#          --manifest data/meld_dev_manifest.jsonl --sample 200 --seed 42          # audio+transcript (vs 0.645)
+#      python scripts/eval_accuracy.py --adapter outputs/meld_lora_4bit/final \
+#          --manifest data/meld_dev_manifest.jsonl --sample 200 --seed 42 --silence            # silence+transcript (vs 0.670)
+#      python scripts/eval_accuracy.py --adapter outputs/meld_lora_4bit/final \
+#          --manifest data/meld_dev_manifest.jsonl --sample 200 --seed 42 --hide-transcript     # audio+placeholder (vs 0.515)
+#
+# 3. Donor-swap tracking on the SAME recorded 15-row index set the grounded rerun used, so all three
+#    adapters (bf16-plain 2/15, this 4bit-plain, grounded 7/15) are row-identical comparable:
+#      python scripts/audio_ablation.py --adapter outputs/meld_lora_4bit/final \
+#          --manifest data/meld_dev_manifest.jsonl \
+#          --indices 228,51,563,501,457,285,209,178,864,65,61,191,447,476,1034 \
+#          --out outputs/ablation_meld_4bit.jsonl
+#
+# Read-out: if (audio - silence) is still negative and tracking stays ~2/15, 4-bit preserved the
+# collapse and the bf16 numbers can anchor the later cells. If the delta or tracking moved
+# materially, quantization is a confound of its own and this 4-bit run becomes the new anchor.
+# Either way, record the four numbers in RP.md "Environment" next to the bf16 anchor.

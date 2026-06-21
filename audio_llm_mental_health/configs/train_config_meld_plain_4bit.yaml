@@ -1,0 +1,30 @@
+# Run on the H100. 4-bit QLoRA re-run of the ORIGINAL MELD plain baseline (RP.md "Core Finding").
+#
+# Byte-for-byte the same training recipe as the original baseline (commit 68c76e5's
+# configs/train_config.yaml: plain non-acoustic MELD manifests, templated CoT via
+# build_synthetic_cot_target, no transcript masking, 3 epochs, identical optimizer/seed) -- the
+# ONLY changed variable is numerical precision: the original ran plain bf16 on the full 80GB card,
+# this runs 4-bit nf4 QLoRA on the 9.75GiB MIG slice (data/model_loading.py loads 4-bit
+# unconditionally now). Purpose: measure the bf16->4-bit delta on the fixed silence-vs-audio ruler
+# so we know whether the original 0.645/0.670 numbers can stand as the comparison anchor for the
+# ESD / text_mask_prob experiments, or must be replaced with this quantized re-baseline. See RP.md
+# "Environment" (hardware-mismatch paragraph).
+#
+# Distinct output_dir from the original (outputs/meld_lora) on purpose -- keep the bf16 baseline
+# adapter intact for a side-by-side, don't overwrite it.
+model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
+lora_config_path: configs/lora_config.yaml
+
+train_manifest: data/meld_train_manifest.jsonl
+eval_manifest: data/meld_dev_manifest.jsonl
+
+output_dir: outputs/meld_lora_4bit
+num_train_epochs: 3
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+warmup_ratio: 0.03
+logging_steps: 10
+save_steps: 200
+max_target_length: 256
+seed: 42

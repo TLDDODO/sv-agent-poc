@@ -88,6 +88,14 @@ def main() -> None:
         help="Comma-separated subset of: original, silence, swap.",
     )
     parser.add_argument("--seed", type=int, default=42, help="Seed for random swap-donor choice.")
+    parser.add_argument(
+        "--audio-only", action="store_true",
+        help="Use the audio-only prompt (no transcript in the template), matching how a "
+        "text_mask_prob=1.0 adapter was trained. Without this, the with-transcript template is "
+        "used, which is a train/test mismatch for audio-only-trained adapters. The swap/tracking "
+        "signal is still the grounding measure: with no transcript in the prompt, a label that "
+        "follows the donor clip's emotion is pure audio grounding.",
+    )
     args = parser.parse_args()
 
     conditions = [c.strip() for c in args.conditions.split(",") if c.strip()]
@@ -135,8 +143,13 @@ def main() -> None:
     n_swap_follow_eval = 0
     with open(out_path, "w", encoding="utf-8") as out_f:
         for i, row in enumerate(target_rows):
-            # Transcript is held FIXED across conditions -- only the audio changes.
-            conversation = build_conversation(row["audio_path"], row["transcript"], ANSWER_KEY)
+            # Transcript is held FIXED across conditions -- only the audio changes. Under
+            # --audio-only the prompt carries no transcript at all (matching a text_mask_prob=1.0
+            # adapter's training distribution), so the only thing that can move the label is audio.
+            conversation = build_conversation(
+                row["audio_path"], row["transcript"], ANSWER_KEY,
+                include_transcript=not args.audio_only,
+            )
             original_audio = librosa.load(row["audio_path"], sr=sr)[0]
 
             audio_variants: dict[str, np.ndarray] = {}

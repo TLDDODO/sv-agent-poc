@@ -75,7 +75,18 @@ def main() -> None:
         "consumed by this model, carries usable emotion signal -- independent of whether "
         "training currently lets the model ignore it in favor of the transcript.",
     )
+    parser.add_argument(
+        "--audio-only", action="store_true",
+        help="Use the audio-only prompt (USER_PROMPT_AUDIO_ONLY, 'No transcript is available'), "
+        "the SAME prompt a text_mask_prob=1.0 model was trained on -- not a placeholder string "
+        "stuffed into the with-transcript template. This is the in-distribution ruler for "
+        "audio-only-trained adapters; --hide-transcript (placeholder + with-transcript template) "
+        "would be a train/test mismatch for them. Combine with --silence for the audio-only-vs-"
+        "silence-only delta. Overrides --hide-transcript.",
+    )
     args = parser.parse_args()
+    if args.audio_only and args.hide_transcript:
+        parser.error("--audio-only and --hide-transcript are mutually exclusive prompt modes.")
 
     rows = load_manifest(args.manifest)
     if args.sample and args.sample < len(rows):
@@ -98,7 +109,9 @@ def main() -> None:
     for i, row in enumerate(rows):
         gold = (row.get("emotion") or "").lower()
         transcript = placeholder_transcript if args.hide_transcript else row["transcript"]
-        conversation = build_conversation(row["audio_path"], transcript, ANSWER_KEY)
+        conversation = build_conversation(
+            row["audio_path"], transcript, ANSWER_KEY, include_transcript=not args.audio_only
+        )
         prompt_text = processor.apply_chat_template(
             conversation, add_generation_prompt=True, tokenize=False
         )

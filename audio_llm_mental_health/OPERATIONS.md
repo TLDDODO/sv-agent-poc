@@ -57,13 +57,16 @@ sharing your slice**. The error line names the rival: `Process <pid> has <N> MiB
 2. **If the rival is not yours** (e.g. `user=rfu`, `cmd=pmemd.cuda`): do **not** kill it. Move
    yourself to an empty slice instead:
    ```bash
-   nvidia-smi -L                                # list MIG UUIDs; GI 7 is the first/usually-busy one
-   export CUDA_VISIBLE_DEVICES=MIG-<uuid-of-an-empty-slice>
+   ./scripts/find_free_mig_slice.sh             # codifies the nvidia-smi + nvidia-smi -L cross-check
+   export CUDA_VISIBLE_DEVICES=MIG-<uuid-it-suggests>
    python scripts/train_lora.py --config <config>
    nvidia-smi | grep python                     # CONFIRM you landed on a previously-empty slice
    ```
-   (As of last check, GI 8 = `MIG-eae605da-1627-5245-a3ac-77f400bffcd2`. UUIDs can change if MIG is
-   reconfigured — always re-list with `nvidia-smi -L` if a pin fails with "invalid device".)
+   The script prints the raw `nvidia-smi`/`nvidia-smi -L` tables above its suggestion — sanity-check
+   against them, especially the first few times, since landing on the wrong slice means colliding
+   with another tenant's job. (As of last check, GI 8 = `MIG-eae605da-1627-5245-a3ac-77f400bffcd2`.
+   UUIDs can change if MIG is reconfigured — the script re-derives the GI↔UUID mapping every run
+   rather than hardcoding this.)
 3. **If the rival is your own stale process** (a killed-but-not-reaped eval/train): then and only
    then, `kill -9 <pid>` it, confirm memory frees with `nvidia-smi`, and relaunch.
 4. **If every slice is occupied / you get a permission error opening another slice**: your account
@@ -96,9 +99,12 @@ checkpoint. The loss right before it is irrelevant — training was healthy; the
    ```
    **Never delete** any `final/` (RP.md numbers depend on `meld_lora`, `meld_lora_4bit`,
    `meld_lora_grounded`, `esd_lora_plain` finals) or the checkpoints of an incomplete run.
-3. Durable fix (do when not mid-crisis): point `output_dir` in the config to
-   `/data/user_dirs/$USER/outputs/...`, or symlink `outputs` → `/data`. `$HOME` is 58 GB; `/data`
-   is TBs. This recurs until outputs leave `$HOME`.
+3. Durable fix (done — `outputs/` no longer needs to be babysat): run
+   `./scripts/migrate_outputs_to_data.sh`. It moves each run dir under `outputs/` to
+   `/data/user_dirs/$USER/outputs/` and replaces it with a symlink, so existing configs keep
+   writing to `outputs/<run>/...` unchanged. It auto-skips any run that looks ACTIVE (no `final/`
+   yet, `metrics.jsonl` touched in the last 10 min), so it's safe to run while a training job is
+   mid-flight — just re-run it after that run finishes to pick up its directory too.
 
 ## Playbook C — SSH drop killed the job
 
@@ -158,9 +164,10 @@ An **empty** dir (only `.`/`..`, `total 16`) is a half-written shell from a cras
 ## Standing launch checklist (follow every time)
 
 **Before a training run:**
-1. `df -h ~` → need ≥ 3 GB free (a run writes ~2.2 GB of checkpoints). If not, Playbook B.
-2. `nvidia-smi` → find an empty MIG slice (GI 8–13, ~12 MiB used).
-3. `nvidia-smi -L` → get that slice's UUID.
+1. `df -h ~` → need ≥ 3 GB free (a run writes ~2.2 GB of checkpoints). If not, Playbook B
+   (or just run `./scripts/migrate_outputs_to_data.sh` once so this stops recurring).
+2. `./scripts/find_free_mig_slice.sh` → find an empty MIG slice (GI 8–13, ~12 MiB used) and its UUID.
+3. Sanity-check the script's suggestion against the raw tables it prints.
 4. `tmux new -s <name>`.
 5. `export CUDA_VISIBLE_DEVICES=MIG-<empty-slice-uuid>` (inside the tmux window).
 6. `python scripts/train_lora.py --config <config>`.

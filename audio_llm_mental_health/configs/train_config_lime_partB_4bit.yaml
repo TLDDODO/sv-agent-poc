@@ -46,10 +46,13 @@ seed: 42
 # empty MIG slice -- prefer a high-numbered slice, NOT the default GI 7; see OPERATIONS.md and
 # ./scripts/find_free_mig_slice.sh).
 #
-# 0. Get the audio once (per the dataset card; ~big archive, do it in tmux):
-#      python -c "from huggingface_hub import hf_hub_download as d; \
-#          print(d('zhaoxiaoxian/LIME-440K_CogAudio-LLM','PartB_wav_en.tar.gz',repo_type='dataset'))"
-#      mkdir -p PartB_wav_en && tar -xzf <path printed above> -C PartB_wav_en/
+# 0. Get the audio once (per the dataset card; ~big archive, do it in tmux). Captured into a
+#    variable, not pasted by hand -- a literal "<path printed above>" placeholder here would be
+#    parsed by the shell as redirection, not text to replace (see OPERATIONS.md):
+#      ARCHIVE=$(python -c "from huggingface_hub import hf_hub_download as d; \
+#          print(d('zhaoxiaoxian/LIME-440K_CogAudio-LLM','PartB_wav_en.tar.gz',repo_type='dataset'))")
+#      echo "$ARCHIVE"
+#      mkdir -p PartB_wav_en && tar -xzf "$ARCHIVE" -C PartB_wav_en/
 #
 # 1. Build a REPRESENTATIVE ~12k-row manifest (matches MELD/ESD scale and fits the slice's GPU
 #    budget; the full ~96k Part B is ~10x bigger and ~90h to train on the slice -- not worth it for

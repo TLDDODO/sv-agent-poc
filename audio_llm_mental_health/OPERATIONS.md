@@ -41,6 +41,7 @@ the thing to actually follow every time you start a run.
 | "is it still running / did it finish?" | trust the filesystem, not scrollback | Playbook D |
 | unknown PID holding GPU memory | identify before touching | Playbook E |
 | crash mid-run, want to continue | resume — but validate the checkpoint first | Playbook F |
+| `tar`/a command silently fails right after pasting a "fill-in-the-blank" snippet | the snippet used `<...>` as a placeholder | Playbook G |
 
 ---
 
@@ -158,6 +159,25 @@ An **empty** dir (only `.`/`..`, `total 16`) is a half-written shell from a cras
 - valid checkpoint → `python scripts/train_lora.py --config <config> --resume-from outputs/<run>/checkpoint-<N>`
 - crashed before the first `save_steps` (200) → no checkpoint exists → restart from scratch (you
   only lost <200 steps).
+
+---
+
+## Playbook G — runbook snippets that use `<placeholder>` syntax
+
+`<` and `>` are shell metacharacters (stdin/stdout redirection) even when they appear mid-word,
+e.g. `tar -xzf <path printed above> -C dir/` is not "fill in the blank" to bash — it tries to
+redirect, and pasting your real value *inside* the brackets (instead of replacing the whole
+bracketed token) fails silently or confusingly. This has bitten this project for real (the LIME
+Part B archive-extraction step). Prefer capturing the value into a variable instead, so the
+snippet runs as-is with zero manual substitution:
+```bash
+ARCHIVE=$(python -c "...")   # capture, don't paste into <...>
+echo "$ARCHIVE"              # sanity-check before using it
+tar -xzf "$ARCHIVE" -C dir/
+```
+When you do see a literal `<...>` placeholder in a runbook here (config-file RUNBOOK comments,
+this file's own `<run>`/`<config>` examples in Playbook F), treat it as "replace this whole
+token," never "paste inside the brackets."
 
 ---
 

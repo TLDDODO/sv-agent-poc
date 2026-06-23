@@ -44,7 +44,14 @@ Usage:
     python scripts/build_lime_manifest.py --audio-root PartB_wav_en/ --limit 50 \
         --audio-out-dir data/lime_audio_smoke --out data/lime_manifest_smoke.jsonl
 
-    # Full run:
+    # Representative ~12k subset (matches MELD/ESD scale + fits the MIG-slice GPU budget;
+    # full 96k Part B is ~10x bigger and ~90h to train on the slice -- see the two-phase note
+    # in main() and RP.md "Approach"). Only the sampled rows get re-encoded:
+    python scripts/build_lime_manifest.py --audio-root PartB_wav_en/ --sample 12000 \
+        --audio-out-dir data/lime_audio --train-out data/lime_train_manifest.jsonl \
+        --dev-out data/lime_dev_manifest.jsonl --dev-frac 0.1
+
+    # Full run (all ~96k rows -- only if you have the GPU-hours for a ~90h slice run):
     python scripts/build_lime_manifest.py --audio-root PartB_wav_en/ \
         --audio-out-dir data/lime_audio --train-out data/lime_train_manifest.jsonl \
         --dev-out data/lime_dev_manifest.jsonl --dev-frac 0.1
@@ -95,7 +102,8 @@ def main() -> None:
     parser.add_argument("--dev-out", default=None, help="Dev manifest output (use with --train-out).")
     parser.add_argument("--dev-frac", type=float, default=0.1, help="Fraction of GROUPS sent to dev.")
     parser.add_argument("--sr", type=int, default=16000)
-    parser.add_argument("--limit", type=int, default=None, help="Cap records scanned (omit to scan every matching file).")
+    parser.add_argument("--limit", type=int, default=None, help="Cap records SCANNED in file order (first-N, biased; use --sample for a representative subset).")
+    parser.add_argument("--sample", type=int, default=None, help="Seeded random subset size drawn over the whole eligible pool before the audio re-encode (representative; preferred over --limit for the gradient comparison).")
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
@@ -117,9 +125,14 @@ def main() -> None:
     json_files = list_json_files(api, args.dataset, args.prefix)
     print(f"{len(json_files)} json files under prefix {args.prefix!r}")
 
-    rows: list[dict] = []
-    seen_emotions: set[str] = set()
-    n_scanned = n_missing_field = n_missing_audio = n_decode_failed = n_empty_text = 0
+    # Two phases on purpose. Phase 1 only reads the (cheap) JSON and stats the audio file; it
+    # does NOT decode/resample. That lets --sample draw a representative subset across the WHOLE
+    # corpus and pay the expensive re-encode for only the chosen rows -- the difference between
+    # re-encoding 12k files and re-encoding 96k. Part B at full size (~96k rows) is ~10x MELD/ESD
+    # and ~90h on the MIG slice; a seeded ~12k sample both fits the GPU budget and keeps the
+    # data-level gradient (MELD/ESD/LIME) at comparable training-set sizes (see RP.md "Approach").
+    candidates: list[tuple] = []  # (utt_id, text, raw_emotion, group, src_path)
+    n_missing_field = n_missing_audio = 0
     done = False
     for rel_path in json_files:
         if done:
@@ -128,7 +141,7 @@ def main() -> None:
         with open(local_path, encoding="utf-8") as f:
             data = json.load(f)
         for utt_id, record in data.items():
-            if args.limit and n_scanned >= args.limit:
+            if args.limit and len(candidates) >= args.limit:
                 done = True
                 break
 
@@ -146,36 +159,52 @@ def main() -> None:
                 print(f"  [skip] {utt_id}: audio not found at {src_path}")
                 continue
 
-            out_path = audio_out_dir / f"{utt_id}.wav"
-            try:
-                y, sr = librosa.load(src_path, sr=None)
-                if sr != args.sr:
-                    y = librosa.resample(y, orig_sr=sr, target_sr=args.sr)
-                sf.write(out_path, y, args.sr)
-            except Exception as e:  # noqa: BLE001 -- one bad row shouldn't kill a 96k-row run.
-                n_decode_failed += 1
-                print(f"  [skip] {utt_id}: failed to decode audio ({e})")
-                continue
+            candidates.append((utt_id, text, str(raw_emotion), group, src_path))
 
-            emotion = str(raw_emotion).lower()
-            emotion = EMOTION_REMAP.get(emotion, emotion)
-            seen_emotions.add(emotion)
-            if not text:
-                n_empty_text += 1
-            rows.append({
-                "audio_path": str(out_path),
-                "transcript": text or "",
-                "emotion": emotion,
-                "group": group,
-                "id": utt_id,
-            })
-            n_scanned += 1
-            if n_scanned % 2000 == 0:
-                print(f"  ...{n_scanned} records processed")
+    n_eligible = len(candidates)
+    # --sample: seeded random subset over the whole eligible pool, BEFORE the re-encode cost.
+    # (--limit, by contrast, is a first-N cut in file order -- biased toward early groups; use
+    # --sample for the representative subset the gradient comparison needs.)
+    if args.sample and n_eligible > args.sample:
+        candidates = random.Random(args.seed).sample(candidates, args.sample)
+        print(f"Sampled {len(candidates)} of {n_eligible} eligible records (seed {args.seed}) "
+              f"before re-encoding.")
 
+    rows: list[dict] = []
+    seen_emotions: set[str] = set()
+    n_decode_failed = n_empty_text = 0
+    for utt_id, text, raw_emotion, group, src_path in candidates:
+        out_path = audio_out_dir / f"{utt_id}.wav"
+        try:
+            y, sr = librosa.load(src_path, sr=None)
+            if sr != args.sr:
+                y = librosa.resample(y, orig_sr=sr, target_sr=args.sr)
+            sf.write(out_path, y, args.sr)
+        except Exception as e:  # noqa: BLE001 -- one bad row shouldn't kill a 96k-row run.
+            n_decode_failed += 1
+            print(f"  [skip] {utt_id}: failed to decode audio ({e})")
+            continue
+
+        emotion = raw_emotion.lower()
+        emotion = EMOTION_REMAP.get(emotion, emotion)
+        seen_emotions.add(emotion)
+        if not text:
+            n_empty_text += 1
+        rows.append({
+            "audio_path": str(out_path),
+            "transcript": text or "",
+            "emotion": emotion,
+            "group": group,
+            "id": utt_id,
+        })
+        if len(rows) % 2000 == 0:
+            print(f"  ...{len(rows)} records re-encoded")
+
+    n_scanned = len(rows)
     print(
-        f"\nScanned {n_scanned} usable records "
-        f"(missing fields: {n_missing_field}, missing audio: {n_missing_audio}, decode failures: {n_decode_failed})."
+        f"\n{n_eligible} eligible records (missing fields: {n_missing_field}, "
+        f"missing audio: {n_missing_audio}); re-encoded {n_scanned} "
+        f"(decode failures: {n_decode_failed})."
     )
     if n_scanned:
         print(

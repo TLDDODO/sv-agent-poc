@@ -48,16 +48,35 @@ first_gi=${first_gi:-7}
 
 echo
 echo "=== suggestion ==="
+# GI 7 (the first slice) is where every job with an empty CUDA_VISIBLE_DEVICES lands by
+# default, so it's the highest-collision-risk slice even when it reads empty right now --
+# someone else's un-pinned job will drop onto it without warning. So: prefer the
+# HIGHEST-numbered empty slice (farthest from the default landing zone and from GI 8, the
+# one most recently seen busy), and fall back to GI 7 only if it's the single empty slice
+# left. Iterate descending; first empty wins; remember GI 7 separately as last resort.
 free_uuid=""
 free_gi=""
-for i in "${!uuids[@]}"; do
+gi7_uuid=""
+gi7_gi=""
+for ((i = ${#uuids[@]} - 1; i >= 0; i--)); do
   gi=$((first_gi + i))
-  if ! echo "$occupied_gis" | grep -qx "$gi"; then
-    free_uuid="${uuids[$i]}"
-    free_gi="$gi"
-    break
+  if echo "$occupied_gis" | grep -qx "$gi"; then
+    continue
   fi
+  if [ "$gi" -eq "$first_gi" ]; then
+    gi7_uuid="${uuids[$i]}"   # the default slice -- only used if nothing else is free
+    gi7_gi="$gi"
+    continue
+  fi
+  free_uuid="${uuids[$i]}"
+  free_gi="$gi"
+  break
 done
+if [ -z "$free_uuid" ] && [ -n "$gi7_uuid" ]; then
+  echo "(only the default slice GI $gi7_gi is free -- nothing higher available, using it)"
+  free_uuid="$gi7_uuid"
+  free_gi="$gi7_gi"
+fi
 
 if [ -n "$free_uuid" ]; then
   echo "Empty slice: GI $free_gi -> $free_uuid"

@@ -68,8 +68,11 @@ seed: 42
 # 1. Build a REPRESENTATIVE ~12k-row manifest (matches MELD/ESD scale and fits the slice's GPU
 #    budget; the full ~96k Part B is ~10x bigger and ~90h to train on the slice -- not worth it for
 #    this cell). --sample re-encodes only the sampled rows, so this step is ~12k resamples, not 96k.
-#    Both --audio-root (the /data extraction) and --audio-out-dir (the re-encoded clips) stay on /data:
-#      python scripts/build_lime_manifest.py --audio-root /data/user_dirs/$USER/lime_partB/ --sample 12000 \
+#    Both --audio-root and --audio-out-dir stay on /data. NOTE: --audio-root points ONE LEVEL DOWN,
+#    into the unpacked emotion_alm_wav_en_0206/ subdir, because the JSON wav_path field is relative
+#    to inside it (e.g. /output_1_1_output/medium/...wav), not to the extraction root:
+#      python scripts/build_lime_manifest.py \
+#          --audio-root /data/user_dirs/$USER/lime_partB/emotion_alm_wav_en_0206 --sample 12000 \
 #          --audio-out-dir /data/user_dirs/$USER/lime_audio --train-out data/lime_train_manifest.jsonl \
 #          --dev-out data/lime_dev_manifest.jsonl --dev-frac 0.1
 #    Check the printed label summary: if any LIME label is outside MELD's 7-class set, it's flagged

@@ -13,15 +13,20 @@ read (see RP.md "Open premises" and probe_lime_partB.py's docstring) --
                            transcript and trained/evaluated audio-only by construction, not via
                            the probabilistic text_mask_prob masking used for MELD.
     PartB_wav_en.tar.gz    The actual audio, as ONE archive -- not fetched per-row from the
-                           Hub. Download and extract it yourself first (per the dataset card):
+                           Hub. Download and extract it yourself first (per the dataset card),
+                           to /data (the wavs are ~17 GB, far too big for the shared 58 GB $HOME):
 
-                               python -c "from huggingface_hub import hf_hub_download as d; \\
+                               ARCHIVE=$(python -c "from huggingface_hub import hf_hub_download as d; \\
                                    print(d('zhaoxiaoxian/LIME-440K_CogAudio-LLM', \\
-                                   'PartB_wav_en.tar.gz', repo_type='dataset'))"
-                               mkdir -p PartB_wav_en && tar -xzvf <path printed above> -C PartB_wav_en/
+                                   'PartB_wav_en.tar.gz', repo_type='dataset'))")
+                               mkdir -p /data/user_dirs/$USER/lime_partB
+                               tar -xzf "$ARCHIVE" -C /data/user_dirs/$USER/lime_partB/
 
-                           then pass that directory via --audio-root. Each record's wav_path
-                           (e.g. "/4/strong/4_5_surprise.wav") is relative to that root.
+                           The archive unpacks with a top-level `emotion_alm_wav_en_0206/` dir,
+                           but each record's `wav_path` is relative to INSIDE that dir (e.g.
+                           "/output_1_1_output/medium/output_1_1_output_1_1_0_fear.wav"), so
+                           --audio-root must point ONE LEVEL DOWN, at the unpacked subdir:
+                           --audio-root /data/user_dirs/$USER/lime_partB/emotion_alm_wav_en_0206
 
 This script re-encodes each extracted .wav to --sr (16 kHz mono, matching extract_meld_audio.py's
 convention for MELD) and writes the normalized copy to --audio-out-dir, so the manifest's
@@ -46,14 +51,17 @@ Usage:
 
     # Representative ~12k subset (matches MELD/ESD scale + fits the MIG-slice GPU budget;
     # full 96k Part B is ~10x bigger and ~90h to train on the slice -- see the two-phase note
-    # in main() and RP.md "Approach"). Only the sampled rows get re-encoded:
-    python scripts/build_lime_manifest.py --audio-root PartB_wav_en/ --sample 12000 \
-        --audio-out-dir data/lime_audio --train-out data/lime_train_manifest.jsonl \
+    # in main() and RP.md "Approach"). Only the sampled rows get re-encoded. Note the audio-root
+    # points INTO the unpacked emotion_alm_wav_en_0206/ subdir (see PartB_wav_en.tar.gz above):
+    python scripts/build_lime_manifest.py \
+        --audio-root /data/user_dirs/$USER/lime_partB/emotion_alm_wav_en_0206 --sample 12000 \
+        --audio-out-dir /data/user_dirs/$USER/lime_audio --train-out data/lime_train_manifest.jsonl \
         --dev-out data/lime_dev_manifest.jsonl --dev-frac 0.1
 
     # Full run (all ~96k rows -- only if you have the GPU-hours for a ~90h slice run):
-    python scripts/build_lime_manifest.py --audio-root PartB_wav_en/ \
-        --audio-out-dir data/lime_audio --train-out data/lime_train_manifest.jsonl \
+    python scripts/build_lime_manifest.py \
+        --audio-root /data/user_dirs/$USER/lime_partB/emotion_alm_wav_en_0206 \
+        --audio-out-dir /data/user_dirs/$USER/lime_audio --train-out data/lime_train_manifest.jsonl \
         --dev-out data/lime_dev_manifest.jsonl --dev-frac 0.1
 """
 

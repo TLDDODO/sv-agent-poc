@@ -9,11 +9,15 @@
 # without a final/ whose metrics.jsonl was touched in the last 10 minutes is treated as
 # ACTIVE and skipped untouched. Re-run this after that run finishes to pick it up too.
 #
-#   ./scripts/migrate_outputs_to_data.sh                 # uses ~/outputs
+#   ./scripts/migrate_outputs_to_data.sh                 # the repo's outputs/ (next to this script)
 #   ./scripts/migrate_outputs_to_data.sh /path/to/outputs # explicit path
 set -euo pipefail
 
-SRC="${1:-$HOME/outputs}"
+# Default to the repo's own outputs/ (the dir the configs actually write to), resolved relative to
+# this script's location so it's correct regardless of the caller's cwd -- NOT $HOME/outputs, which
+# is a different (usually nonexistent) path and was the old, wrong default.
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+SRC="${1:-$SCRIPT_DIR/../outputs}"
 DEST_BASE="/data/user_dirs/$USER/outputs"
 
 if [ ! -d "$SRC" ]; then

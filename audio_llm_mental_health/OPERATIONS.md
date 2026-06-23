@@ -82,27 +82,25 @@ sharing your slice**. The error line names the rival: `Process <pid> has <N> MiB
 The traceback points at `save_pretrained` / `safetensors` because the crash happens when writing a
 checkpoint. The loss right before it is irrelevant — training was healthy; the disk filled.
 
-1. Confirm and locate the hogs:
+**`$HOME` (`/dev/sda1`) is only ~58G and is SHARED with every other user's home + the OS** — so it
+can read 100% full even when your own footprint is small, and the other users' bytes are not yours
+to clear. `/data` is ~4T. The rule: **anything big — dataset archives, their extractions, training
+outputs — lives on `/data/user_dirs/$USER/`, never on `$HOME`.** The HF cache should already be
+there via `HF_HOME` (check `echo $HF_HOME`); if it is, downloads are fine and the culprit is almost
+always a **relative path that silently resolved under `$HOME`** (a `tar -C somedir/`, a config
+`output_dir: outputs/...`).
+
+0. Find YOUR hogs on the root fs only (`-x` stays on one filesystem, so it won't descend into
+   `/data` symlinks or list other people's dirs):
    ```bash
-   df -h ~ /data
-   du -sh outputs/* 2>/dev/null | sort -h
-   du -sh outputs/*/checkpoint-* 2>/dev/null | sort -h | tail
-   du -sh ~/.cache/huggingface 2>/dev/null      # the usual #1 hog -- see step 0 below
+   echo "$HF_HOME"                                       # expect /data/...; if empty, that's the bug
+   df -h / /data
+   du -xh ~ --max-depth=2 2>/dev/null | sort -rh | head -20
    ```
-0. **Most common root cause: the HF cache is on `$HOME`, not `/data`.** `$HOME` (`/dev/sda1`) is
-   only ~58G; one model download (Qwen2-Audio-7B is ~15G) or one dataset archive (LIME Part B wavs)
-   fills it to 100%. The HF cache defaults to `~/.cache/huggingface`, i.e. on that tiny disk. Move
-   the WHOLE cache to `/data` (~4T) **once** and symlink it back — this keeps already-downloaded
-   weights (no re-download) and makes every future download land on `/data`:
-   ```bash
-   mkdir -p /data/user_dirs/$USER
-   mv ~/.cache/huggingface /data/user_dirs/$USER/hf_cache
-   ln -s /data/user_dirs/$USER/hf_cache ~/.cache/huggingface
-   df -h /                                       # $HOME should drop well below 100%
-   ```
-   `mv` across filesystems copies-then-deletes; a 100%-full `$HOME` does NOT block writing to
-   `/data`, so this works even from a fully-wedged disk. Extract big dataset archives to
-   `/data/user_dirs/$USER/...` too, never into the repo under `$HOME`.
+   Typical offenders, all under the repo on `$HOME`: a half-finished `tar` extraction (e.g.
+   `PartB_wav_en/` from a `-C` into the repo dir), `outputs/` checkpoints, re-encoded `data/` audio.
+   A failed extraction is throwaway (the source archive is safe in the HF cache on `/data`) — delete
+   it. `outputs/` and `data/` are NOT throwaway — move them to `/data` (step 3), don't delete.
 2. Safe cleanup — **self-protecting**: only delete intermediate checkpoints of runs that already
    have a `final/` (the completed-run adapter). Runs lacking a `final/` keep their checkpoints.
    ```bash

@@ -84,11 +84,25 @@ checkpoint. The loss right before it is irrelevant — training was healthy; the
 
 1. Confirm and locate the hogs:
    ```bash
-   df -h ~
+   df -h ~ /data
    du -sh outputs/* 2>/dev/null | sort -h
    du -sh outputs/*/checkpoint-* 2>/dev/null | sort -h | tail
-   du -sh ~/.cache/huggingface 2>/dev/null      # should be ~empty; HF_HOME points to /data
+   du -sh ~/.cache/huggingface 2>/dev/null      # the usual #1 hog -- see step 0 below
    ```
+0. **Most common root cause: the HF cache is on `$HOME`, not `/data`.** `$HOME` (`/dev/sda1`) is
+   only ~58G; one model download (Qwen2-Audio-7B is ~15G) or one dataset archive (LIME Part B wavs)
+   fills it to 100%. The HF cache defaults to `~/.cache/huggingface`, i.e. on that tiny disk. Move
+   the WHOLE cache to `/data` (~4T) **once** and symlink it back — this keeps already-downloaded
+   weights (no re-download) and makes every future download land on `/data`:
+   ```bash
+   mkdir -p /data/user_dirs/$USER
+   mv ~/.cache/huggingface /data/user_dirs/$USER/hf_cache
+   ln -s /data/user_dirs/$USER/hf_cache ~/.cache/huggingface
+   df -h /                                       # $HOME should drop well below 100%
+   ```
+   `mv` across filesystems copies-then-deletes; a 100%-full `$HOME` does NOT block writing to
+   `/data`, so this works even from a fully-wedged disk. Extract big dataset archives to
+   `/data/user_dirs/$USER/...` too, never into the repo under `$HOME`.
 2. Safe cleanup — **self-protecting**: only delete intermediate checkpoints of runs that already
    have a `final/` (the completed-run adapter). Runs lacking a `final/` keep their checkpoints.
    ```bash

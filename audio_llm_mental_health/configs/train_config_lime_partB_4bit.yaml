@@ -46,19 +46,32 @@ seed: 42
 # empty MIG slice -- prefer a high-numbered slice, NOT the default GI 7; see OPERATIONS.md and
 # ./scripts/find_free_mig_slice.sh).
 #
+# PREREQ -- where big files go. $HOME (/dev/sda1) is only ~58G and fills instantly; /data is ~4T.
+# The HF cache defaults to ~/.cache/huggingface, i.e. ON the tiny $HOME disk, so a model-weights or
+# dataset download will 100%-fill $HOME (it has -- "No space left on device" mid-tar). Relocate the
+# WHOLE cache to /data ONCE, symlink it back, so every future download (incl. the ~15G Qwen2-Audio
+# weights at train time) lands on /data without re-downloading anything (see OPERATIONS.md Playbook B):
+#      mkdir -p /data/user_dirs/$USER
+#      mv ~/.cache/huggingface /data/user_dirs/$USER/hf_cache && ln -s /data/user_dirs/$USER/hf_cache ~/.cache/huggingface
+#      ./scripts/migrate_outputs_to_data.sh    # also move old checkpoints off $HOME
+#      df -h /                                  # confirm $HOME is no longer ~100%
+#
 # 0. Get the audio once (per the dataset card; ~big archive, do it in tmux). Captured into a
 #    variable, not pasted by hand -- a literal "<path printed above>" placeholder here would be
-#    parsed by the shell as redirection, not text to replace (see OPERATIONS.md):
+#    parsed by the shell as redirection, not text to replace (see OPERATIONS.md Playbook G). Extract
+#    to /data, NOT $HOME -- the unpacked wavs are far too big for the 58G $HOME disk:
 #      ARCHIVE=$(python -c "from huggingface_hub import hf_hub_download as d; \
 #          print(d('zhaoxiaoxian/LIME-440K_CogAudio-LLM','PartB_wav_en.tar.gz',repo_type='dataset'))")
 #      echo "$ARCHIVE"
-#      mkdir -p PartB_wav_en && tar -xzf "$ARCHIVE" -C PartB_wav_en/
+#      mkdir -p /data/user_dirs/$USER/lime_partB
+#      tar -xzf "$ARCHIVE" -C /data/user_dirs/$USER/lime_partB/
 #
 # 1. Build a REPRESENTATIVE ~12k-row manifest (matches MELD/ESD scale and fits the slice's GPU
 #    budget; the full ~96k Part B is ~10x bigger and ~90h to train on the slice -- not worth it for
-#    this cell). --sample re-encodes only the sampled rows, so this step is ~12k resamples, not 96k:
-#      python scripts/build_lime_manifest.py --audio-root PartB_wav_en/ --sample 12000 \
-#          --audio-out-dir data/lime_audio --train-out data/lime_train_manifest.jsonl \
+#    this cell). --sample re-encodes only the sampled rows, so this step is ~12k resamples, not 96k.
+#    Both --audio-root (the /data extraction) and --audio-out-dir (the re-encoded clips) stay on /data:
+#      python scripts/build_lime_manifest.py --audio-root /data/user_dirs/$USER/lime_partB/ --sample 12000 \
+#          --audio-out-dir /data/user_dirs/$USER/lime_audio --train-out data/lime_train_manifest.jsonl \
 #          --dev-out data/lime_dev_manifest.jsonl --dev-frac 0.1
 #    Check the printed label summary: if any LIME label is outside MELD's 7-class set, it's flagged
 #    (extend EMOTION_REMAP only if you later train MELD+LIME together; for this stand-alone run the

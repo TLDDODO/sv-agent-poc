@@ -63,27 +63,36 @@ def _ask(client, system, facts, extra=""):
     return msg.choices[0].message.content
 
 
-ADVOCATE_MD = """You are the STRUCTURAL / MD advocate in a scientific debate. Argue,
-using ONLY the facts given, what the FAT10-MAD2 interface is and why the MD evidence
-deserves weight. Cite specific residues and occupancies. Acknowledge the model came
-from an AF3 prediction. 4-6 sentences. Do NOT invent residues or numbers."""
+ADVOCATE_MD = """You are the STRUCTURAL / MD advocate in a scientific debate. Argue AS
+STRONGLY AS YOU LEGITIMATELY CAN that the C-terminal interface should NOT be dismissed.
+DO NOT CONCEDE and do not say it should be flagged. Legitimate points you may press:
+- the 100 ns MD shows a stable, high-occupancy interface (cite specific residues/occupancies);
+- there is NO solved experimental structure of the FAT10-MAD2 complex, so the "UBL1"
+  expectation rests on functional work (Theng 2014) and the isolated first-domain NMR
+  assignments (2MBE) — NOT a structure of the actual complex;
+- MD is dynamic evidence, and a C-terminal or secondary contact is not impossible.
+Use ONLY the given facts/residues; do not invent numbers. 4-6 sentences."""
 
 ADVOCATE_NMR = """You are the LITERATURE / NMR advocate in a scientific debate. Argue,
 using ONLY the facts given, why the current model's interface is suspect and where
-MAD2 is expected to bind. Use the verified domain boundaries and the known failure
-mode where AlphaFold mis-docks a flexible C-terminal Gly-Gly tail. 4-6 sentences.
-Do NOT invent residues or numbers."""
+MAD2 is expected to bind. Press the verified domain boundaries and the known failure
+mode where AlphaFold mis-docks a flexible C-terminal Gly-Gly tail (note G164/G165 ARE
+that tail). Rebut the MD side directly. 4-6 sentences. Do NOT invent residues or numbers."""
 
-JUDGE = """You are the JUDGE. You are given two arguments and the hard facts. There is
-NO experimental ground-truth structure of the complex. Decide impartially. Respond
-ONLY as JSON with keys:
+JUDGE = """You are the JUDGE. There is NO experimental ground-truth structure of the
+complex, so you must SEPARATE two questions and not conflate them:
+  (a) Does the model's interface CONTRADICT the literature expectation? — a factual check.
+  (b) Do we KNOW which side is actually right? — we do not.
+Do NOT "reject" the model with high confidence as if you knew the truth. Recommend the
+appropriate TEST / recheck instead. Respond ONLY as JSON with keys:
   interface_shown_by_data (list of residues),
-  in_expected_domain (true/false),
-  model_consistent_with_literature (true/false),
-  confidence (0..1),
+  contradicts_literature_expectation (true/false),
+  true_interface_experimentally_known (true/false),
+  confidence_in_contradiction (0..1),
+  confidence_in_which_side_is_right (0..1),
   flags (list),
-  recommendation (string),
-  reasoning (string, grounded in the facts; do not declare a winner you cannot support)."""
+  recommendation (string; a concrete next experiment/check, not a verdict on truth),
+  reasoning (string, grounded; state plainly that both are models, not ground truth)."""
 
 
 def _extract_json(text):

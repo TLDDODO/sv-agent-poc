@@ -37,6 +37,20 @@ fits per dump, so it is ~33x slower than a single --location run -- drop --n-see
 """
 
 import argparse
+import os
+import sys
+
+# Many-core nodes (like the GPU box this is run from) default to one BLAS/OpenMP
+# thread per core. This script does thousands of TINY fits (n_layers x n_seeds x
+# 5 folds), and for matrices this small the per-call thread spin-up dwarfs the
+# actual math -- oversubscription can make each fit 10-50x slower, so --peak looks
+# hung for minutes. Cap threads to 1 BEFORE numpy/sklearn import them; the real
+# speedup for this workload is that the layer scan is embarrassingly parallel, not
+# BLAS threads. Export OMP_NUM_THREADS etc. yourself to override (setdefault keeps
+# any value you set).
+for _thread_var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                    "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+    os.environ.setdefault(_thread_var, "1")
 
 import numpy as np
 from sklearn.decomposition import PCA
@@ -91,10 +105,10 @@ def run_peak(args) -> None:
     """Per dump, per kfold seed: scan every llm layer, take the argmax layer. Report the
     peak-layer distribution (mode/mean/std) and mean peak AUC -- so a 'peak shifted later'
     claim can be read against fold noise instead of off two fixed-layer point estimates."""
-    print(f"Peak-layer robustness over all llm layers, {args.n_seeds} kfold seeds")
-    print("(SAME rows per dump -- isolates fold noise, not sample noise)\n")
+    print(f"Peak-layer robustness over all llm layers, {args.n_seeds} kfold seeds", flush=True)
+    print("(SAME rows per dump -- isolates fold noise, not sample noise)\n", flush=True)
     print(f"{'dump':<42} {'track':>5} {'peak_mode':>9} {'peak_mean':>9} {'peak_std':>8} "
-          f"{'peak_min':>8} {'peak_max':>8} {'mean_auc':>8}")
+          f"{'peak_min':>8} {'peak_max':>8} {'mean_auc':>8}", flush=True)
 
     for spec in args.ins:
         path, tracking = parse_spec(spec)
@@ -102,21 +116,30 @@ def run_peak(args) -> None:
         y = LabelEncoder().fit_transform(data["labels"])
         layers = data["llm_layers"]  # (N, n_layers, D)
         n_layers = layers.shape[1]
+        name = path.rsplit("/", 1)[-1]
+        # The stdout row prints only after ALL seeds x layers finish, so without a
+        # heartbeat a slow dump looks hung. Progress goes to stderr to keep stdout
+        # a clean parseable table.
+        print(f"# {name}: scanning {n_layers} layers x {args.n_seeds} seeds ...",
+              file=sys.stderr, flush=True)
         peak_layers, peak_aucs = [], []
         for seed in range(args.n_seeds):
             per_layer = np.array([probe_auc(layers[:, j, :], y, seed) for j in range(n_layers)])
+            print(f"\r#   seed {seed + 1}/{args.n_seeds} done", end="",
+                  file=sys.stderr, flush=True)
             if np.all(np.isnan(per_layer)):
                 continue
             j_star = int(np.nanargmax(per_layer))
             peak_layers.append(j_star)
             peak_aucs.append(per_layer[j_star])
+        print("", file=sys.stderr, flush=True)
         peak_layers = np.array(peak_layers)
         peak_aucs = np.array(peak_aucs)
         mode = int(np.bincount(peak_layers).argmax())
-        name = path.rsplit("/", 1)[-1]
         tag = f"{tracking:g}" if tracking is not None else "-"
         print(f"{name:<42} {tag:>5} {mode:>9d} {peak_layers.mean():>9.1f} {peak_layers.std():>8.1f} "
-              f"{int(peak_layers.min()):>8d} {int(peak_layers.max()):>8d} {peak_aucs.mean():>8.4f}")
+              f"{int(peak_layers.min()):>8d} {int(peak_layers.max()):>8d} {peak_aucs.mean():>8.4f}",
+              flush=True)
 
     print("\nRead it:")
     print("  * A claimed peak SHIFT between two dumps (e.g. layer ~12 -> ~22) is real only if")
@@ -142,9 +165,9 @@ def main() -> None:
         run_peak(args)
         return
 
-    print(f"Fold-noise robustness at location='{args.location}', {args.n_seeds} kfold seeds")
-    print("(SAME rows per dump -- isolates fold noise, not sample noise)\n")
-    print(f"{'dump':<42} {'track':>5} {'mean':>7} {'std':>6} {'min':>7} {'max':>7} {'range':>6}")
+    print(f"Fold-noise robustness at location='{args.location}', {args.n_seeds} kfold seeds", flush=True)
+    print("(SAME rows per dump -- isolates fold noise, not sample noise)\n", flush=True)
+    print(f"{'dump':<42} {'track':>5} {'mean':>7} {'std':>6} {'min':>7} {'max':>7} {'range':>6}", flush=True)
 
     rows = []
     for spec in args.ins:
@@ -152,12 +175,13 @@ def main() -> None:
         data = np.load(path, allow_pickle=True)
         y = LabelEncoder().fit_transform(data["labels"])
         X = resolve_matrix(data, args.location)
+        name = path.rsplit("/", 1)[-1]
+        print(f"# {name}: {args.n_seeds} seeds at '{args.location}' ...", file=sys.stderr, flush=True)
         aucs = np.array([probe_auc(X, y, seed) for seed in range(args.n_seeds)])
         aucs = aucs[~np.isnan(aucs)]
-        name = path.rsplit("/", 1)[-1]
         tag = f"{tracking:g}" if tracking is not None else "-"
         print(f"{name:<42} {tag:>5} {aucs.mean():>7.4f} {aucs.std():>6.4f} "
-              f"{aucs.min():>7.4f} {aucs.max():>7.4f} {aucs.max() - aucs.min():>6.4f}")
+              f"{aucs.min():>7.4f} {aucs.max():>7.4f} {aucs.max() - aucs.min():>6.4f}", flush=True)
         rows.append((name, tracking, aucs))
 
     print("\nRead it:")

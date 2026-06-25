@@ -14,11 +14,19 @@ import re
 import sys
 from pathlib import Path
 
+# FAT10 (UniProt O15205) domain boundaries — VERIFIED from UniProt feature table.
+DOMAINS = [
+    ("Ubiquitin-like 1 (N-term)", 6, 81),
+    ("linker", 82, 89),
+    ("Ubiquitin-like 2 (C-term)", 90, 163),
+    ("C-terminal tail", 164, 165),
+]
 # Literature / NMR expectation: MAD2 binds FAT10's FIRST (N-terminal) ubl domain.
 EXPECTED = {
-    "region": "N-terminal ubiquitin-like domain",
-    "residue_range": (1, 80),
-    "source": "NMR: PDB 2MBE (first FAT10 domain); Theng et al. 2014 PNAS (FAT10-MAD2 interaction)",
+    "region": "Ubiquitin-like 1 (N-terminal domain)",
+    "residue_range": (6, 81),   # UniProt O15205 DOMAIN "Ubiquitin-like 1"
+    "source": "UniProt O15205 (domain boundaries); NMR PDB 2MBE (first FAT10 domain); "
+              "Theng et al. 2014 PNAS (FAT10-MAD2 interaction)",
 }
 INTERFACE_CUTOFF = 0.5   # occupancy >= 0.5 = persistent interface contact
 SECONDARY_CUTOFF = 0.1   # 0.1-0.5 = transient/secondary
@@ -27,6 +35,13 @@ SECONDARY_CUTOFF = 0.1   # 0.1-0.5 = transient/secondary
 def resnum(label: str):
     m = re.search(r"(\d+)", label)
     return int(m.group(1)) if m else None
+
+
+def domain_of(n):
+    for name, lo, hi in DOMAINS:
+        if lo <= n <= hi:
+            return name
+    return "outside annotated domains"
 
 
 def adjudicate(scores: dict) -> dict:
@@ -73,7 +88,9 @@ def render(method: str, adj: dict) -> str:
 ## Persistent interface from the MD (occupancy >= {INTERFACE_CUTOFF})
 {core_str}
 
-- Inside expected region ({lo}-{hi}): **{', '.join(adj['in_expected_region']) or 'NONE'}**
+Domain of each: {', '.join(f"{k}={domain_of(resnum(k))}" for k in core)}
+
+- Inside expected region ({lo}-{hi}, {EXPECTED['region']}): **{', '.join(adj['in_expected_region']) or 'NONE'}**
 - Outside expected region: **{', '.join(adj['outside_expected_region']) or 'none'}**
 
 ## Verdict

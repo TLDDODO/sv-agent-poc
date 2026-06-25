@@ -27,10 +27,12 @@ def get_expected_interface_region(uniprot: str = "O15205") -> dict:
     if the interface falls outside this region."""
     return {
         "uniprot": uniprot,
-        "expected_region": "N-terminal ubiquitin-like domain",
-        "residue_range": [1, 80],
-        "source": "NMR: PDB 2MBE (first FAT10 domain); Theng et al. 2014 PNAS (FAT10-MAD2)",
-        "note": "If the interface residues fall outside 1-80, the model disagrees "
+        "expected_region": "Ubiquitin-like 1 (N-terminal domain)",
+        "residue_range": [6, 81],   # UniProt O15205 DOMAIN "Ubiquitin-like 1" (verified)
+        "other_domains": {"Ubiquitin-like 2 (C-term)": [90, 163], "C-terminal tail": [164, 165]},
+        "source": "UniProt O15205 domain table; NMR PDB 2MBE (first FAT10 domain); "
+                  "Theng et al. 2014 PNAS (FAT10-MAD2)",
+        "note": "If the interface residues fall outside UBL1 (6-81), the model disagrees "
                 "with the literature and must be flagged (e.g. an AF3 model that "
                 "docked MAD2 onto FAT10's C-terminal region).",
     }

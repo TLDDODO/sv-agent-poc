@@ -6,19 +6,22 @@ import urllib.request
 from dataclasses import asdict
 
 from interface.structures import offline_structures, canonical_map
-from interface.data import mock_predictions
-from interface.experts import _CAVEATS
+
+
+# Tools whose per-residue interface scores the team has NOT produced yet. We do not
+# fabricate them — the agent is told they are pending so it cannot pretend a
+# multi-tool consensus exists.
+PENDING_TOOLS = ["AlphaFold-Multimer", "HADDOCK", "PISA"]
 
 
 def _predictions() -> dict:
-    """Per-tool, per-residue interface scores. Demo uses mock numbers; set
-    INTERFACE_SCORES to a JSON file ({tool: {residue: score}}) to use real data.
-    These are the tools' OUTPUTS (data), not the agent's decision."""
-    path = os.environ.get("INTERFACE_SCORES")
+    """REAL per-tool, per-residue interface scores. Defaults to the real MD output;
+    set INTERFACE_SCORES to override. Returns {} if none present — NO mock data."""
+    path = os.environ.get("INTERFACE_SCORES", "analysis/md_interface_scores.json")
     if path and os.path.exists(path):
         with open(path) as fh:
             return json.load(fh)
-    return {p.tool: {s.residue: s.score for s in p.scores} for p in mock_predictions()}
+    return {}
 
 
 def get_md_interface_scores(scores_path: str = "analysis/md_interface_scores.json") -> dict:
@@ -67,8 +70,10 @@ def get_expected_interface_region(uniprot: str = "O15205") -> dict:
         "expected_region": "Ubiquitin-like 1 (N-terminal domain)",
         "residue_range": [6, 81],   # UniProt O15205 DOMAIN "Ubiquitin-like 1" (verified)
         "other_domains": {"Ubiquitin-like 2 (C-term)": [90, 163], "C-terminal tail": [164, 165]},
-        "source": "UniProt O15205 domain table; NMR PDB 2MBE (first FAT10 domain); "
-                  "Theng et al. 2014 PNAS (FAT10-MAD2)",
+        "evidence_type": "CITED literature fact (not derived by this agent)",
+        "source": "Domain ranges: UniProt O15205 feature table (verified). Binding region: "
+                  "Theng et al. 2014 PNAS + NMR PDB 2MBE (first FAT10 domain). Use "
+                  "search_literature to corroborate the binding-region claim live.",
         "note": "If the interface residues fall outside UBL1 (6-81), the model disagrees "
                 "with the literature and must be flagged (e.g. an AF3 model that "
                 "docked MAD2 onto FAT10's C-terminal region).",
@@ -82,14 +87,21 @@ def fetch_structures(uniprot: str) -> dict:
 
 
 def list_interface_tools() -> dict:
-    return {"tools": list(_predictions().keys())}
+    return {"available_real": list(_predictions().keys()),
+            "pending_no_data_yet": PENDING_TOOLS,
+            "note": "Only methods under 'available_real' have real per-residue scores. "
+                    "AFM/HADDOCK/PISA are pending team data; a multi-tool consensus "
+                    "cannot be computed until they arrive — do not fabricate them."}
 
 
 def get_tool_prediction(tool: str) -> dict:
     preds = _predictions()
-    if tool not in preds:
-        return {"error": f"unknown tool '{tool}'", "available": list(preds)}
-    return {"tool": tool, "scores": preds[tool], "caveat": _CAVEATS.get(tool, "")}
+    if tool in preds:
+        return {"tool": tool, "scores": preds[tool], "real": True}
+    if tool in PENDING_TOOLS:
+        return {"tool": tool, "status": "pending", "real": False,
+                "note": "no real data yet — awaiting team output; do not use placeholder numbers"}
+    return {"error": f"unknown tool '{tool}'", "available": list(preds)}
 
 
 def map_residues(residues: list, uniprot: str, domain_lo: int = 1, domain_hi: int = 80) -> dict:

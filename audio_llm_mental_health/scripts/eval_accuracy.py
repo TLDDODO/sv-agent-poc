@@ -12,6 +12,13 @@ discriminating emotions.
 
     python scripts/eval_accuracy.py --adapter outputs/meld_lora/final \
         --manifest data/meld_dev_manifest.jsonl --sample 200
+
+Omit --adapter for a zero-shot base-model run -- the "Plain" column in a Plain-vs-LoRA
+comparison (e.g. the Delta = LoRA-accuracy - zero-shot-accuracy matrix across corpora of
+differing text/audio decoupling). Match --manifest/--sample/--seed to the adapter run so
+both sides are scored on the identical rows:
+
+    python scripts/eval_accuracy.py --manifest data/meld_dev_manifest.jsonl --sample 200
 """
 
 import argparse
@@ -55,7 +62,12 @@ def parse_label(completion: str, answer_key: str = ANSWER_KEY) -> str | None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-model", default="Qwen/Qwen2-Audio-7B-Instruct")
-    parser.add_argument("--adapter", required=True)
+    parser.add_argument(
+        "--adapter", default=None,
+        help="LoRA adapter dir. Omit for a zero-shot base-model run -- the 'Plain' column of "
+        "a Plain-vs-LoRA comparison (use the SAME --manifest/--sample/--seed as the adapter "
+        "run being compared against, so both sides score the identical rows).",
+    )
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--sample", type=int, default=200, help="Random sample size (0 = all rows).")
     parser.add_argument("--seed", type=int, default=42)
@@ -96,7 +108,8 @@ def main() -> None:
     processor = AutoProcessor.from_pretrained(args.base_model)
     sr = processor.feature_extractor.sampling_rate
     model = load_base_model(args.base_model)
-    model = PeftModel.from_pretrained(model, args.adapter)
+    if args.adapter:
+        model = PeftModel.from_pretrained(model, args.adapter)
     model.eval()
 
     out_f = open(args.out, "w", encoding="utf-8") if args.out else None

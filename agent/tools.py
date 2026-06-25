@@ -21,6 +21,43 @@ def _predictions() -> dict:
     return {p.tool: {s.residue: s.score for s in p.scores} for p in mock_predictions()}
 
 
+def get_md_interface_scores(scores_path: str = "analysis/md_interface_scores.json") -> dict:
+    """Real per-residue MAD2-contact occupancy from the 100 ns MD (0..1 = fraction
+    of frames in contact). This is real evidence, not a prediction."""
+    if not os.path.exists(scores_path):
+        return {"error": f"no MD scores at {scores_path}"}
+    with open(scores_path) as fh:
+        data = json.load(fh)
+    method, occ = next(iter(data.items()))
+    return {"method": method, "occupancy": occ,
+            "note": "fraction of MD frames each FAT10 residue contacts MAD2 (real)"}
+
+
+def search_literature(query: str = "FAT10 MAD2 interaction ubiquitin-like domain") -> dict:
+    """Search PubMed for the FAT10-MAD2 binding region and return real abstracts for
+    the agent to read. Falls back to a cited result if PubMed is unreachable."""
+    try:
+        from .literature import search_pubmed
+        ids, abstracts = search_pubmed(query)
+        if abstracts.strip():
+            return {"retrieved_live": True, "pmids": ids, "abstracts": abstracts[:4000]}
+    except Exception as exc:
+        return {"retrieved_live": False, "error": type(exc).__name__,
+                "fallback": "Theng et al. 2014 PNAS: MAD2 binds the N-terminal "
+                            "(first) ubiquitin-like domain of FAT10"}
+    return {"retrieved_live": False,
+            "fallback": "Theng et al. 2014 PNAS: MAD2 binds the N-terminal "
+                        "(first) ubiquitin-like domain of FAT10"}
+
+
+def convene_debate() -> dict:
+    """Convene the multi-agent debate (MD advocate vs NMR advocate + judge) over the
+    current real evidence, and return the judge's calibrated verdict. Call this when
+    the MD interface and the literature/domain expectation conflict."""
+    from .debate import run as _run_debate
+    return _run_debate()
+
+
 def get_expected_interface_region(uniprot: str = "O15205") -> dict:
     """Literature/NMR prior for where MAD2 is expected to bind FAT10. Use this as
     the standard to compare the predicted/MD interface against, and FLAG the model
@@ -94,6 +131,9 @@ DISPATCH = {
     "map_residues": map_residues,
     "validate_residues": validate_residues,
     "get_expected_interface_region": get_expected_interface_region,
+    "get_md_interface_scores": get_md_interface_scores,
+    "search_literature": search_literature,
+    "convene_debate": convene_debate,
 }
 
 # --- tool schemas (OpenAI / DeepSeek function-calling format) -----------------
@@ -119,6 +159,19 @@ TOOLS = [
         "description": "Get the literature/NMR-expected binding region (the standard). Compare the predicted/MD interface against it and FLAG the model if the interface falls outside this region.",
         "parameters": {"type": "object", "properties": {
             "uniprot": {"type": "string"}}, "required": []}}},
+    {"type": "function", "function": {
+        "name": "get_md_interface_scores",
+        "description": "Get the REAL per-residue MAD2-contact occupancy from the 100 ns MD simulation (0..1). This is real interface evidence.",
+        "parameters": {"type": "object", "properties": {}, "required": []}}},
+    {"type": "function", "function": {
+        "name": "search_literature",
+        "description": "Search PubMed for the FAT10-MAD2 binding region and read the real abstracts to learn which FAT10 domain binds MAD2.",
+        "parameters": {"type": "object", "properties": {
+            "query": {"type": "string"}}, "required": []}}},
+    {"type": "function", "function": {
+        "name": "convene_debate",
+        "description": "Convene a multi-agent debate (MD advocate vs NMR advocate + judge) over the real evidence and get a calibrated verdict. Use this when the MD interface and the literature/domain expectation conflict.",
+        "parameters": {"type": "object", "properties": {}, "required": []}}},
     {"type": "function", "function": {
         "name": "map_residues",
         "description": "Map residue labels (e.g. L9) to canonical UniProt numbering and flag whether each is inside the binding domain range.",

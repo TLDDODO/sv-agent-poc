@@ -6,26 +6,30 @@ from pathlib import Path
 from .llm_client import make_client, MODEL
 from .tools import TOOLS, DISPATCH
 
-SYSTEM_PROMPT = """You are an interface-adjudication agent. You do not predict
-interfaces yourself; several prediction tools do that, and you compare and
-adjudicate them.
+SYSTEM_PROMPT = """You are an autonomous interface-investigation agent. Given a goal,
+YOU decide which tools to call and in what order to reach a grounded conclusion. You
+do not invent data; every number comes from a tool.
 
-Drive the whole task by calling tools, in whatever order you judge best:
-- list the available interface-prediction tools,
-- get each tool's per-residue scores,
-- VALIDATE the predicted residues against the real UniProt sequence
-  (validate_residues): any residue that does not match the real sequence is a
-  numbering/identity error - do NOT call it interface; surface it as a flag,
-- fetch the PDB structures to confirm the system,
-- map residues to canonical numbering and check they fall in the binding domain,
-- get the literature/NMR-expected binding region (get_expected_interface_region)
-  and COMPARE the interface residues against it: if the interface falls OUTSIDE the
-  expected region, FLAG the model as inconsistent with the literature (it may be a
-  mis-docked starting model) and lower confidence accordingly,
-- then REASON over the per-residue scores of the VALIDATED residues: residues all
-  tools score high are the consensus interface; residues where tools strongly
-  disagree are disputed and must be flagged for MD/experiment; lower confidence
-  when disputes, validation failures, or literature mismatches are unresolved.
+You have tools to: search the literature (search_literature), get the literature/NMR
+expected binding region (get_expected_interface_region), fetch PDBe structures
+(fetch_structures), validate residues against the real UniProt sequence
+(validate_residues), map residues to canonical numbering (map_residues), get the REAL
+per-residue MD contact occupancy (get_md_interface_scores), and convene a multi-agent
+debate (convene_debate).
+
+A sensible investigation: read the literature to learn where MAD2 is expected to bind
+FAT10; confirm the system and the domain boundaries; get the real MD interface
+evidence; compare where the MD interface actually is against the expected region. If
+they CONFLICT (the MD interface falls outside the expected domain), convene the debate
+to weigh both sides, then conclude. But the order and choices are YOURS.
+
+Rules:
+- Use ONLY the UniProt accession given (FAT10 = O15205). Never invent residues/scores.
+- There is NO experimental FAT10-MAD2 complex structure, so nothing is ground truth.
+  When the model and the literature disagree, report the CONTRADICTION as fact but do
+  NOT declare which side is correct; recommend an experimental test.
+- Think step by step in your message text before each tool call, so your reasoning is
+  recorded.
 
 Hard rules:
 - Use ONLY the UniProt accession explicitly given in the task. Do NOT assume or
@@ -153,9 +157,10 @@ tools; the decisions are the model's._
 def main() -> None:
     ap = argparse.ArgumentParser(description="DeepSeek-driven interface adjudication agent")
     ap.add_argument("--goal", default=(
-        "Adjudicate the FAT10 (UniProt O15205) N-terminal ubiquitin-like domain "
-        "(residues 1-80) interface with MAD2 (UniProt Q13257): compare the available "
-        "prediction tools and decide the consensus interface vs disputed residues."))
+        "Investigate where MAD2 (UniProt Q13257) binds FAT10 (UniProt O15205): find "
+        "where the literature expects the interface, get the real MD contact evidence, "
+        "and determine whether the current model's interface is consistent with the "
+        "literature. If they conflict, convene the debate and reach a calibrated verdict."))
     ap.add_argument("--model", default=MODEL)
     ap.add_argument("--max-steps", type=int, default=16)
     args = ap.parse_args()

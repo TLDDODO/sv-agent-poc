@@ -144,6 +144,7 @@ literature/NMR expects binding via the N-terminal UBL1. Two agents argue; a judg
     (out / "debate_report.md").write_text(report, encoding="utf-8")
     print("\nWROTE outputs/debate_report.md")
     print(json.dumps(verdict, indent=2, ensure_ascii=False)[:600])
+    return verdict
 
 
 if __name__ == "__main__":

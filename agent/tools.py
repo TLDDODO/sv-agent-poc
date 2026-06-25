@@ -21,6 +21,21 @@ def _predictions() -> dict:
     return {p.tool: {s.residue: s.score for s in p.scores} for p in mock_predictions()}
 
 
+def get_expected_interface_region(uniprot: str = "O15205") -> dict:
+    """Literature/NMR prior for where MAD2 is expected to bind FAT10. Use this as
+    the standard to compare the predicted/MD interface against, and FLAG the model
+    if the interface falls outside this region."""
+    return {
+        "uniprot": uniprot,
+        "expected_region": "N-terminal ubiquitin-like domain",
+        "residue_range": [1, 80],
+        "source": "NMR: PDB 2MBE (first FAT10 domain); Theng et al. 2014 PNAS (FAT10-MAD2)",
+        "note": "If the interface residues fall outside 1-80, the model disagrees "
+                "with the literature and must be flagged (e.g. an AF3 model that "
+                "docked MAD2 onto FAT10's C-terminal region).",
+    }
+
+
 # --- tool implementations (the agent calls these) ----------------------------
 def fetch_structures(uniprot: str) -> dict:
     hits = offline_structures()          # verified PDBe snapshot (or --mcp live on HPC)
@@ -76,6 +91,7 @@ DISPATCH = {
     "get_tool_prediction": get_tool_prediction,
     "map_residues": map_residues,
     "validate_residues": validate_residues,
+    "get_expected_interface_region": get_expected_interface_region,
 }
 
 # --- tool schemas (OpenAI / DeepSeek function-calling format) -----------------
@@ -96,6 +112,11 @@ TOOLS = [
         "parameters": {"type": "object", "properties": {
             "tool": {"type": "string", "description": "Tool name from list_interface_tools"}},
             "required": ["tool"]}}},
+    {"type": "function", "function": {
+        "name": "get_expected_interface_region",
+        "description": "Get the literature/NMR-expected binding region (the standard). Compare the predicted/MD interface against it and FLAG the model if the interface falls outside this region.",
+        "parameters": {"type": "object", "properties": {
+            "uniprot": {"type": "string"}}, "required": []}}},
     {"type": "function", "function": {
         "name": "map_residues",
         "description": "Map residue labels (e.g. L9) to canonical UniProt numbering and flag whether each is inside the binding domain range.",

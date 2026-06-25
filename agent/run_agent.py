@@ -18,10 +18,14 @@ Drive the whole task by calling tools, in whatever order you judge best:
   numbering/identity error - do NOT call it interface; surface it as a flag,
 - fetch the PDB structures to confirm the system,
 - map residues to canonical numbering and check they fall in the binding domain,
+- get the literature/NMR-expected binding region (get_expected_interface_region)
+  and COMPARE the interface residues against it: if the interface falls OUTSIDE the
+  expected region, FLAG the model as inconsistent with the literature (it may be a
+  mis-docked starting model) and lower confidence accordingly,
 - then REASON over the per-residue scores of the VALIDATED residues: residues all
   tools score high are the consensus interface; residues where tools strongly
   disagree are disputed and must be flagged for MD/experiment; lower confidence
-  when disputes or validation failures are unresolved.
+  when disputes, validation failures, or literature mismatches are unresolved.
 
 Hard rules:
 - Use ONLY the UniProt accession explicitly given in the task. Do NOT assume or

@@ -1,0 +1,696 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>FAT10–MAD2 Interface — Agentic Adjudication Pipeline &#8212; FAT10–MAD2 Interface — Agentic Adjudication</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/fat10_mad2_pipeline';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="FAT10–MAD2 Interface — Agentic Adjudication" href="../intro.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../intro.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">FAT10–MAD2 Interface — Agentic Adjudication</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../intro.html">
+                    FAT10–MAD2 Interface — Agentic Adjudication
+                </a>
+            </li>
+        </ul>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">FAT10–MAD2 Interface — Agentic Adjudication Pipeline</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-launch-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Launch interactive content">
+    <i class="fas fa-rocket"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li>
+<button onclick="initThebeSBT()"
+  class="btn btn-sm btn-launch-thebe dropdown-item"
+  title="Launch Thebe"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-play"></i>
+  </span>
+<span class="btn__text-container">Live Code</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+<a href="https://github.com/TLDDODO/sv-agent-poc" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/notebooks/fat10_mad2_pipeline.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>FAT10–MAD2 Interface — Agentic Adjudication Pipeline</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-1-retrieve-the-binding-region-claim-from-the-literature">Stage 1 — Retrieve the binding-region claim from the literature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-2-ground-it-real-structures-uniprot-verified-domains">Stage 2 — Ground it: real structures + UniProt-verified domains</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-3-real-md-interface-evidence-your-100-ns-simulation">Stage 3 — Real MD interface evidence (your 100 ns simulation)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-4-deterministic-adjudication-md-interface-vs-expected-domain">Stage 4 — Deterministic adjudication: MD interface vs expected domain</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-5-multi-agent-debate-the-highlight">Stage 5 — Multi-agent debate (the highlight)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#captured-live-debate-deepseek-chat-run-on-hpc">📎 Captured live debate (DeepSeek-chat, run on HPC)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="fat10mad2-interface-agentic-adjudication-pipeline">
+<h1>FAT10–MAD2 Interface — Agentic Adjudication Pipeline<a class="headerlink" href="#fat10mad2-interface-agentic-adjudication-pipeline" title="Link to this heading">#</a></h1>
+<p>An LLM-agent pipeline that <strong>retrieves the literature claim, grounds it in real
+structures/sequence, compares it against real MD evidence, and stages a multi-agent
+debate</strong> to reach an honest, calibrated verdict — run it cell by cell below.</p>
+<p><strong>Honest status:</strong> the MD data, PDBe structures, and UniProt domain boundaries are
+real. The interface <em>conclusion</em> is a method demo: there is <strong>no experimental
+FAT10–MAD2 complex structure</strong>, so nothing here is ground truth.</p>
+<blockquote>
+<div><p>Set <code class="docutils literal notranslate"><span class="pre">DEEPSEEK_API_KEY</span></code> in your environment before launching Jupyter to enable the
+LLM stages (literature extraction + debate). The non-LLM stages run without it.</p>
+</div></blockquote>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span><span class="o">,</span><span class="w"> </span><span class="nn">re</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span> <span class="o">==</span> <span class="s1">&#39;notebooks&#39;</span><span class="p">:</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span>                      <span class="c1"># run from repo root</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span><span class="p">,</span> <span class="n">display</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">md</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="n">display</span><span class="p">(</span><span class="n">Markdown</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">HAVE_KEY</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;DEEPSEEK_API_KEY&#39;</span><span class="p">))</span>
+<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Repo root:** `</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span><span class="si">}</span><span class="s2">`  </span><span class="se">\n</span><span class="s2">**DEEPSEEK_API_KEY set:** </span><span class="si">{</span><span class="n">HAVE_KEY</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<p><strong>Repo root:</strong> <code class="docutils literal notranslate"><span class="pre">/home/user/sv-agent-poc</span></code><br />
+<strong>DEEPSEEK_API_KEY set:</strong> False</p>
+</div>
+</div>
+</section>
+<section id="stage-1-retrieve-the-binding-region-claim-from-the-literature">
+<h2>Stage 1 — Retrieve the binding-region claim from the literature<a class="headerlink" href="#stage-1-retrieve-the-binding-region-claim-from-the-literature" title="Link to this heading">#</a></h2>
+<p>An agent searches PubMed and extracts which FAT10 region binds MAD2 (falls back to a
+cited result if PubMed is unreachable, and says so).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">HAVE_KEY</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agent.literature</span><span class="w"> </span><span class="kn">import</span> <span class="n">retrieve_binding_region</span>
+    <span class="n">lit</span> <span class="o">=</span> <span class="n">retrieve_binding_region</span><span class="p">()</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">lit</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;retrieved_live&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+           <span class="s1">&#39;claim&#39;</span><span class="p">:</span> <span class="s1">&#39;MAD2 binds the N-terminal (first) ubiquitin-like domain of FAT10&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;Theng et al. 2014 (no API key: live search skipped)&#39;</span><span class="p">,</span> <span class="s1">&#39;pmids&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;🔎 live PubMed&#39;</span> <span class="k">if</span> <span class="n">lit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;retrieved_live&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;📌 cited fallback&#39;</span>
+<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Claim (</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">):** </span><span class="si">{</span><span class="n">lit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;claim&#39;</span><span class="p">,</span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">  </span><span class="se">\n</span><span class="s2">&quot;</span>
+   <span class="sa">f</span><span class="s2">&quot;**Source:** </span><span class="si">{</span><span class="n">lit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">,</span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">  </span><span class="se">\n</span><span class="s2">**PMIDs:** </span><span class="si">{</span><span class="n">lit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pmids&#39;</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;—&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<p><strong>Claim (📌 cited fallback):</strong> MAD2 binds the N-terminal (first) ubiquitin-like domain of FAT10<br />
+<strong>Source:</strong> Theng et al. 2014 (no API key: live search skipped)<br />
+<strong>PMIDs:</strong> —</p>
+</div>
+</div>
+</section>
+<section id="stage-2-ground-it-real-structures-uniprot-verified-domains">
+<h2>Stage 2 — Ground it: real structures + UniProt-verified domains<a class="headerlink" href="#stage-2-ground-it-real-structures-uniprot-verified-domains" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">agent.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">fetch_structures</span><span class="p">,</span> <span class="n">get_expected_interface_region</span>
+<span class="n">st</span> <span class="o">=</span> <span class="n">fetch_structures</span><span class="p">(</span><span class="s1">&#39;O15205&#39;</span><span class="p">)</span>
+<span class="n">rows</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;| </span><span class="si">{</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;pdb_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;resolution&#39;</span><span class="p">,</span><span class="s1">&#39;-&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;experimental_method&#39;</span><span class="p">,</span><span class="s1">&#39;-&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> |&quot;</span>
+                 <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">st</span><span class="p">[</span><span class="s1">&#39;structures&#39;</span><span class="p">])</span>
+<span class="n">md</span><span class="p">(</span><span class="s1">&#39;**PDBe structures (verified FAT10):**</span><span class="se">\n\n</span><span class="s1">| PDB | Resolution | Method |</span><span class="se">\n</span><span class="s1">|---|---|---|</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">rows</span><span class="p">)</span>
+<span class="n">exp</span> <span class="o">=</span> <span class="n">get_expected_interface_region</span><span class="p">(</span><span class="s1">&#39;O15205&#39;</span><span class="p">)</span>
+<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">**UniProt-verified domains** — UBL1 (N-term, expected MAD2 site): **</span><span class="si">{</span><span class="n">exp</span><span class="p">[</span><span class="s1">&#39;residue_range&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">**; &quot;</span>
+   <span class="sa">f</span><span class="s2">&quot;others: </span><span class="si">{</span><span class="n">exp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;other_domains&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<p><strong>PDBe structures (verified FAT10):</strong></p>
+<p>| PDB | Resolution | Method |
+|—|—|—|
+| 6GF1 | 1.925 | X-ray diffraction |
+| 6GF2 | None | Solution NMR |
+| 2MBE | None | Solution NMR |
+| 7PYV | 3.27 | X-ray diffraction |</p>
+<p><strong>UniProt-verified domains</strong> — UBL1 (N-term, expected MAD2 site): <strong>[6, 81]</strong>; others: {‘Ubiquitin-like 2 (C-term)’: [90, 163], ‘C-terminal tail’: [164, 165]}</p>
+</div>
+</div>
+</section>
+<section id="stage-3-real-md-interface-evidence-your-100-ns-simulation">
+<h2>Stage 3 — Real MD interface evidence (your 100 ns simulation)<a class="headerlink" href="#stage-3-real-md-interface-evidence-your-100-ns-simulation" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">scores</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s1">&#39;analysis/md_interface_scores.json&#39;</span><span class="p">))</span>
+<span class="n">method</span><span class="p">,</span> <span class="n">occ</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+<span class="n">DOMAINS</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;UBL1 (N-term)&#39;</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">81</span><span class="p">),(</span><span class="s1">&#39;linker&#39;</span><span class="p">,</span><span class="mi">82</span><span class="p">,</span><span class="mi">89</span><span class="p">),(</span><span class="s1">&#39;UBL2 (C-term)&#39;</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="mi">163</span><span class="p">),(</span><span class="s1">&#39;C-term tail&#39;</span><span class="p">,</span><span class="mi">164</span><span class="p">,</span><span class="mi">165</span><span class="p">)]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dom</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">nm</span><span class="p">,</span><span class="n">lo</span><span class="p">,</span><span class="n">hi</span> <span class="ow">in</span> <span class="n">DOMAINS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lo</span><span class="o">&lt;=</span><span class="n">n</span><span class="o">&lt;=</span><span class="n">hi</span><span class="p">:</span> <span class="k">return</span> <span class="n">nm</span>
+    <span class="k">return</span> <span class="s1">&#39;outside&#39;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">rn</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+    <span class="n">m</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\d+)&#39;</span><span class="p">,</span> <span class="n">l</span><span class="p">);</span> <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="mi">0</span>
+<span class="n">rows</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;| </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1"> | </span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> | </span><span class="si">{</span><span class="n">dom</span><span class="p">(</span><span class="n">rn</span><span class="p">(</span><span class="n">k</span><span class="p">))</span><span class="si">}</span><span class="s1"> |&#39;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">occ</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span><span class="o">-</span><span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;**MD contact occupancy (</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s1">):**</span><span class="se">\n\n</span><span class="s1">| Residue | Occupancy | Domain |</span><span class="se">\n</span><span class="s1">|---|---|---|</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">rows</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<p><strong>MD contact occupancy (MD-contacts(100ns)):</strong></p>
+<p>| Residue | Occupancy | Domain |
+|—|—|—|
+| I163 | 1.00 | UBL2 (C-term) |
+| C162 | 1.00 | UBL2 (C-term) |
+| G164 | 0.96 | C-term tail |
+| C160 | 0.71 | UBL2 (C-term) |
+| G165 | 0.66 | C-term tail |
+| Y161 | 0.61 | UBL2 (C-term) |
+| D97 | 0.47 | UBL2 (C-term) |
+| K137 | 0.43 | UBL2 (C-term) |
+| A159 | 0.35 | UBL2 (C-term) |
+| R138 | 0.23 | UBL2 (C-term) |
+| N135 | 0.15 | UBL2 (C-term) |
+| K31 | 0.12 | UBL1 (N-term) |
+| G136 | 0.10 | UBL2 (C-term) |
+| R60 | 0.08 | UBL1 (N-term) |
+| F157 | 0.01 | UBL2 (C-term) |</p>
+</div>
+</div>
+</section>
+<section id="stage-4-deterministic-adjudication-md-interface-vs-expected-domain">
+<h2>Stage 4 — Deterministic adjudication: MD interface vs expected domain<a class="headerlink" href="#stage-4-deterministic-adjudication-md-interface-vs-expected-domain" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">core</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">occ</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="o">&gt;=</span><span class="mf">0.5</span><span class="p">}</span>
+<span class="n">in_ubl1</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">core</span> <span class="k">if</span> <span class="mi">6</span> <span class="o">&lt;=</span> <span class="n">rn</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">81</span><span class="p">]</span>
+<span class="n">flag</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">core</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">in_ubl1</span>
+<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;🚩 **FLAG** — persistent interface is OUTSIDE the expected UBL1 (6–81)&#39;</span> <span class="k">if</span> <span class="n">flag</span> <span class="k">else</span> <span class="s1">&#39;✅ consistent with UBL1&#39;</span>
+<span class="n">md</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Persistent interface (occ ≥ 0.5):** </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">core</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;—&#39;</span><span class="si">}</span><span class="s2">  </span><span class="se">\n</span><span class="s2">&quot;</span>
+   <span class="sa">f</span><span class="s2">&quot;**Inside expected UBL1 (6–81):** </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">in_ubl1</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;**NONE**&#39;</span><span class="si">}</span><span class="s2">  </span><span class="se">\n\n</span><span class="s2">### </span><span class="si">{</span><span class="n">verdict</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<p><strong>Persistent interface (occ ≥ 0.5):</strong> I163, C162, G164, C160, G165, Y161<br />
+<strong>Inside expected UBL1 (6–81):</strong> <strong>NONE</strong></p>
+<h3 class="rubric" id="flag-persistent-interface-is-outside-the-expected-ubl1-681">🚩 <strong>FLAG</strong> — persistent interface is OUTSIDE the expected UBL1 (6–81)</h3>
+</div>
+</div>
+</section>
+<section id="stage-5-multi-agent-debate-the-highlight">
+<h2>Stage 5 — Multi-agent debate (the highlight)<a class="headerlink" href="#stage-5-multi-agent-debate-the-highlight" title="Link to this heading">#</a></h2>
+<p>Two agents argue the SAME real facts — one defends the MD C-terminal interface, one
+defends the NMR N-terminal expectation — and a judge weighs them, separating <em>is it
+contradictory</em> (factual) from <em>which side is right</em> (unknown).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">HAVE_KEY</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agent.debate</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span> <span class="k">as</span> <span class="n">run_debate</span>
+    <span class="n">run_debate</span><span class="p">()</span>
+    <span class="n">md</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s1">&#39;outputs/debate_report.md&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">md</span><span class="p">(</span><span class="s1">&#39;&gt; ⚠️ Set `DEEPSEEK_API_KEY` and re-run this cell to run the live debate.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<blockquote>
+<div><p>⚠️ Set <code class="docutils literal notranslate"><span class="pre">DEEPSEEK_API_KEY</span></code> and re-run this cell to run the live debate.</p>
+</div></blockquote>
+</div>
+</div>
+<section id="captured-live-debate-deepseek-chat-run-on-hpc">
+<h3>📎 Captured live debate (DeepSeek-chat, run on HPC)<a class="headerlink" href="#captured-live-debate-deepseek-chat-run-on-hpc" title="Link to this heading">#</a></h3>
+<p><em>The cell above runs the debate live when a key is set. Below is a real captured run, for reference.</em></p>
+<p><strong>🧬 MD advocate</strong> — <em>I argue the C-terminal interface should NOT be dismissed: our 100 ns MD shows residues I163, C162, G164, C160, G165, Y161 form a persistent, high-occupancy surface (I163 = 1.0). The UBL1 expectation rests on functional work (Theng 2014) and the isolated first-domain NMR (2MBE) — there is <strong>no solved structure of the full complex</strong>. MD is dynamic, atomic-level evidence that a C-terminal contact is stable over 100 ns.</em></p>
+<p><strong>📚 NMR advocate</strong> — <em>Every persistent contact falls outside the verified UBL1 (6–81), contradicting the NMR-derived site. AlphaFold3 is known to mis-dock flexible C-terminal Gly-Gly tails, and here the high-occupancy G164/G165 are precisely that tail — a classic tail-docking artifact.</em></p>
+<p><strong>⚖️ Judge</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;contradicts_literature_expectation&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;true_interface_experimentally_known&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;confidence_in_contradiction&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;confidence_in_which_side_is_right&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;recommendation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cross-linking MS on the full-length complex, or mutate C-terminal residues (e.g. I163; avoid the G164/G165 conjugation site) + ITC/pull-down to distinguish N- vs C-terminal binding&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;reasoning&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Both the MD model and the literature expectation are models, not ground truth. The contradiction is clear (high confidence); which side is correct is unknown (low confidence). A direct experimental test is needed.&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>Real:</strong> MD occupancies, PDBe structures, UniProt domains, the contradiction with literature.</p></li>
+<li><p><strong>Not ground truth:</strong> which interface is correct — no experimental complex structure exists.</p></li>
+<li><p><strong>Output:</strong> the model’s MD interface (C-terminal) contradicts the NMR-expected UBL1; the
+judge recommends an experimental test rather than declaring a winner.</p></li>
+</ul>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "TLDDODO/sv-agent-poc",
+            ref: "claude/eloquent-meitner-xhb070",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./notebooks"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../intro.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">FAT10–MAD2 Interface — Agentic Adjudication</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-1-retrieve-the-binding-region-claim-from-the-literature">Stage 1 — Retrieve the binding-region claim from the literature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-2-ground-it-real-structures-uniprot-verified-domains">Stage 2 — Ground it: real structures + UniProt-verified domains</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-3-real-md-interface-evidence-your-100-ns-simulation">Stage 3 — Real MD interface evidence (your 100 ns simulation)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-4-deterministic-adjudication-md-interface-vs-expected-domain">Stage 4 — Deterministic adjudication: MD interface vs expected domain</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stage-5-multi-agent-debate-the-highlight">Stage 5 — Multi-agent debate (the highlight)</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#captured-live-debate-deepseek-chat-run-on-hpc">📎 Captured live debate (DeepSeek-chat, run on HPC)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By ychen
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

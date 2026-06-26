@@ -41,7 +41,11 @@ class EmotionTower(nn.Module):
         super().__init__()
         self.encoder_name = encoder_name
         self.feature_extractor = AutoFeatureExtractor.from_pretrained(encoder_name)
-        self.encoder = AutoModel.from_pretrained(encoder_name, torch_dtype=dtype)
+        # use_safetensors=True: some encoder repos (e.g. facebook/hubert-base-ls960) ship both
+        # pytorch_model.bin and model.safetensors. transformers now refuses to torch.load() a .bin
+        # file unless torch>=2.6 (CVE-2025-32434) and raises rather than falling back -- forcing
+        # safetensors sidesteps that check entirely instead of requiring a torch upgrade.
+        self.encoder = AutoModel.from_pretrained(encoder_name, dtype=dtype, use_safetensors=True)
         self.encoder.eval()
         for p in self.encoder.parameters():
             p.requires_grad_(False)

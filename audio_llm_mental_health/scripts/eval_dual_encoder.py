@@ -103,8 +103,32 @@ def main() -> None:
     if not proj_path.exists():
         raise FileNotFoundError(f"{proj_path} not found -- dual-encoder eval needs the emotion "
                                 f"projection saved beside the adapter by train_dual_encoder.py.")
-    emotion_tower.proj.load_state_dict(torch.load(proj_path, map_location=model.device))
+    emotion_tower.proj.load_state_dict(
+        torch.load(proj_path, map_location=model.device, weights_only=True))
     emotion_tower.eval()
+
+    embed_layer = base.get_input_embeddings()
+    eos_id = processor.tokenizer.eos_token_id
+
+    def greedy_generate(inputs_embeds: torch.Tensor, attn: torch.Tensor) -> list[int]:
+        """Manual greedy decode via forward() + KV cache. Qwen2AudioForConditionalGeneration
+        .generate() does NOT implement the inputs_embeds-only path (it raises), but its forward
+        DOES accept inputs_embeds (the train path relies on it), so we drive decoding by hand:
+        feed the merged+prepended prompt embeds once, then append each argmax token's embedding."""
+        ids: list[int] = []
+        out = model(inputs_embeds=inputs_embeds, attention_mask=attn, use_cache=True)
+        past = out.past_key_values
+        for _ in range(args.max_new_tokens):
+            next_id = int(out.logits[0, -1].argmax())
+            if next_id == eos_id:
+                break
+            ids.append(next_id)
+            next_embed = embed_layer(torch.tensor([[next_id]], device=model.device))
+            attn = torch.cat([attn, attn.new_ones((1, 1))], dim=1)
+            out = model(inputs_embeds=next_embed, attention_mask=attn,
+                        past_key_values=past, use_cache=True)
+            past = out.past_key_values
+        return ids
 
     def run(conversation: list[dict], audio_array: np.ndarray) -> str:
         prompt_text = processor.apply_chat_template(
@@ -121,12 +145,8 @@ def main() -> None:
             emo = emotion_tower([audio_array]).to(merged.dtype)     # (1, D)
             inputs_embeds = torch.cat([emo.unsqueeze(1), merged], dim=1)  # (1, S+1, D)
             attn = inputs["attention_mask"].new_ones((1, inputs_embeds.shape[1]))
-            generated = model.generate(inputs_embeds=inputs_embeds, attention_mask=attn,
-                                       max_new_tokens=args.max_new_tokens, do_sample=False,
-                                       num_beams=1)
-        # With inputs_embeds, generate() returns ONLY the newly generated token ids (no prompt
-        # prefix to strip), unlike the input_ids path in audio_ablation.py.
-        return processor.tokenizer.decode(generated[0], skip_special_tokens=True)
+            ids = greedy_generate(inputs_embeds, attn)
+        return processor.tokenizer.decode(ids, skip_special_tokens=True)
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)

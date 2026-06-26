@@ -6,7 +6,9 @@ logo: ""
 # Do NOT auto-execute on build: the LLM stages need DEEPSEEK_API_KEY + network.
 # Readers run the cells interactively in Jupyter instead.
 execute:
-  execute_notebooks: "off"
+  execute_notebooks: "force"
+  allow_errors: true
+  timeout: 120
 
 repository:
   url: https://github.com/TLDDODO/sv-agent-poc

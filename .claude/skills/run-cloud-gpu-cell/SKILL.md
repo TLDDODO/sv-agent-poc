@@ -64,24 +64,49 @@ cd audio_llm_mental_health
 
 ## Step 2 — environment
 
+**On a Deep Learning VM image** (e.g. GCP "Deep Learning VM with CUDA + PyTorch", which ships a
+CUDA-matched torch in its base conda env): do **NOT** create a fresh `venv` and do **NOT** reinstall
+torch — a clean venv hides the preinstalled torch, and a PyPI torch may not match the box's CUDA. Use
+the base env directly; `torch>=2.2` in requirements is already satisfied by the preinstalled build, so
+pip skips it.
+
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -U pip
-# Skip the torch line if the template already ships it. Otherwise MATCH the box's CUDA
-# (nvidia-smi "CUDA Version"), e.g. cu121:
-pip install torch --index-url https://download.pytorch.org/whl/cu121
-pip install -r requirements.txt
-apt-get update && apt-get install -y ffmpeg     # audio extraction needs it
+# Confirm the preinstalled GPU torch first:
+python -c "import torch; print(torch.__version__, torch.cuda.is_available())"   # expect 2.x  True
+pip install -r requirements.txt                 # torch>=2.2 satisfied by preinstalled build → skipped
+sudo apt-get update && sudo apt-get install -y ffmpeg
 hf auth login                                   # token with WRITE scope (pulls base model + backs up result)
 ```
 
+**On a bare PyTorch template without torch**: only then create a venv and install torch matching the
+box's CUDA (`nvidia-smi` "CUDA Version"), e.g. `pip install torch --index-url https://download.pytorch.org/whl/cu121`.
+
 ## Step 3 — data (MELD, public, no license gate)
 
-Follow CLOUD_RUNBOOK.md §3 exactly. **Capture paths into variables — never paste a real value inside a
-`<placeholder>`** (`<` / `>` are shell redirection and fail silently; this has bitten the project for
-real — OPERATIONS.md Playbook G). VERIFY the MELD.Raw mirror resolves before trusting it. The end state
-is `data/meld_train_manifest.jsonl` + `data/meld_dev_manifest.jsonl` (plain manifests; the dual-encoder
-cell needs NO acoustic priors).
+**First check for a cached extraction** — the slow part is `ffmpeg` extracting per-utterance audio
+(thousands of clips), not the download. If a prior box already backed it up, pull it and skip §3 entirely:
+
+```bash
+R=Avery11/audio-llm-mh-backup
+hf download "$R" --include "data/meld_*_manifest.jsonl" "audio/meld_*" --local-dir . --repo-type=model 2>/dev/null \
+  && echo "cached data found — skip the rest of Step 3" || echo "no cache — do the full §3"
+```
+
+If no cache: follow CLOUD_RUNBOOK.md §3 exactly. **Capture paths into variables — never paste a real
+value inside a `<placeholder>`** (`<` / `>` are shell redirection and fail silently; this has bitten the
+project for real — OPERATIONS.md Playbook G). VERIFY the MELD.Raw mirror resolves before trusting it.
+The end state is `data/meld_train_manifest.jsonl` + `data/meld_dev_manifest.jsonl` (plain manifests; the
+dual-encoder cell needs NO acoustic priors).
+
+**Then back the extraction up once**, so later boxes hit the cache path above instead of re-downloading
++ re-extracting (half a day → minutes):
+
+```bash
+hf upload "$R" data/meld_train_manifest.jsonl data/meld_train_manifest.jsonl --repo-type=model
+hf upload "$R" data/meld_dev_manifest.jsonl   data/meld_dev_manifest.jsonl   --repo-type=model
+hf upload "$R" MELD.Raw/train_audio audio/meld_train_audio --repo-type=model
+hf upload "$R" MELD.Raw/dev_audio   audio/meld_dev_audio   --repo-type=model
+```
 
 ## Step 4 — SMOKE TEST FIRST (gate, ~minutes)
 

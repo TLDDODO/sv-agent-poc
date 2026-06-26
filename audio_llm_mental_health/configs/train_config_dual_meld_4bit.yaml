@@ -22,7 +22,7 @@ eval_manifest: data/meld_dev_manifest.jsonl
 output_dir: outputs/dual_meld
 emotion_encoder: facebook/hubert-base-ls960
 disentangle_loss: cosine
-disentangle_lambda: 1.0
+disentangle_lambda: 100
 
 text_mask_prob: 0.0
 num_train_epochs: 3

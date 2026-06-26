@@ -1,0 +1,33 @@
+# Run on the H100 (1g.10gb MIG slice, 4-bit QLoRA). LoRA-PLACEMENT ATTRIBUTION -- audio-encoder-only arm.
+#
+# Sibling of train_config_meld_textmask1_llm_only_4bit.yaml. Identical recipe; the ONLY difference
+# is lora_config_path -> the adapter is scoped to audio_tower and the LLM decoder is frozen. See
+# that file's header and RP.md Future Work (LoRA-placement paragraph) for the 3-arm read-out.
+model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
+lora_config_path: configs/lora_config_audio_only.yaml
+
+train_manifest: data/meld_train_manifest.jsonl
+eval_manifest: data/meld_dev_manifest.jsonl
+
+output_dir: outputs/meld_tm1_audio_only
+num_train_epochs: 3
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+warmup_ratio: 0.03
+logging_steps: 10
+save_steps: 200
+max_target_length: 256
+seed: 42
+text_mask_prob: 1.0
+
+# RUNBOOK (run on the H100, AFTER scripts/check_target_modules.py passes):
+#   python scripts/train_lora.py --config configs/train_config_meld_textmask1_audio_only_4bit.yaml
+#   python scripts/eval_accuracy.py --adapter outputs/meld_tm1_audio_only/final \
+#       --manifest data/meld_dev_manifest.jsonl --sample 200 --seed 42 --audio-only
+#   python scripts/eval_accuracy.py --adapter outputs/meld_tm1_audio_only/final \
+#       --manifest data/meld_dev_manifest.jsonl --sample 200 --seed 42 --audio-only --silence
+#   python scripts/audio_ablation.py --adapter outputs/meld_tm1_audio_only/final \
+#       --manifest data/meld_dev_manifest.jsonl --audio-only \
+#       --indices 228,51,563,501,457,285,209,178,864,65,61,191,447,476,1034 \
+#       --out outputs/ablation_meld_tm1_audio_only.jsonl

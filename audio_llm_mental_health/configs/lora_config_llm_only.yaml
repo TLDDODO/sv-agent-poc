@@ -1,0 +1,20 @@
+# LoRA config -- LLM-DECODER-ONLY arm of the placement-attribution experiment (RP.md Future Work).
+#
+# Unlike configs/lora_config.yaml (bare component names q_proj/k_proj/v_proj/o_proj, which PEFT
+# suffix-matches and therefore LEAKS onto the audio_tower's identically-named q/k/v projections --
+# the bug documented at RP.md line 29), target_modules here is a single REGEX STRING. PEFT matches
+# a string-valued target_modules with re.fullmatch against each module's full dotted path, so the
+# `model\.language_model\.` prefix scopes the adapter strictly inside the LLM decoder and nothing
+# touches audio_tower. This is the clean "only the LLM may adapt; the audio encoder is frozen" arm:
+# if grounding still rises, the audio info was already present and the LLM re-arbitration is what
+# matters; if it does NOT, the encoder had to change too.
+#
+# PREFLIGHT: the `model.` prefix is derived from RP.md line 85, not verified against a live
+# checkpoint in this repo. Run scripts/check_target_modules.py on the GPU box BEFORE training --
+# it fails loud if this pattern matches 0 modules or leaks into audio_tower.
+r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+bias: none
+task_type: CAUSAL_LM
+target_modules: "model\\.language_model\\..*\\.(q_proj|k_proj|v_proj|o_proj)$"

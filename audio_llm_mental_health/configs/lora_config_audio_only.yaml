@@ -1,0 +1,17 @@
+# LoRA config -- AUDIO-ENCODER-ONLY arm of the placement-attribution experiment (RP.md Future Work).
+#
+# Mirror image of lora_config_llm_only.yaml: the regex scopes the adapter strictly INSIDE
+# audio_tower (Qwen2AudioEncoder, Whisper-style) and the LLM decoder stays frozen. Note the audio
+# attention block names its output projection `out_proj` (Whisper convention), NOT `o_proj` -- the
+# pattern lists out_proj so the audio arm gets full q/k/v/o coverage symmetric with the LLM arm's
+# q/k/v/o. This is the "only the encoder may adapt; the LLM is frozen" arm: if grounding rises here
+# the re-representation lives in the encoder; if it does not, the encoder alone can't produce it.
+#
+# PREFLIGHT: run scripts/check_target_modules.py on the GPU box before training -- it fails loud if
+# this pattern matches 0 modules or leaks into language_model.
+r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+bias: none
+task_type: CAUSAL_LM
+target_modules: "model\\.audio_tower\\..*\\.(q_proj|k_proj|v_proj|out_proj)$"

@@ -1,0 +1,19 @@
+# LoRA config -- BOTH arm of the placement-attribution experiment (RP.md Future Work).
+#
+# Union of the LLM-only and audio-only patterns: q/k/v/o on the LLM decoder AND q/k/v/out_proj on
+# the audio encoder, in one regex. The o_proj|out_proj alternation is safe because the LLM has no
+# out_proj and the audio tower has no o_proj, so neither name spuriously double-matches.
+#
+# This is the PROPER "both adapt" apex of the 3-arm comparison. Note it is NOT the same as the
+# existing outputs/meld_lora_textmask1 adapter: that one was trained with bare component names,
+# which suffix-matched audio q/k/v but MISSED audio out_proj -- i.e. a lopsided both. This config
+# is the clean, symmetric Both, so all three arms (llm_only / audio_only / both) differ only in
+# WHICH tower(s) adapt, with identical rank/alpha/dropout and identical training data.
+#
+# PREFLIGHT: run scripts/check_target_modules.py on the GPU box before training.
+r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+bias: none
+task_type: CAUSAL_LM
+target_modules: "model\\.(language_model|audio_tower)\\..*\\.(q_proj|k_proj|v_proj|o_proj|out_proj)$"

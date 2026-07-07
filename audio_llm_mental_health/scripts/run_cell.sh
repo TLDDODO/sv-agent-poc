@@ -141,6 +141,7 @@ if ! done_marker 10_data; then
       [[ -f MELD.Raw.tar.gz ]] || wget --tries=4 --waitretry=5 -O MELD.Raw.tar.gz \
         "https://web.eecs.umich.edu/~mihalcea/downloads/MELD.Raw.tar.gz" \
         || die "MELD mirror unreachable — get the current link from https://affective-meld.github.io/"
+      sha256sum MELD.Raw.tar.gz > outputs/meld_raw_sha256.txt   # data provenance for the run card
       tar xzf MELD.Raw.tar.gz
       tar xzf MELD.Raw/train.tar.gz -C MELD.Raw/
       tar xzf MELD.Raw/dev.tar.gz   -C MELD.Raw/
@@ -205,6 +206,54 @@ if ! done_marker 40_eval; then
 fi
 
 ############################################################################
+# Stage 45 — RUN CARD: pin exactly what produced this number (commit, config
+# hash, library versions, GPU, data checksum, p-value). The card is what makes
+# the N/15 reproducible instead of anecdotal.
+############################################################################
+if ! done_marker 45_card; then
+  say "[45] run card + significance"
+  pip freeze > "outputs/pip_freeze_${CELL}.txt" 2>/dev/null || true
+  python scripts/significance.py --k "$(grep -o 'tracking: [0-9]*' "outputs/RESULT_${CELL}.txt" | tr -dc '0-9')" \
+    --n 15 | tee -a "outputs/RESULT_${CELL}.txt" || true
+  CELL="$CELL" TRAIN_CONFIG="$TRAIN_CONFIG" EVAL_FLAGS="$EVAL_FLAGS" RULER_INDICES="$RULER_INDICES" \
+  HF_BACKUP_REPO="$HF_BACKUP_REPO" python - > "outputs/run_card_${CELL}.json" <<'PY'
+import hashlib, json, os, platform, subprocess, sys, time
+def sh(cmd):
+    try: return subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30).stdout.strip()
+    except Exception: return ""
+def ver(mod):
+    try: return __import__(mod).__version__
+    except Exception: return None
+cfg = os.environ["TRAIN_CONFIG"]
+card = {
+    "cell": os.environ["CELL"],
+    "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    "git_commit": sh("git rev-parse HEAD"),
+    "git_dirty": bool(sh("git status --porcelain")),
+    "train_config": cfg,
+    "train_config_sha256": hashlib.sha256(open(cfg, "rb").read()).hexdigest(),
+    "ruler_indices": os.environ["RULER_INDICES"],
+    "eval_flags": os.environ["EVAL_FLAGS"],
+    "result": open(f"outputs/RESULT_{os.environ['CELL']}.txt").read().strip(),
+    "meld_raw_sha256": (open("outputs/meld_raw_sha256.txt").read().split()[0]
+                        if os.path.exists("outputs/meld_raw_sha256.txt") else "cache-hit (see backup repo revision)"),
+    "python": platform.python_version(),
+    "versions": {m: ver(m) for m in ("torch", "transformers", "peft", "bitsandbytes", "accelerate")},
+    "gpu": sh("nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader"),
+    "hostname": platform.node(),
+    "backup_repo": os.environ["HF_BACKUP_REPO"],
+}
+try:
+    from huggingface_hub import HfApi
+    card["backup_repo_revision"] = HfApi().repo_info(os.environ["HF_BACKUP_REPO"], repo_type="model").sha
+except Exception:
+    pass
+json.dump(card, sys.stdout, indent=2)
+PY
+  mark 45_card
+fi
+
+############################################################################
 # Stage 50 — BACKUP EVERYTHING immediately
 ############################################################################
 if ! done_marker 50_backup; then
@@ -212,6 +261,8 @@ if ! done_marker 50_backup; then
   [[ -d "$ADAPTER_DIR" ]] && hf upload "$HF_BACKUP_REPO" "$ADAPTER_DIR" "adapters/${CELL}/final" --repo-type model
   hf upload "$HF_BACKUP_REPO" "$EVAL_OUT"                  "results/$(basename "$EVAL_OUT")"     --repo-type model
   hf upload "$HF_BACKUP_REPO" "outputs/RESULT_${CELL}.txt" "results/RESULT_${CELL}.txt"          --repo-type model
+  hf upload "$HF_BACKUP_REPO" "outputs/run_card_${CELL}.json"  "results/run_card_${CELL}.json"   --repo-type model
+  [[ -f "outputs/pip_freeze_${CELL}.txt" ]] && hf upload "$HF_BACKUP_REPO" "outputs/pip_freeze_${CELL}.txt" "results/pip_freeze_${CELL}.txt" --repo-type model
   [[ -f "outputs/${CELL}_train.log" ]] && hf upload "$HF_BACKUP_REPO" "outputs/${CELL}_train.log" "logs/${CELL}_train.log" --repo-type model
   mark 50_backup
 fi

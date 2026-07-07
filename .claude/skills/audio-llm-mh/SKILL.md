@@ -19,13 +19,20 @@ audio ("modality collapse"). Measurement: the **donor-swap tracking ruler** — 
 rows; swap in a donor's audio, count how often the predicted label follows the donor's audio
 rather than the transcript. Every intervention lands in one gradient table in `RP.md`:
 
-| cell | intervention level | tracking |
-|---|---|---|
-| baseline 4-bit | none | 3/15 |
-| textmask1 | data (mask transcript) | 9/15 |
-| LIME part B | data (decoupled synth) | 13/15 |
-| ESD | data (acted, decoupled) | 15/15 |
-| **dual_meld** | **objective (dual-encoder + disentangle λ=100)** | **MISSING — the run to produce** |
+| cell | intervention level | tracking | p vs chance |
+|---|---|---|---|
+| baseline bf16 | none (precision differs — NOT the anchor) | 2/15 | 0.65 |
+| baseline 4-bit | none — **the apples-to-apples anchor** | 3/15 | 0.36 |
+| grounded (CoT+mask0.3) | supervision | 7/15 | 2.7e-3 |
+| textmask1 | data (mask transcript fully) | 9/15 | 5.4e-5 |
+| textmask1_acoustic | data+supervision (adds nothing) | 9/15 | 5.4e-5 |
+| LIME part B | data (no transcript by construction) | 13/15 | 8.2e-10 |
+| ESD | data (parallel text, acted) | 100/100 (≡15/15) | 1.3e-70 |
+| **dual_meld** | **objective (dual-encoder + disentangle λ=100)** | **MISSING — the run to produce** | — |
+
+Machine-readable version with configs/adapters/index-sets: `results/ledger.jsonl` (CI re-derives
+its p-values). p-values come from `scripts/significance.py` (exact binomial, null 1/7 MELD/LIME,
+1/5 ESD) — never hand-compute them again.
 
 Producing one cell = rent a single GPU (~$2, 1–2 h), run the pipeline, get `N/15`, write it back.
 
@@ -97,14 +104,59 @@ Cell parameterization (env vars; defaults = dual_meld):
    `<placeholder>` syntax in shell (redirection eats it silently — OPERATIONS.md Playbook G).
    On Deep-Learning-VM images use the preinstalled torch; a fresh venv hides it.
 
+## Reproducibility stack (what exists at each layer — keep all of it green)
+
+- **Environment**: `requirements.txt` pins `transformers==5.12.1` exactly; per-run
+  `outputs/pip_freeze_<cell>.txt` captures the box's real env (uploaded with the backup).
+- **Data**: manifests store relative paths (portability contract, CI-tested); the HF cache
+  under `data/` + `audio/` includes the CSVs so any box can rebuild manifests in seconds;
+  `outputs/meld_raw_sha256.txt` records the tarball checksum at download time.
+- **Run provenance**: the pipeline's stage 45 emits `outputs/run_card_<cell>.json` — git
+  commit, config sha256, library versions, GPU/driver, data checksum, backup-repo revision,
+  the result, its p-value. Training itself also writes `run_metadata.jsonl` + `metrics.jsonl`
+  per run (append-only: old crashed-run lines persist; read timestamps, not just steps).
+- **Claims**: `RP.md` (narrative truth) ↔ `results/ledger.jsonl` (machine index) ↔
+  `scripts/significance.py` (the math). CI (`.github/workflows/repro-guards.yml`) fails the
+  push if the ledger's p-values don't re-derive, the ruler indices drift between files, the
+  manifest contract breaks, or a config stops parsing.
+- **AI continuity**: repo-root `CLAUDE.md` auto-loads into every future Claude session and
+  points here. Deliberately NO wandb/MLflow: each new tracked service adds a credential
+  dependency, and credentials are this project's proven #1 failure mode — the run card +
+  HF backup achieve the same provenance on infrastructure the project already trusts.
+
+## Research-layer traps (deep knowledge that changes results, not just workflow)
+
+- **Ruler index sets differ per corpus** — do not mix them: MELD uses
+  `228,51,563,501,457,285,209,178,864,65,61,191,447,476,1034` over `meld_dev_manifest`;
+  LIME uses `51,61,65,178,191,209,228,285,447,457,476,501,563,864,1116` (note 1034→1116)
+  over `lime_dev_manifest`; ESD used a 100-row `random.Random(42).sample(range(1750),100)`.
+- **The PEFT `target_modules` suffix-match trap** (RP.md Core Finding correction): with
+  list-valued `target_modules: [q_proj,k_proj,v_proj,o_proj]`, PEFT matches by component-name
+  suffix across the WHOLE model — so every adapter trained so far also LoRA'd the audio
+  tower's q/k/v (only `out_proj` escaped). Any LoRA-placement arm needs path-qualified regex
+  strings (see RP.md Future Work for the exact patterns) and a
+  `scripts/check_target_modules.py` sanity pass before training.
+- **Probe noise floor**: a single fixed-fold-seed AUC point on ~200 rows cannot support any
+  claim under a 0.05–0.07 gap — three such readings were already retracted after 20-seed
+  `probe_robustness.py` sweeps. Any "this stage looks elevated/depressed" reading needs the
+  sweep (and ideally a fresh `--seed` re-extract) first.
+- **Single 200-row accuracy points carry ~3.4% SE** — a 0.005 delta is noise, not signal.
+- **Absolute accuracy is not comparable across corpora** (class balance differs); only the
+  audio-vs-silence delta and per-class recall shapes are read across regimes.
+- **Cross-eval-regime numbers are not comparable**: audio-only cells' absolute accuracy lives
+  on a different task framing than with-transcript cells' — compare within regime.
+
 ## Write-back (after the pipeline prints RESULT)
 
 `outputs/RESULT_<cell>.txt` holds the `tracking: N/15` line (also backed up to
 `results/RESULT_<cell>.txt` on HF). Slot it into RP.md's gradient table following the project's
 discipline: exact ratio, exact-binomial test vs the 1/7 null, which cell it's compared against and
 on what axis, and the honest limit (for dual_meld: it isolates objective-level vs data-level on
-the same ruler; a single 15-row number carries no causal claim beyond that). Commit on
-`claude/audio-llm-mental-health-setup-pjrkc0`.
+the same ruler; a single 15-row number carries no causal claim beyond that). In the same
+commit: flip the cell's row in `results/ledger.jsonl` from `pending` to `published` with the
+real `tracking_k` and `p_exact` (from `scripts/significance.py`), and copy
+`run_card_<cell>.json` from the HF backup into `results/`. CI will verify the ledger math.
+Commit on `claude/audio-llm-mental-health-setup-pjrkc0`.
 
 ## Adding a new arm
 

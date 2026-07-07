@@ -1,5 +1,10 @@
 # Cloud-GPU Runbook — reproducing the dual-encoder (objective-level) cell
 
+> **Automated:** `bash scripts/run_cell.sh` runs §0–§7 below as ONE resumable pipeline with
+> credential preflight (proves HF write access and RunPod teardown ability BEFORE spending
+> GPU-hours), cache-first data, seed-before-train backup, and auto/acked teardown.
+> See `.claude/skills/audio-llm-mh/SKILL.md`. The sections below remain the manual reference.
+
 Goal: produce the one missing result — the **dual-encoder + disentanglement** run on MELD
 (`outputs/dual_meld`), its donor-swap **tracking** number, and slot it into RP.md's gradient
 table next to the data-level cells (baseline 3/15, textmask1 9/15, LIME 13/15, ESD 15/15).

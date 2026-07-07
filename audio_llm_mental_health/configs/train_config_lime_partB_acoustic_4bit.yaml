@@ -1,0 +1,79 @@
+# Run on the H100. 4-bit QLoRA LIME Part B run: acoustic-grounded CoT, audio-only by construction.
+# The mirror of train_config_meld_textmask1_acoustic_4bit.yaml at the OTHER end of the gradient.
+#
+# Purpose (RP.md "Core Finding"): LIME's 13/15 donor-tracking number came from PLAIN templated CoT
+# (build_synthetic_cot_target) on the no-transcript corpus. Just as the MELD 9/15 number was the
+# ceiling of *plain-CoT* decoupling rather than of decoupling per se, LIME's 13/15 may be capped by
+# the plain CoT, not by the corpus. This config tests the strongest combination on LIME: acoustic-
+# grounded CoT on top of LIME's already-complete data-level decoupling (no transcript at all).
+#
+# Two changes vs train_config_lime_partB_4bit.yaml, nothing else:
+#   1. train/eval manifests -> *_acoustic.jsonl variants (built by running extract_acoustic_priors.py
+#      on the SAME 12k-sample LIME manifests this project already produced -- see PREREQ below). With
+#      the per-clip 'acoustic' field present, data/meld_dataset.py picks build_decoupled_cot_target.
+#   2. output_dir -> a new dir so the plain-CoT lime_lora_plain adapter is untouched.
+# text_mask_prob stays 0.0 (a no-op here -- LIME rows have empty transcripts, so include_transcript
+# is False for every row regardless). The acoustic-grounded target then becomes "Acoustic evidence:
+# the delivery has <REAL measured cue>. Judging from the delivery alone, the state is consistent
+# with <emotion>." -- the cue is measured per-clip, NOT a per-emotion constant, so the model must
+# decode the audio to reach the target, AND there is no transcript shortcut (there never was on LIME).
+#
+# Read-out (same audio-only ruler as lime_lora_plain): if donor tracking rises ABOVE the plain-CoT
+# 13/15, acoustic-grounded CoT adds grounding on top of LIME's full decoupling. If it lands at
+# ~13/15, the plain-CoT number WAS the corpus ceiling and the acoustic CoT adds nothing once the
+# transcript is already entirely absent. Read together with the MELD acoustic-CoT cell (its mirror
+# at the weak-natural end), this is the cross-corpus test of "does acoustic CoT add on top of
+# decoupling, and does the answer depend on the decoupling degree?"
+# Compare to: 13/15 (LIME plain CoT, the number under audit here), 9/15 (MELD plain CoT + mask 1.0),
+# 15/15 (ESD-plain). DO NOT compare absolute accuracy across corpora -- delta and shape only.
+model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
+lora_config_path: configs/lora_config.yaml
+
+# *_acoustic.jsonl: the SAME 12k-sample LIME rows as the plain manifests, plus a per-clip 'acoustic'
+# field. Build once on the box (CPU only, no GPU; ~12k + ~1.2k librosa decodes):
+#   python scripts/extract_acoustic_priors.py \
+#       --in data/lime_train_manifest.jsonl --out data/lime_train_manifest_acoustic.jsonl
+#   python scripts/extract_acoustic_priors.py \
+#       --in data/lime_dev_manifest.jsonl   --out data/lime_dev_manifest_acoustic.jsonl
+train_manifest: data/lime_train_manifest_acoustic.jsonl
+eval_manifest: data/lime_dev_manifest_acoustic.jsonl
+
+output_dir: outputs/lime_lora_acoustic
+text_mask_prob: 0.0
+num_train_epochs: 3
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+warmup_ratio: 0.03
+logging_steps: 10
+save_steps: 200
+max_target_length: 256
+seed: 42
+
+# --------------------------------------------------------------------------------------------------
+# RUNBOOK -- LIME acoustic-CoT run + the PINNED eval protocol (H100, tmux, pinned empty MIG slice).
+#
+# PREREQ -- same /data routing as every run on this box. Pre-symlink output_dir to /data FIRST:
+#   mkdir -p /data/user_dirs/$USER/outputs/lime_lora_acoustic
+#   ln -sfn /data/user_dirs/$USER/outputs/lime_lora_acoustic outputs/lime_lora_acoustic
+# Then build the acoustic manifests (PREREQ block above) if not already present.
+#
+# 1. Train:
+#      python scripts/train_lora.py --config configs/train_config_lime_partB_acoustic_4bit.yaml
+#
+# 2. Audio-only ruler, with and without silence. 200-row dev, seed 42, greedy. DELTA is the signal,
+#    NOT absolute accuracy (LIME's class balance differs from MELD/ESD -- delta and shape only):
+#      python scripts/eval_accuracy.py --adapter outputs/lime_lora_acoustic/final \
+#          --manifest data/lime_dev_manifest.jsonl --sample 200 --seed 42 --audio-only
+#      python scripts/eval_accuracy.py --adapter outputs/lime_lora_acoustic/final \
+#          --manifest data/lime_dev_manifest.jsonl --sample 200 --seed 42 --audio-only --silence
+#
+# 3. Donor-swap tracking on the SAME pinned 15-row LIME index set as lime_lora_plain (apples-to-
+#    apples against the 13/15 this run audits), under --audio-only:
+#      python scripts/audio_ablation.py --adapter outputs/lime_lora_acoustic/final \
+#          --manifest data/lime_dev_manifest.jsonl --audio-only \
+#          --indices 51,61,65,178,191,209,228,285,447,457,476,501,563,864,1116 \
+#          --out outputs/ablation_lime_acoustic.jsonl
+#
+# Record delta, per-class shape, and tracking ratio in RP.md "Core Finding" next to the LIME plain-CoT
+# 13/15 and the MELD acoustic-CoT cell -- the cross-corpus "acoustic CoT on top of decoupling" test.

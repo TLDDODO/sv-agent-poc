@@ -1,0 +1,24 @@
+# CPU-only reproducibility guards for audio_llm_mental_health.
+# CI can't train a cell, but it CAN pin everything a stale claim could drift on:
+# the significance math vs RP.md's published values, the results ledger's internal
+# consistency, the pinned donor-swap ruler indices across files, the manifest
+# builder's relative-path contract, config parseability, and pipeline shell syntax.
+name: repro-guards
+on:
+  push:
+  pull_request:
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pandas pyyaml
+      - name: pipeline shell syntax
+        run: bash -n audio_llm_mental_health/scripts/run_cell.sh
+      - name: python syntax (no imports, so torch not needed)
+        run: python -m compileall -q audio_llm_mental_health/scripts audio_llm_mental_health/data audio_llm_mental_health/tests
+      - name: reproducibility guards
+        run: python audio_llm_mental_health/tests/test_repro_guards.py

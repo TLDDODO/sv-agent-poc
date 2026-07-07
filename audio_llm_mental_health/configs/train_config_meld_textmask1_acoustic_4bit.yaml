@@ -1,0 +1,88 @@
+# Run on the H100. 4-bit QLoRA MELD run: acoustic-grounded CoT + text_mask_prob=1.0 -- the cell
+# that audits the "natural speech tops out at 9/15" claim.
+#
+# Purpose (RP.md "Core Finding"): the 9/15 donor-tracking number for natural MELD came from ONE
+# configuration only -- PLAIN templated CoT (build_synthetic_cot_target) under text_mask_prob=1.0
+# (train_config_meld_textmask1_4bit.yaml). The supervision-level fix (acoustic-grounded CoT +
+# text_mask_prob=0.3) was measured separately and reached 7/15. The strongest combination on paper
+# -- acoustic-grounded CoT AND full transcript removal -- was never run, so "natural speech tops out
+# at 9/15" is premature: it is the ceiling of plain-CoT decoupling, not of decoupling per se.
+#
+# This config is that missing combination. Two changes vs train_config_meld_textmask1_4bit.yaml,
+# nothing else:
+#   1. train/eval manifests -> the *_acoustic.jsonl variants (carry the per-clip 'acoustic' field
+#      from scripts/extract_acoustic_priors.py). With that field present, data/meld_dataset.py picks
+#      build_decoupled_cot_target instead of build_synthetic_cot_target.
+#   2. output_dir -> a new dir so the plain-CoT textmask1 adapter is untouched.
+# text_mask_prob stays 1.0, so include_transcript=False for every row. The acoustic-grounded target
+# then becomes "Acoustic evidence: the delivery has <REAL measured cue>. Judging from the delivery
+# alone, the state is consistent with <emotion>." -- the cue is measured per-clip (pitch / loudness-
+# variance / pace tertiles), NOT a per-emotion constant, so the target is unreachable without
+# decoding the audio, AND there is no transcript shortcut. This is the strongest data+supervision
+# decoupling pressure this project can apply to natural-acoustic MELD.
+#
+# Read-out (same in-distribution ruler as the plain textmask1 cell -- audio-only, never with a
+# transcript, since this model also never saw one): if donor tracking rises ABOVE the plain-CoT
+# 9/15, "natural speech tops out at 9/15" is FALSE -- it was the plain CoT, not the corpus, that
+# capped it, and acoustic-grounded CoT adds further grounding on top of decoupling. If it lands at
+# ~9/15, the plain-CoT result WAS the natural-speech ceiling and the acoustic CoT adds nothing once
+# the transcript is already fully gone. Either outcome is a real, reportable answer to the audit.
+# Compare to: 2/15 (bf16-plain baseline), 3/15 (4-bit-plain baseline), 7/15 (acoustic CoT + mask
+# 0.3), 9/15 (plain CoT + mask 1.0, the number under audit), 13/15 (LIME), 15/15 (ESD-plain).
+model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
+lora_config_path: configs/lora_config.yaml
+
+# *_acoustic.jsonl: the same MELD rows as the plain manifests, plus a per-clip 'acoustic' field.
+# Build once on the box if not already present (the supervision-fix run already produced these):
+#   python scripts/extract_acoustic_priors.py \
+#       --in data/meld_train_manifest.jsonl --out data/meld_train_manifest_acoustic.jsonl
+#   python scripts/extract_acoustic_priors.py \
+#       --in data/meld_dev_manifest.jsonl   --out data/meld_dev_manifest_acoustic.jsonl
+train_manifest: data/meld_train_manifest_acoustic.jsonl
+eval_manifest: data/meld_dev_manifest_acoustic.jsonl
+
+output_dir: outputs/meld_lora_textmask1_acoustic
+num_train_epochs: 3
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+warmup_ratio: 0.03
+logging_steps: 10
+save_steps: 200
+max_target_length: 256
+seed: 42
+
+# Full transcript removal, same as the plain textmask1 cell -- the acoustic CoT is the only changed
+# variable relative to that run.
+text_mask_prob: 1.0
+
+# --------------------------------------------------------------------------------------------------
+# RUNBOOK -- acoustic-grounded CoT + text_mask_prob=1.0 MELD run + the PINNED eval protocol (H100,
+# tmux, pinned empty MIG slice -- see OPERATIONS.md, ./scripts/find_free_mig_slice.sh).
+#
+# PREREQ -- same /data routing as every run on this box ($HOME is the shared 58G disk; /data is ~4T).
+# Pre-symlink output_dir to /data FIRST so the ~2.2G of checkpoints don't land on $HOME:
+#   mkdir -p /data/user_dirs/$USER/outputs/meld_lora_textmask1_acoustic
+#   ln -sfn /data/user_dirs/$USER/outputs/meld_lora_textmask1_acoustic outputs/meld_lora_textmask1_acoustic
+#
+# 1. Train (writes outputs/meld_lora_textmask1_acoustic/final; all other adapters untouched):
+#      python scripts/train_lora.py --config configs/train_config_meld_textmask1_acoustic_4bit.yaml
+#
+# 2. In-distribution ruler -- audio-only prompt, with and without silence. 200-row dev, seed 42,
+#    greedy. The DELTA (audio-only minus silence-only) is the grounding signal, NOT absolute acc:
+#      python scripts/eval_accuracy.py --adapter outputs/meld_lora_textmask1_acoustic/final \
+#          --manifest data/meld_dev_manifest.jsonl --sample 200 --seed 42 --audio-only
+#      python scripts/eval_accuracy.py --adapter outputs/meld_lora_textmask1_acoustic/final \
+#          --manifest data/meld_dev_manifest.jsonl --sample 200 --seed 42 --audio-only --silence
+#    Note: the eval manifest can be the PLAIN dev manifest -- eval never uses the 'acoustic' field
+#    (it only shapes the training CoT target), so plain vs acoustic dev manifest give the same eval.
+#
+# 3. Donor-swap tracking on the SAME recorded 15-row index set as every MELD run (apples-to-apples
+#    against the 9/15 plain-CoT number this run audits), under --audio-only:
+#      python scripts/audio_ablation.py --adapter outputs/meld_lora_textmask1_acoustic/final \
+#          --manifest data/meld_dev_manifest.jsonl --audio-only \
+#          --indices 228,51,563,501,457,285,209,178,864,65,61,191,447,476,1034 \
+#          --out outputs/ablation_meld_textmask1_acoustic.jsonl
+#
+# Record delta, per-class shape, and tracking ratio in RP.md "Core Finding" next to the plain-CoT
+# 9/15 -- this is the cell that confirms or refutes "natural speech tops out at 9/15."

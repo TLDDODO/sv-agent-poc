@@ -1,0 +1,36 @@
+# Run on the H100 (1g.10gb MIG slice, 4-bit QLoRA). DUAL-ENCODER + disentanglement on MELD --
+# the architecture/objective-level intervention (RP.md Approach 1 / "The controlled comparison").
+#
+# MELD is the coupled, transcript-shortcut corpus where collapse is strongest -- the place the
+# objective-level fix is meant to counteract it, the direct analogue of the data-level text_mask
+# runs. Same MELD data, same 4-bit QLoRA LLM recipe as train_config_meld_textmask1_4bit.yaml; the
+# only additions are the emotion tower + the disentanglement loss. Keep text_mask_prob at 0.0 here:
+# the whole point is to counteract the shortcut at the OBJECTIVE level WITHOUT removing it at the
+# data level, so the two intervention families can be compared on the same ruler.
+#
+# Evaluate with the SAME pinned ruler used for every other cell once trained (donor-swap tracking on
+# the fixed 15-row set + audio-vs-silence delta), so the resulting tracking number drops straight
+# into the gradient table next to the data-level cells (baseline 3/15, textmask1 9/15, LIME 13/15,
+# ESD 15/15). NOTE: eval needs the emotion projection loaded too (outputs/dual_meld/final/
+# emotion_proj.pt) -- a dual-encoder eval path is the next script to add after the smoke passes.
+model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
+lora_config_path: configs/lora_config.yaml
+
+train_manifest: data/meld_train_manifest.jsonl
+eval_manifest: data/meld_dev_manifest.jsonl
+
+output_dir: outputs/dual_meld
+emotion_encoder: facebook/hubert-base-ls960
+disentangle_loss: cosine
+disentangle_lambda: 100
+
+text_mask_prob: 0.0
+num_train_epochs: 3
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+warmup_ratio: 0.03
+logging_steps: 10
+save_steps: 200
+max_target_length: 256
+seed: 42

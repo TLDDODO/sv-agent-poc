@@ -60,3 +60,9 @@ No critical consistency issues detected in minimum real-PDBe HPC PoC.
 - Integrate PDBe-SIFTS residue-level mapping.
 - Add literature PMID retrieval and claim-level citation checks.
 - Package the pipeline as a cleaner CLI or MCP tool.
+
+## Other projects in this repo
+
+- `audio_llm_mental_health/`: separate PoC, explainable mental-state assessment via an
+  audio-LLM fine-tuned with LoRA to emit chain-of-thought reasoning. See its own README and
+  `RP.md`. Unrelated to the structural-biology pipeline above.

@@ -1,0 +1,20 @@
+# Install on the H100 environment, not in this sandbox (no GPU / no network here).
+# torch: pick a build matching the H100's NVIDIA driver's max supported CUDA version
+# (check `nvidia-smi`'s "CUDA Version" field), e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu121
+torch>=2.2
+# Pinned exactly: Qwen2AudioProcessor's call signature changed across transformers majors
+# (5.12.1 takes audio=<np.ndarray|list[np.ndarray]>, not the audios=<path> used by older
+# releases) -- see scripts/train_lora.py and scripts/infer.py, which target this version.
+transformers==5.12.1
+accelerate>=0.34
+peft>=0.12
+# 4-bit (QLoRA-style) base-model loading -- see data/model_loading.py and RP.md "Environment"
+# (per-student GPU allocation is a ~9.75 GiB MIG slice, too small for bf16 weights).
+bitsandbytes>=0.43
+datasets>=2.20
+huggingface_hub>=0.24
+librosa>=0.10
+soundfile>=0.12
+pandas>=2.2
+pyyaml>=6.0

@@ -1,0 +1,35 @@
+# SMOKE test for the dual-encoder + disentanglement loop (scripts/train_dual_encoder.py).
+# Validates the whole mechanism on a handful of real MELD rows before a slice is committed:
+#   * EmotionTower loads + projects (already smoke-passed standalone)
+#   * the forward#1 (model's own audio merge) -> prepend emotion token -> forward#2 path runs
+#   * lm_loss and dis_loss are both finite and the combined loss backpropagates through BOTH the
+#     LLM LoRA and the emotion projection head without OOM on a 1g.10gb slice
+# max_steps caps it at 3 optimizer steps (~6 rows) so it finishes in a minute or two. Uses the full
+# MELD train manifest (no dependency on a smoke subset existing) since max_steps bounds the work.
+#
+#   CUDA_VISIBLE_DEVICES=MIG-<free-slice> python scripts/train_dual_encoder.py \
+#       --config configs/train_config_dual_smoke.yaml
+#
+# PASS = three "step N loss ... (lm ... dis ...)" lines with finite numbers, no traceback, and a
+# "saved adapter + emotion projection" line. If it OOMs, drop per_device_train_batch_size to 1.
+model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
+lora_config_path: configs/lora_config.yaml
+
+train_manifest: data/meld_train_manifest.jsonl
+eval_manifest: data/meld_dev_manifest.jsonl
+
+output_dir: outputs/dual_smoke
+emotion_encoder: facebook/hubert-base-ls960
+disentangle_loss: cosine        # 'cosine' (per-sample) or 'decorrelation' (Barlow-Twins batch-level)
+disentangle_lambda: 1.0
+
+max_steps: 3
+num_train_epochs: 1
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 1
+learning_rate: 1.0e-4
+warmup_ratio: 0.0
+logging_steps: 1
+save_steps: 1000
+max_target_length: 256
+seed: 42

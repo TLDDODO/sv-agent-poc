@@ -1,0 +1,110 @@
+# Run on the H100. LIME-440K Part B (English) -- the strictest cell of the data-level gradient
+# (RP.md "Approach" point 2, "Data-level, a three-tier gradient"; "Open premises", LIME bullet).
+#
+# Where this sits in the gradient: MELD (transcript present AND predictive) -> ESD (transcript
+# present but uninformative, same sentence across 5 emotions) -> LIME Part B (NO transcript at all).
+# Part B's `text` field is null in 100% of the public release (confirmed exhaustively, see RP.md
+# "Open premises"), so build_lime_manifest.py writes transcript:"" for every row and
+# data/meld_dataset.py forces include_transcript=False whenever the transcript is empty -- the model
+# trains audio-only by CONSTRUCTION here, not via the probabilistic text_mask_prob masking MELD
+# needed. This is structurally the same audio-only regime as the MELD text_mask_prob=1.0 causal
+# cell, reached through the data instead of through masking; text_mask_prob below is therefore a
+# no-op (kept at 0.0 for clarity, not because masking does anything when there's no text to mask).
+#
+# Precision: load is hardcoded 4-bit nf4 in data/model_loading.py (the MIG slice can't hold bf16),
+# so this run is automatically the SAME 4-bit regime as the MELD text_mask_prob=1.0 cell and the
+# 4-bit MELD baseline -- the apples-to-apples precision the gradient comparison needs.
+#
+# Read-out (same ruler, RP.md "Core Finding"): if removing the transcript ENTIRELY at the data
+# level also grounds (audio-only-vs-silence delta clearly positive, donor-swap tracking well above
+# the 3/15 collapsed 4-bit baseline), the data-level decoupling effect holds at the strict end of
+# the gradient too, not just under ESD's strong acoustics or MELD's masking. LIME is TTS-synthesized
+# (a known synthetic-vs-natural prosody caveat, RP.md "Open premises"), so it is the strict-decoupling
+# supplement to ESD, not a natural-speech result.
+model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
+lora_config_path: configs/lora_config.yaml
+
+train_manifest: data/lime_train_manifest.jsonl
+eval_manifest: data/lime_dev_manifest.jsonl
+
+output_dir: outputs/lime_lora_plain
+# No-op here (Part B has no transcript to mask); kept explicit. Audio-only is enforced by the
+# empty-transcript path in data/meld_dataset.py, independent of this value.
+text_mask_prob: 0.0
+num_train_epochs: 3
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+warmup_ratio: 0.03
+logging_steps: 10
+save_steps: 200
+max_target_length: 256
+seed: 42
+
+# --------------------------------------------------------------------------------------------------
+# RUNBOOK -- LIME Part B run + the PINNED eval protocol (run on the H100, in tmux, on a pinned
+# empty MIG slice -- prefer a high-numbered slice, NOT the default GI 7; see OPERATIONS.md and
+# ./scripts/find_free_mig_slice.sh).
+#
+# PREREQ -- where big files go. $HOME (/dev/sda1) is only ~58G AND shared with every other user's
+# home + the OS, so it reads ~100% full easily; /data is ~4T. The HF cache is already on /data via
+# HF_HOME=/data/user_dirs/$USER/hf_cache (check: echo $HF_HOME), so the DOWNLOAD is fine. The trap is
+# RELATIVE paths: a `tar -C somedir/` or a config `output_dir: outputs/...` silently writes under the
+# repo on the tiny $HOME disk and 100%-fills it mid-run ("No space left on device"). So below, every
+# big artifact -- the extraction, the re-encoded audio, the run's outputs -- is pinned to /data
+# explicitly. See OPERATIONS.md Playbook B.
+#
+# 0. Get the audio once (per the dataset card; ~big archive, do it in tmux). Captured into a
+#    variable, not pasted by hand -- a literal "<path printed above>" placeholder here would be
+#    parsed by the shell as redirection, not text to replace (see OPERATIONS.md Playbook G). Extract
+#    to /data, NOT $HOME -- the unpacked wavs are far too big for the 58G $HOME disk. (Already
+#    downloaded once? skip the python line; $ARCHIVE / the cached tar.gz is reused, not re-fetched.)
+#      ARCHIVE=$(python -c "from huggingface_hub import hf_hub_download as d; \
+#          print(d('zhaoxiaoxian/LIME-440K_CogAudio-LLM','PartB_wav_en.tar.gz',repo_type='dataset'))")
+#      echo "$ARCHIVE"
+#      mkdir -p /data/user_dirs/$USER/lime_partB
+#      tar -xzf "$ARCHIVE" -C /data/user_dirs/$USER/lime_partB/
+#
+# 1. Build a REPRESENTATIVE ~12k-row manifest (matches MELD/ESD scale and fits the slice's GPU
+#    budget; the full ~96k Part B is ~10x bigger and ~90h to train on the slice -- not worth it for
+#    this cell). --sample re-encodes only the sampled rows, so this step is ~12k resamples, not 96k.
+#    Both --audio-root and --audio-out-dir stay on /data. NOTE: --audio-root points ONE LEVEL DOWN,
+#    into the unpacked emotion_alm_wav_en_0206/ subdir, because the JSON wav_path field is relative
+#    to inside it (e.g. /output_1_1_output/medium/...wav), not to the extraction root:
+#      python scripts/build_lime_manifest.py \
+#          --audio-root /data/user_dirs/$USER/lime_partB/emotion_alm_wav_en_0206 --sample 12000 \
+#          --audio-out-dir /data/user_dirs/$USER/lime_audio --train-out data/lime_train_manifest.jsonl \
+#          --dev-out data/lime_dev_manifest.jsonl --dev-frac 0.1
+#    Check the printed label summary: if any LIME label is outside MELD's 7-class set, it's flagged
+#    (extend EMOTION_REMAP only if you later train MELD+LIME together; for this stand-alone run the
+#    eval handles whatever classes appear).
+#
+# 2. Train. output_dir below is the RELATIVE `outputs/lime_lora_plain` (kept relative so the config
+#    stays portable / username-free). Pre-symlink it to /data FIRST so the ~2.2G of checkpoints land
+#    on /data, not the 58G $HOME disk -- otherwise a save mid-run can 100%-fill $HOME:
+#      mkdir -p /data/user_dirs/$USER/outputs/lime_lora_plain
+#      ln -sfn /data/user_dirs/$USER/outputs/lime_lora_plain outputs/lime_lora_plain
+#      python scripts/train_lora.py --config configs/train_config_lime_partB_4bit.yaml
+#
+# 3. In-distribution ruler -- audio-only prompt (the SAME prompt the model trained on, since every
+#    row was audio-only), with and without silence. The DELTA (audio-only minus silence-only) is the
+#    grounding signal, NOT the absolute accuracy. Use a fixed 200-row dev sample, seed 42, greedy:
+#      python scripts/eval_accuracy.py --adapter outputs/lime_lora_plain/final \
+#          --manifest data/lime_dev_manifest.jsonl --sample 200 --seed 42 --audio-only
+#      python scripts/eval_accuracy.py --adapter outputs/lime_lora_plain/final \
+#          --manifest data/lime_dev_manifest.jsonl --sample 200 --seed 42 --audio-only --silence
+#    DO NOT compare these absolute numbers to MELD's/ESD's -- different corpus and class set. Compare
+#    the audio-vs-silence DELTA and the per-class recall SHAPE (does silencing collapse predictions
+#    onto one class, the way it did 191/200->neutral in the MELD text_mask_prob=1.0 cell?).
+#
+# 4. Donor-swap tracking, --audio-only so the prompt matches training. Pin a fixed 15-row index set
+#    FIRST and record it here + in RP.md (same discipline as the MELD 15-row set), so the ratio is
+#    reproducible. N below = number of lines in data/lime_dev_manifest.jsonl (wc -l):
+#      IDX=$(python -c "import random; print(','.join(map(str, sorted(random.Random(42).sample(range(N),15)))))")
+#      echo "$IDX"   # <-- paste the printed list into RP.md next to the result
+#      python scripts/audio_ablation.py --adapter outputs/lime_lora_plain/final \
+#          --manifest data/lime_dev_manifest.jsonl --audio-only --indices "$IDX" \
+#          --out outputs/ablation_lime_plain.jsonl
+#    Compare tracking to: 3/15 (4-bit MELD baseline, collapsed), 9/15 (MELD text_mask_prob=1.0),
+#    100/100 (ESD-plain). Record the delta, per-class shape, and tracking ratio in RP.md "Core
+#    Finding" -- this is the strict-decoupling end of the data-level gradient.

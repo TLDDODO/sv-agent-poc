@@ -1,0 +1,79 @@
+# Run on the H100. 4-bit QLoRA MELD run with text_mask_prob=1.0 -- the confound-breaking cell.
+#
+# Purpose (RP.md "Core Finding", the ESD-confound paragraph): ESD-plain reaches full grounding
+# (100/100 donor tracking) but changes TWO variables vs MELD at once -- the transcript shortcut is
+# removed AND the acoustic signal is far stronger (acted, exaggerated). That run alone cannot tell
+# "grounds because the text shortcut is gone" from "grounds because the audio is too loud to
+# ignore." This config builds the missing "decoupled + weak-acoustic" cell: natural MELD audio
+# (weak, subtle prosody, same as the baseline) with the transcript fully removed at train time.
+#
+# Same recipe as train_config_meld_plain_4bit.yaml (plain templated CoT, 4-bit nf4 QLoRA, 3 epochs,
+# identical optimizer/seed) -- the ONLY changed variable is text_mask_prob: 0.0 -> 1.0. At 1.0,
+# data/meld_dataset.py sets include_transcript=False for EVERY row, so both the prompt
+# (USER_PROMPT_AUDIO_ONLY) and the CoT target drop the transcript: the model is trained purely
+# audio-only on natural-acoustic MELD.
+#
+# Read-out: if this ALSO grounds (audio-only-vs-silence delta goes clearly positive, donor tracking
+# rises well above the collapsed 2/15), then removing the text shortcut produces grounding even on
+# weak natural acoustics -> ESD's 100/100 was about decoupling, not loudness. If it stays near the
+# collapsed / 7-15 level, ESD's grounding was carried by acoustic strength, not decoupling per se.
+# This is the causal confirmation of the cheap Route-B split already recorded in RP.md.
+model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
+lora_config_path: configs/lora_config.yaml
+
+train_manifest: data/meld_train_manifest.jsonl
+eval_manifest: data/meld_dev_manifest.jsonl
+
+output_dir: outputs/meld_lora_textmask1
+num_train_epochs: 3
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+warmup_ratio: 0.03
+logging_steps: 10
+save_steps: 200
+max_target_length: 256
+seed: 42
+
+# The one variable under test: drop the transcript from 100% of training rows.
+text_mask_prob: 1.0
+
+# --------------------------------------------------------------------------------------------------
+# RUNBOOK -- text_mask_prob=1.0 MELD run and the PINNED eval protocol (run on the H100).
+#
+# The eval ruler MUST change for this cell, and pinning it down is the whole point of writing this
+# block before launching: a model trained text_mask_prob=1.0 has NEVER seen a transcript, so the
+# baseline's "audio+transcript vs silence+transcript" ruler is train/test-mismatched here and would
+# measure a broken out-of-distribution state, not grounding. The in-distribution ruler is audio-only
+# vs silence-only, using the SAME audio-only prompt the model trained on. This is exactly what the
+# new --audio-only flag does (USER_PROMPT_AUDIO_ONLY, not the --hide-transcript placeholder, which
+# stuffs junk into the WITH-transcript template and would re-introduce the mismatch).
+#
+# 1. Train (writes outputs/meld_lora_textmask1/final; bf16 and 4bit-plain adapters untouched):
+#      python scripts/train_lora.py --config configs/train_config_meld_textmask1_4bit.yaml
+#
+# 2. In-distribution ruler -- audio-only prompt, with and without silence. 200-row dev, seed 42,
+#    greedy. The DELTA (audio-only minus silence-only) is the grounding signal here, NOT the
+#    absolute accuracy:
+#      python scripts/eval_accuracy.py --adapter outputs/meld_lora_textmask1/final \
+#          --manifest data/meld_dev_manifest.jsonl --sample 200 --seed 42 --audio-only
+#      python scripts/eval_accuracy.py --adapter outputs/meld_lora_textmask1/final \
+#          --manifest data/meld_dev_manifest.jsonl --sample 200 --seed 42 --audio-only --silence
+#
+#    DO NOT compare these absolute numbers to the baseline's 0.645 / 0.670 -- different prompt,
+#    different task framing. Compare instead: (a) is the audio-only-vs-silence-only delta clearly
+#    positive (audio used), vs the collapsed baseline where audio HURT; (b) per-class recall SHAPE
+#    -- does silencing concentrate predictions onto neutral (collapse) or spread across classes
+#    (grounding)?
+#
+# 3. Donor-swap tracking on the SAME recorded 15-row index set, also under --audio-only so the
+#    prompt matches training. Tracking (swap label == donor emotion) is the cleanest grounding
+#    measure; compare to bf16-plain 2/15, grounded 7/15, ESD-plain 100/100:
+#      python scripts/audio_ablation.py --adapter outputs/meld_lora_textmask1/final \
+#          --manifest data/meld_dev_manifest.jsonl --audio-only \
+#          --indices 228,51,563,501,457,285,209,178,864,65,61,191,447,476,1034 \
+#          --out outputs/ablation_meld_textmask1.jsonl
+#
+# Record the audio-only-vs-silence delta, the per-class shape, and the tracking ratio in RP.md
+# "Core Finding" next to the Route-B split and the ESD result -- this is the cell that turns the
+# observational Route-B evidence into a causal answer on the decoupling-vs-loudness question.

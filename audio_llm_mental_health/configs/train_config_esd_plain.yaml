@@ -1,0 +1,26 @@
+# Run on the H100. See ../README.md "ESD" section, run 1 ("plain baseline").
+#
+# Plain (non-acoustic) ESD manifests, templated CoT (build_synthetic_cot_target), no transcript
+# masking -- the un-fixed Phase-1-style pipeline, just pointed at ESD instead of MELD. ESD's
+# transcript is already uninformative about the label by construction (the same sentence recurs
+# under all 5 emotions), so this run isolates whether removing the shortcut at the DATA level
+# alone -- with no acoustic-grounded CoT, no text_mask_prob -- changes the silence-vs-audio delta,
+# before the supervision-level fix (configs/train_config_esd.yaml) is layered on top. See RP.md
+# "Hypothesis" and "Approach" point 2.
+model_name_or_path: Qwen/Qwen2-Audio-7B-Instruct
+lora_config_path: configs/lora_config.yaml
+
+train_manifest: data/esd_train_manifest.jsonl
+eval_manifest: data/esd_dev_manifest.jsonl
+
+output_dir: outputs/esd_lora_plain
+text_mask_prob: 0.0
+num_train_epochs: 3
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+warmup_ratio: 0.03
+logging_steps: 10
+save_steps: 200
+max_target_length: 256
+seed: 42

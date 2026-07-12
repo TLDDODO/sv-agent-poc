@@ -1,4 +1,9 @@
-# FAT10–MAD2 Interface Adjudicator
+# Interface Adjudicator
+
+*An autonomous LLM agent that adjudicates protein–protein interfaces from real evidence.*
+**Case study: FAT10–MAD2.**
+
+![FAT10–MAD2 interface: the persistent MD contacts (red) sit on FAT10's C-terminal region — outside the NMR-expected UBL1 binding site (blue). MAD2 in grey.](interface_labeled.png)
 
 An LLM agent that adjudicates where **MAD2** binds **FAT10**, grounding every fact in
 a tool call — PDBe structures, the real UniProt sequence, a 100 ns molecular-dynamics

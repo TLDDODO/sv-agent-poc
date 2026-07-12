@@ -1,72 +1,112 @@
-# SV Agent PoC — Interface-Adjudication Agent
+# FAT10–MAD2 Interface Adjudicator
 
-An LLM agent that, given a protein–partner system, **compares several interface-
-prediction tools and adjudicates a consensus interface vs disputed residues** —
-grounding everything in real PDBe structures and the real UniProt sequence, and
-auditing the result with a weak-vs-strong model comparison.
+An LLM agent that adjudicates where **MAD2** binds **FAT10**, grounding every fact in
+a tool call — PDBe structures, the real UniProt sequence, a 100 ns molecular-dynamics
+run, and PubMed — and, when the evidence conflicts with the literature, convening a
+**multi-agent debate** to reach a *calibrated* verdict instead of a false one.
 
-The agent does **not** predict interfaces or run physics. It compares, validates,
-adjudicates, and audits. Current target system: **FAT10 N-terminal ubl domain
-(UniProt O15205) : MAD2 (UniProt Q13257)** for the group's interface project.
+The agent does not predict interfaces or invent numbers. It retrieves, validates,
+compares the real MD contact map against the literature-expected binding region, and
+— crucially — when the model and the literature disagree it reports the **contradiction
+as a fact without declaring a winner**, because no experimental FAT10–MAD2 complex
+exists to serve as ground truth.
 
-## Honest status — what is real vs placeholder
+## The finding this pipeline surfaces
+
+The 100 ns MD (run on an AlphaFold3 starting model) puts the persistent FAT10–MAD2
+interface on FAT10's **C-terminal region** (I163, C162, G164, C160, G165, Y161 …),
+while the literature/NMR expects MAD2 to bind FAT10's **N-terminal UBL1 domain
+(residues 6–81)**. Every persistent contact falls *outside* the expected region, so
+the deterministic check **flags the model** and the debate recommends an experiment —
+it does not pronounce the MD "right" or the literature "wrong."
+
+## Architecture
+
+```
+goal ─▶ [ReAct agent: DeepSeek plans + calls tools in a loop]
+             │
+             ├─ search_literature            → PubMed abstracts (live) / cited fallback
+             ├─ get_expected_interface_region→ UBL1 6–81 (UniProt + Theng 2014, CITED)
+             ├─ fetch_structures             → PDBe (live MCP client or verified snapshot)
+             ├─ validate_residues            → real UniProt sequence (catches bad numbering)
+             ├─ get_md_interface_scores      → real 100 ns MD contact occupancy
+             └─ convene_debate  ─▶ [MD advocate] vs [NMR advocate] ─▶ [Judge → calibrated verdict]
+             │
+        submit_adjudication  →  report + full reasoning/tool trace
+```
+
+Design principles: **no fabricated data** (unavailable tools report `pending`, never
+placeholder numbers); **no false ground truth** (contradictions are reported, winners
+are not declared); every residue and score originates from a tool, never the model.
+
+## Honest status — real vs cited vs pending
 
 | Component | Status |
 | --- | --- |
-| Agent loop (LLM plans, calls tools, reasons, in a loop) | ✅ real |
-| `validate_residues` — checks residues against the real UniProt sequence | ✅ real (catches fabricated/mis-numbered residues) |
-| PDBe structure retrieval (6GF1, 6GF2, 2MBE, 7PYV) | ✅ real — confirmed via live PDBe query; all genuine FAT10 structures. Note: none are FAT10:MAD2 complexes (none exist), so they confirm the protein, not the interface |
-| Canonical residue mapping + domain check | ✅ real |
-| Weak-vs-strong model comparison (deepseek-chat vs deepseek-reasoner) | ✅ real mechanism |
-| Residue identities (C7, C9, F22 … real FAT10 amino acids) | ✅ real |
-| **Per-residue interface scores (AFM / HADDOCK / PISA)** | ❌ **placeholder / demo numbers** |
-| Any conclusion about *which FAT10 residues are the interface* | ❌ method demo only, not a real result |
+| ReAct agent loop (LLM plans, calls tools, reasons, in a loop) | ✅ real |
+| 100 ns MD contact occupancy (per-residue MAD2 contact fraction) | ✅ real evidence (own Amber run) |
+| `validate_residues` vs the real UniProt O15205 sequence | ✅ real |
+| PDBe retrieval — live MCP client or verified snapshot (6GF1, 6GF2, 2MBE, 7PYV) | ✅ real (all genuine FAT10; none are FAT10:MAD2 complexes — none exist) |
+| FAT10 domain boundaries (UBL1 6–81, UBL2 90–163) | ✅ verified from the UniProt feature table |
+| Expected binding region (MAD2 → UBL1) | 📚 cited (Theng et al. 2014 PNAS; NMR PDB 2MBE) — not derived here |
+| Multi-agent debate + calibrated judge | ✅ real mechanism |
+| Weak-vs-strong model comparison | ✅ real mechanism |
+| AFM / HADDOCK / PISA per-residue scores | ⏳ pending — no team data yet; reported as `pending`, never faked |
+| Which side (MD vs literature) is correct | ❌ unknown — no experimental complex; the pipeline recommends a test |
 
-To make conclusions real, supply real per-residue interface scores via
-`INTERFACE_SCORES` (see below). Everything else already runs on real data.
+## Quickstart
 
-## Run
+### Run the API (Docker)
 
-Agentic adjudication (needs a DeepSeek key; tools work offline without one):
+```bash
+docker compose up --build          # serves on http://localhost:8000
+# or:
+docker build -t fat10-adjudicator .
+docker run -p 8000:8000 -e DEEPSEEK_API_KEY=sk-... fat10-adjudicator
+```
+
+### Run the API (local)
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn api.main:app --reload      # http://localhost:8000/docs
+```
+
+| Endpoint | Needs key? | What it does |
+| --- | --- | --- |
+| `GET /health` | no | liveness + whether the LLM is configured |
+| `GET /evidence` | no | real MD occupancy + expected region + the deterministic conflict flag |
+| `POST /adjudicate` | yes | run the autonomous investigator agent end-to-end |
+| `POST /debate` | yes | run the multi-agent debate and return the judge's verdict |
+| `GET /docs` | no | interactive OpenAPI docs |
+
+### Run the pipeline directly (CLI)
 
 ```bash
 export DEEPSEEK_API_KEY=...
-python -m agent.run_agent           # -> outputs/agent_report.md (+ reasoning trace)
-python -m agent.compare             # weak vs strong -> outputs/agent_compare.md
+python -m agent.run_agent          # autonomous agent  → outputs/agent_report.md (+ trace)
+python -m agent.debate             # multi-agent debate → outputs/debate_report.md
+python -m agent.compare            # weak-vs-strong     → outputs/agent_compare.md
+python analysis/adjudicate_md.py   # deterministic conflict check (no key, no network)
 ```
 
-Deterministic pipeline version (no LLM, runs anywhere):
+## Repository layout
 
-```bash
-python -m interface.run_interface               # PDBe -> mapping -> tool adjudication
-python -m interface.run_interface --source mcp  # live PDBe query (HPC)
+```
+agent/       ReAct agent: llm_client, tools, structures (PDBe MCP client),
+             literature (PubMed), debate (advocates + judge), run_agent, compare
+analysis/    MD → per-residue scores, deterministic adjudication, HTML report, figure render
+api/         FastAPI service (api.main:app)
+skills/      Agent role prompts as loadable Markdown files (investigator, advocates, judge)
+notebooks/   Executable walkthrough of the pipeline
+FLOW.md      Architecture diagrams
 ```
 
-Plug in real tool scores (the only remaining placeholder):
+## Data provenance & limitations
 
-```bash
-export INTERFACE_SCORES=/path/to/scores.json
-# scores.json: { "AlphaFold-Multimer": {"C7": 0.x, ...}, "HADDOCK": {...}, "PISA-contacts": {...} }
-```
-
-## Components
-
-- `agent/` — genuine ReAct loop (DeepSeek): plans, calls tools, records per-step
-  reasoning, submits the adjudication. `agent/compare.py` is the weak-vs-strong audit.
-- `interface/` — deterministic version of the FAT10 interface adjudication
-  (retrieval → mapping → tool comparison → critic).
-- `pipeline/` — EGFR retrieval → canonical mapping → MD-vs-NMA debate (one shot).
-- `debate/` — MD-vs-NMA decision engine (method comparison).
-- `outputs/` — generated reports and run artifacts.
-
-## Origin
-
-Started as an EGFR T790M PDBe MCP proof of concept (the original `*pdbe*.py`
-scripts at repo root and the `debate/` / `pipeline/` MD-vs-NMA line). It evolved
-into the FAT10 interface-adjudication agent above.
-
-## See also
-
-- `FLOW.md` — flow diagrams (agent loop + weak-vs-strong audit).
-- `outputs/agent_compare.md` — a concrete case where two models disagree on a
-  residue (Y66), so it is flagged low-confidence rather than declared either way.
+- The MD interface reflects the AF3 *starting pose*, so it is a **consistency check on
+  that model, not independent validation** of the binding site.
+- Analysis is a **single MD replica (n = 1)**.
+- The "AlphaFold docked the flexible C-terminal tail" explanation is a **hypothesis**,
+  not proven; confirming it needs AF3's own ipTM/PAE at that interface.

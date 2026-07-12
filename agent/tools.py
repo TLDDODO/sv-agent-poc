@@ -5,7 +5,7 @@ import re
 import urllib.request
 from dataclasses import asdict
 
-from interface.structures import offline_structures, canonical_map
+from .structures import offline_structures, canonical_map
 
 
 # Tools whose per-residue interface scores the team has NOT produced yet. We do not

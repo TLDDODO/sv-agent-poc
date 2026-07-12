@@ -50,7 +50,7 @@ _VERIFIED_FAT10 = [
 def offline_structures() -> list[StructureHit]:
     """Verified snapshot of the live PDBe query (uniprot_accession:O15205), so the
     offline demo shows the real FAT10 structures. 2MBE is the N-terminal (MAD2-binding)
-    domain; 6GF1/6GF2 are full FAT10. Use --source mcp for a fresh live query."""
+    domain; 6GF1/6GF2 are full FAT10. Use mcp_structures() for a fresh live query."""
     return [
         StructureHit(pdb_id=p.lower(), title=t, experimental_method=m,
                      resolution=r, source="offline:verified_pdbe_snapshot")
@@ -101,8 +101,10 @@ def _parse(text: str) -> list[StructureHit]:
     return hits
 
 
-def mcp_structures(uvx: str = "/home/ychen/.local/bin/uvx") -> list[StructureHit]:
-    """Query the official PDBe MCP search server for FAT10 structures. HPC/online only."""
+def mcp_structures(uvx: str = "uvx") -> list[StructureHit]:
+    """Query the official PDBe MCP search server for FAT10 structures (live; needs
+    network + `uvx`). This is the real MCP client — a stdio session to the PDBe
+    server. Falls back to offline_structures() for the offline/demo path."""
     import asyncio
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
@@ -142,15 +144,3 @@ def canonical_map(residue_labels: list[str], uniprot: str = FAT10_UNIPROT,
             in_nterm_ubl=lo <= num <= hi,
         ))
     return out
-
-
-def mapping_critic(mappings: list[ResidueMapping]) -> list[str]:
-    findings = []
-    outside = [m.residue_label for m in mappings if not m.in_nterm_ubl]
-    if outside:
-        findings.append(
-            "Residue(s) outside FAT10 N-terminal ubl domain "
-            f"{NTERM_UBL_RANGE} - mapping/numbering may be off: " + ", ".join(outside))
-    if not mappings:
-        findings.append("No interface residues could be mapped to canonical numbering.")
-    return findings

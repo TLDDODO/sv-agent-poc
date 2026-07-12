@@ -1,0 +1,12 @@
+# Core runtime (agent + API)
+openai>=1.30
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+
+# Live PDBe MCP client (agent.structures.mcp_structures). Optional at runtime:
+# the offline snapshot path does not import it.
+mcp>=1.0
+
+# Figure regeneration only (analysis/render_structure.py) is NOT listed here;
+# install pymol-open-source + pillow separately if you want to rebuild the render.

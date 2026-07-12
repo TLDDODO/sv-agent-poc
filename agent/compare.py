@@ -13,7 +13,20 @@ from pathlib import Path
 
 from .llm_client import make_client
 from .tools import _predictions, validate_residues, fetch_structures, map_residues
-from interface.experts import _CAVEATS
+
+# Per-tool caveats attached to the evidence bundle (kept here to keep the agent
+# package self-contained). Only tools with real per-residue scores appear.
+_CAVEATS = {
+    "AlphaFold-Multimer":
+        "AF-Multimer interface confidence is model-derived, not experimental, and "
+        "can be overconfident on shallow or transient interfaces.",
+    "HADDOCK":
+        "HADDOCK scores depend on the input restraints and sampling; they reflect "
+        "docking energetics, not direct observation.",
+    "PISA-contacts":
+        "PISA contacts come from a single static pose; they are sensitive to which "
+        "docked model was chosen.",
+}
 
 
 def gather_evidence(uniprot: str, domain=(1, 80)) -> tuple[list, dict]:

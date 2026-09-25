@@ -1,7 +1,7 @@
 # Agent 2.0 — progress
 
 - [x] S1 — Current-state inventory — docs/current_state.md: 7 sections; 3 README disagreements (MCP not wired; 1–80 vs 6–81 defaults; PISA naming). Reviewer: PASS (attempt 2; attempt 1 BLOCK on out-of-scope line in progress.md, removed).
-- [ ] S2 — Offline smoke test + CI
+- [x] S2 — Offline smoke test + CI — tests/ (fake LLM e2e on FAT10–MAD2 + validate/map unit tests; validate uses a synthetic fixture because this environment's network policy blocks rest.uniprot.org; real O15205 check is a live test, not run here). pytest -q: 5 passed, 1 skipped under unshare -n. Reviewer: PASS (attempt 1).
 - [ ] S3 — Run logging
 - [ ] S4 — Benchmark design (GATE)
 - [ ] S5 — Generalise inputs

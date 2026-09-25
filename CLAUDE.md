@@ -21,10 +21,17 @@ non-technical people (Dify via the existing FastAPI).
   between steps.
 - Find the first step not marked `[x]` in `docs/progress.md` (create it on first run,
   listing S1–S8 unchecked). Do that step.
-- Each step is small. After finishing it, run its **Self-check**. If it passes: commit
-  with message `S<n>: <summary>`, mark it `[x]` in `docs/progress.md` with one line of
-  notes, commit, and continue to the next step.
-- If the self-check fails, fix and retry, **at most 3 attempts**. If it still fails, write
+- Each step is small. After finishing it, run its **Self-check**. If it passes, call the
+  **`reviewer` subagent** (`.claude/agents/reviewer.md`). Give it only the step number —
+  not your reasoning or a summary of what you did; it reads the diff itself.
+- If the reviewer returns `VERDICT: PASS`: commit with message `S<n>: <summary>`, mark
+  the step `[x]` in `docs/progress.md` with one line of notes plus the reviewer verdict,
+  commit, and continue to the next step.
+- If the reviewer returns `BLOCK`, fix every listed issue and go through self-check and
+  review again. A BLOCK counts as a failed attempt. Never argue with or override the
+  reviewer; if you believe it is wrong, record the disagreement in `docs/progress.md`
+  and stop for the human.
+- If the self-check or review fails, fix and retry, **at most 3 attempts**. If it still fails, write
   `FAILED: <what, why, what you tried>` under the step in `docs/progress.md`, commit, and
   **stop the whole run**. Do not continue past a failed step.
 - At a **GATE**, commit, write `WAITING FOR HUMAN: <what to review>` in

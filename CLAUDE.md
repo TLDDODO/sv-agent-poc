@@ -19,6 +19,9 @@ non-technical people (Dify via the existing FastAPI).
 
 - Work through the steps below **in order, automatically**. Do not ask for confirmation
   between steps.
+- If `pytest` is missing, run `pip install --ignore-installed pytest -r requirements.txt` first (the flag
+  avoids a debian-owned PyJWT that blocks a plain install). This is
+  environment setup, not a code change, so it does not break S1's read-only rule.
 - Find the first step not marked `[x]` in `docs/progress.md` (create it on first run,
   listing S1–S8 unchecked). Do that step.
 - Each step is small. After finishing it, run its **Self-check**. If it passes, call the

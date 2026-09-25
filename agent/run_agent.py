@@ -6,6 +6,7 @@ from pathlib import Path
 from .llm_client import make_client, MODEL
 from .tools import TOOLS, DISPATCH
 from .skills import load_skill
+from .runlog import RunRecorder
 
 # Defined in skills/investigator.md (the real source); inline text is fallback.
 SYSTEM_PROMPT = load_skill("investigator",
@@ -33,11 +34,13 @@ def run(user_goal: str, model: str = MODEL, max_steps: int = 16, verbose: bool =
     ]
     transcript = []   # rich per-step record incl. the agent's reasoning
     result = None
+    rec = RunRecorder("agent", model, user_goal)
 
     for step in range(max_steps):
         resp = client.chat.completions.create(
             model=model, messages=messages, tools=TOOLS,
             tool_choice="auto", temperature=0)
+        rec.llm(resp)
         msg = resp.choices[0].message
         messages.append(msg.model_dump())
 
@@ -64,6 +67,7 @@ def run(user_goal: str, model: str = MODEL, max_steps: int = 16, verbose: bool =
                 args = {}
             if verbose:
                 print(f"[step {step}] CALL {name}({json.dumps(args)[:160]})")
+            rec.tool(name)
 
             if name == "submit_adjudication":
                 result = args
@@ -80,6 +84,7 @@ def run(user_goal: str, model: str = MODEL, max_steps: int = 16, verbose: bool =
         if done:
             break
 
+    rec.finish(result)
     return result, transcript
 
 

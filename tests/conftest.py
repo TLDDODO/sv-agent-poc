@@ -5,6 +5,7 @@
   silently reach PubMed, UniProt, PDBe or DeepSeek.
 - Tests marked ``live`` are skipped unless ``--run-live`` is given.
 - ``fake_llm(script)`` swaps a scripted FakeClient into the agent loop.
+- Run logs go to a per-test temp file (``RUNLOG_PATH``), never into the repo.
 """
 from __future__ import annotations
 import socket
@@ -34,6 +35,13 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture(autouse=True)
 def _repo_root(monkeypatch):
     monkeypatch.chdir(ROOT)
+
+
+@pytest.fixture(autouse=True)
+def runlog_path(tmp_path, monkeypatch):
+    path = tmp_path / "runs.jsonl"
+    monkeypatch.setenv("RUNLOG_PATH", str(path))
+    return path
 
 
 @pytest.fixture(autouse=True)

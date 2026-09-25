@@ -19,6 +19,7 @@ from pathlib import Path
 from .llm_client import make_client, MODEL
 from .tools import get_expected_interface_region
 from .skills import load_skill
+from .runlog import RunRecorder
 
 DOMAINS = [
     ("Ubiquitin-like 1 (N-term)", 6, 81),
@@ -27,6 +28,7 @@ DOMAINS = [
     ("C-terminal tail", 164, 165),
 ]
 INTERFACE_CUTOFF = 0.5
+DEBATE_GOAL = "convene_debate: MD advocate vs NMR advocate, then judge (FAT10-MAD2 evidence)"
 
 
 def _resnum(label):
@@ -56,11 +58,13 @@ def evidence_bundle(scores_path="analysis/md_interface_scores.json") -> dict:
     }
 
 
-def _ask(client, system, facts, extra=""):
+def _ask(client, system, facts, extra="", rec=None):
     msg = client.chat.completions.create(
         model=MODEL, temperature=0,
         messages=[{"role": "system", "content": system},
                   {"role": "user", "content": f"FACTS (JSON):\n{json.dumps(facts, indent=2)}\n{extra}"}])
+    if rec is not None:
+        rec.llm(msg)
     return msg.choices[0].message.content
 
 
@@ -97,15 +101,17 @@ def _extract_json(text):
 def run():
     client = make_client()
     facts = evidence_bundle()
+    rec = RunRecorder("debate", MODEL, DEBATE_GOAL)
 
     print("Round 1: MD advocate ...")
-    arg_md = _ask(client, ADVOCATE_MD, facts)
+    arg_md = _ask(client, ADVOCATE_MD, facts, rec=rec)
     print("Round 1: NMR advocate ...")
-    arg_nmr = _ask(client, ADVOCATE_NMR, facts)
+    arg_nmr = _ask(client, ADVOCATE_NMR, facts, rec=rec)
     print("Round 2: judge ...")
     verdict = _extract_json(_ask(
         client, JUDGE, facts,
-        extra=f"\nMD ADVOCATE said:\n{arg_md}\n\nNMR ADVOCATE said:\n{arg_nmr}"))
+        extra=f"\nMD ADVOCATE said:\n{arg_md}\n\nNMR ADVOCATE said:\n{arg_nmr}", rec=rec))
+    rec.finish(verdict)
 
     report = f"""# Multi-Agent Debate — FAT10–MAD2 Interface
 

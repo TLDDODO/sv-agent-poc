@@ -23,7 +23,7 @@ non-technical people (Dify via the existing FastAPI).
   avoids a debian-owned PyJWT that blocks a plain install). This is
   environment setup, not a code change, so it does not break S1's read-only rule.
 - Find the first step not marked `[x]` in `docs/progress.md` (create it on first run,
-  listing S1–S8 unchecked). Do that step.
+  listing S1, S1b, S2–S8 unchecked). Do that step.
 - Each step is small. After finishing it, run its **Self-check**. If it passes, call the
   **`reviewer` subagent** (`.claude/agents/reviewer.md`). Give it only the step number —
   not your reasoning or a summary of what you did; it reads the diff itself.
@@ -72,6 +72,19 @@ local file / pending; how to run locally (commands, env vars); what has no test
 coverage; the 3 most fragile points.
 **Self-check:** all 7 sections present; every file path mentioned exists; the
 live/snapshot/pending list agrees with README's status table (list any disagreement).
+
+### S1b — Fix the S1 inconsistencies
+Fix the three disagreements S1 found. (1) Wire the live PDBe MCP query into the agent's
+`fetch_structures`; if it cannot be made to work, change README to describe honestly what
+the code does. (2) Replace the three 1–80 domain defaults with the verified 6–81 and add a
+regression test. (3) Use one name for the PISA tool everywhere.
+**Self-check:** no 1–80 domain default remains and the regression test pins 6–81; the
+PISA name is identical everywhere; `fetch_structures` uses the MCP query when it is
+reachable and falls back otherwise (fallback tested offline, live path in a `live` test);
+README's status row matches what the code does and what has actually been verified;
+`pytest -q` passes offline. After the reviewer passes S1b, run `pytest --run-live` to check
+the MD residue numbering against the real UniProt sequence, record the result in
+`docs/progress.md`, then continue from S4.
 
 ### S2 — Offline smoke test + CI
 `tests/` with a fake LLM client fixture that returns scripted tool calls. One

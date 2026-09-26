@@ -1,0 +1,11 @@
+services:
+  adjudicator:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Pass the key through from your shell / .env; the /evidence + /health
+      # endpoints work even when it is empty.
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
+    restart: unless-stopped

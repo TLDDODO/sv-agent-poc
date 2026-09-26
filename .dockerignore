@@ -1,0 +1,15 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+.venv/
+venv/
+_build/
+.pytest_cache/
+.ipynb_checkpoints/
+notebooks/
+outputs/*
+!outputs/.gitkeep
+# Large assets not needed by the API (figure regen only):
+*.png
+complex_protein.pdb

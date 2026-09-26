@@ -1,0 +1,1581 @@
+{
+ "fetched": "2026-09-26",
+ "cases": {
+  "1FIN": {
+   "pdb": "1FIN",
+   "title": "CYCLIN A-CYCLIN-DEPENDENT KINASE 2 COMPLEX",
+   "method": [
+    "X-ray diffraction"
+   ],
+   "resolution": 2.3,
+   "pisa_interface_id": "1",
+   "int_area": 1697.4992918,
+   "proteins": {
+    "P20248": {
+     "uniprot_id": "CCNA2_HUMAN",
+     "name": "Cyclin-A2",
+     "length": 432,
+     "chain": "B",
+     "bsa_residues_checked": 42,
+     "interface_residues": [
+      173,
+      174,
+      175,
+      176,
+      177,
+      178,
+      181,
+      182,
+      185,
+      186,
+      189,
+      228,
+      230,
+      263,
+      266,
+      267,
+      268,
+      269,
+      270,
+      271,
+      272,
+      274,
+      275,
+      288,
+      289,
+      292,
+      293,
+      295,
+      296,
+      299,
+      300,
+      303,
+      304,
+      305,
+      306,
+      307,
+      308,
+      309,
+      312,
+      313,
+      316,
+      317
+     ],
+     "n_interface_residues": 42,
+     "dropped_name_mismatch": [],
+     "sifts_author_numbers_missing_assumed_equal_unp": false,
+     "features": [],
+     "all_features_non_disordered": [],
+     "n_disordered_features": 2,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    },
+    "P24941": {
+     "uniprot_id": "CDK2_HUMAN",
+     "name": "Cyclin-dependent kinase 2",
+     "length": 298,
+     "chain": "A",
+     "bsa_residues_checked": 52,
+     "interface_residues": [
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      49,
+      50,
+      52,
+      53,
+      54,
+      56,
+      57,
+      69,
+      71,
+      72,
+      73,
+      76,
+      116,
+      119,
+      120,
+      121,
+      122,
+      124,
+      126,
+      150,
+      151,
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158,
+      159,
+      162,
+      179,
+      180,
+      181,
+      182,
+      183,
+      271,
+      272,
+      274,
+      276,
+      277,
+      278,
+      279
+     ],
+     "n_interface_residues": 52,
+     "dropped_name_mismatch": [],
+     "sifts_author_numbers_missing_assumed_equal_unp": false,
+     "features": [
+      {
+       "type": "Domain",
+       "description": "Protein kinase",
+       "start": 4,
+       "end": 286,
+       "interface_residues_inside": 52
+      }
+     ],
+     "all_features_non_disordered": [
+      {
+       "type": "Domain",
+       "description": "Protein kinase",
+       "start": 4,
+       "end": 286,
+       "interface_residues_inside": 52
+      }
+     ],
+     "n_disordered_features": 0,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    }
+   },
+   "literature_query": {
+    "term": "CDK2 cyclin A binding interface",
+    "top5": [
+     "40836083",
+     "40827837",
+     "40549918",
+     "39868286",
+     "39314090"
+    ],
+    "leaked_pmids": []
+   },
+   "leaked_pmid_summaries": {},
+   "co_complex_entries": [
+    "11GV",
+    "1E9H",
+    "1FIN",
+    "1FVV",
+    "1GY3",
+    "1H1P",
+    "1H1Q",
+    "1H1R",
+    "1H1S",
+    "1H24",
+    "1H25",
+    "1H26",
+    "1H27",
+    "1H28",
+    "1JST",
+    "1JSU",
+    "1OGU",
+    "1OI9",
+    "1OIU",
+    "1OIY",
+    "1OKV",
+    "1OKW",
+    "1OL1",
+    "1OL2",
+    "1P5E",
+    "1PKD",
+    "1QMZ",
+    "1URC",
+    "1VYW",
+    "2BKZ",
+    "2BPM",
+    "2C4G",
+    "2C5N",
+    "2C5O",
+    "2C5V",
+    "2C5X",
+    "2C6T",
+    "2CCH",
+    "2CCI",
+    "2CJM",
+    "2I40",
+    "2IW6",
+    "2IW8",
+    "2IW9",
+    "2UUE",
+    "2UZB",
+    "2UZD",
+    "2UZE",
+    "2UZL",
+    "2V22",
+    "2WEV",
+    "2WFY",
+    "2WHB",
+    "2WIH",
+    "2WIP",
+    "2WMA",
+    "2WMB",
+    "2WPA",
+    "2WXV",
+    "2X1N",
+    "3EID",
+    "3EJ1",
+    "3EOC",
+    "3F5X",
+    "4BCK",
+    "4BCM",
+    "4BCN",
+    "4BCP",
+    "4CFM",
+    "4CFN",
+    "4CFU",
+    "4CFV",
+    "4CFW",
+    "4CFX",
+    "4EOI",
+    "4EOJ",
+    "4EOK",
+    "4EOL",
+    "4EOM",
+    "4EON",
+    "4EOO",
+    "4EOP",
+    "4EOQ",
+    "4EOR",
+    "4EOS",
+    "4FX3",
+    "5CYI",
+    "5IF1",
+    "5LMK",
+    "5NEV",
+    "6ATH",
+    "6GVA",
+    "6P3W",
+    "6RIJ",
+    "6SG4",
+    "7ACK",
+    "7B5L",
+    "7B5R",
+    "7B7S",
+    "7MKX",
+    "7QHL",
+    "8B54",
+    "8BYA",
+    "8BZO",
+    "9GLA",
+    "9HIU",
+    "9HIW",
+    "9HJ1",
+    "9QCV",
+    "9QCX",
+    "9QJJ"
+   ],
+   "co_complex_pmids": {
+    "42328801": [
+     "11GV"
+    ],
+    "11377199": [
+     "1E9H"
+    ],
+    "7630397": [
+     "1FIN"
+    ],
+    "11141566": [
+     "1FVV"
+    ],
+    "12044161": [
+     "1GY3"
+    ],
+    "10559988": [
+     "1GY3",
+     "1H24",
+     "1H25",
+     "1H26",
+     "1H27",
+     "1H28",
+     "1QMZ"
+    ],
+    "12244298": [
+     "1H1P",
+     "1H1Q",
+     "1H1R",
+     "1H1S"
+    ],
+    "12501191": [
+     "1H24",
+     "1H25",
+     "1H26",
+     "1H27",
+     "1H28"
+    ],
+    "8756328": [
+     "1JST"
+    ],
+    "8684460": [
+     "1JSU"
+    ],
+    "12941338": [
+     "1OGU"
+    ],
+    "15239650": [
+     "1OI9",
+     "1OIU",
+     "1OIY"
+    ],
+    "14656438": [
+     "1OKV",
+     "1OKW",
+     "1OL1",
+     "1OL2"
+    ],
+    "12869192": [
+     "1P5E"
+    ],
+    "15455144": [
+     "1URC"
+    ],
+    "15189033": [
+     "1VYW"
+    ],
+    "15713378": [
+     "2BKZ"
+    ],
+    "15828833": [
+     "2BPM"
+    ],
+    "16290148": [
+     "2C4G"
+    ],
+    "16492568": [
+     "2C5N",
+     "2C5O",
+     "2C5V",
+     "2C5X",
+     "2UUE",
+     "2V22"
+    ],
+    "16325401": [
+     "2C6T"
+    ],
+    "16707497": [
+     "2CCH",
+     "2CCI"
+    ],
+    "17095507": [
+     "2CJM"
+    ],
+    "16997559": [
+     "2I40"
+    ],
+    "16942020": [
+     "2IW6",
+     "2IW8",
+     "2IW9"
+    ],
+    "17051658": [
+     "2UUE",
+     "2V22"
+    ],
+    "17570665": [
+     "2UZB",
+     "2UZD",
+     "2UZE",
+     "2UZL"
+    ],
+    "19472269": [
+     "2WEV",
+     "2WFY",
+     "2WHB",
+     "2X1N"
+    ],
+    "19603809": [
+     "2WIH",
+     "2WIP"
+    ],
+    "20153204": [
+     "2WPA"
+    ],
+    "20141146": [
+     "2WXV"
+    ],
+    "20146435": [
+     "2X1N"
+    ],
+    "18835709": [
+     "3EID",
+     "3EJ1"
+    ],
+    "18929484": [
+     "3EOC"
+    ],
+    "19097791": [
+     "3F5X"
+    ],
+    "23252711": [
+     "4BCK",
+     "4BCM",
+     "4BCN"
+    ],
+    "23301767": [
+     "4BCP"
+    ],
+    "24304238": [
+     "4CFM",
+     "4CFN",
+     "4CFU",
+     "4CFV",
+     "4CFW",
+     "4CFX"
+    ],
+    "22921070": [
+     "4EOI",
+     "4EOJ",
+     "4EOK",
+     "4EOL",
+     "4EOM",
+     "4EON",
+     "4EOO",
+     "4EOP",
+     "4EOQ",
+     "4EOR",
+     "4EOS"
+    ],
+    "26320860": [
+     "5CYI"
+    ],
+    "27090615": [
+     "5IF1"
+    ],
+    "28039837": [
+     "5LMK"
+    ],
+    "28005359": [
+     "5NEV"
+    ],
+    "30976006": [
+     "6ATH"
+    ],
+    "30943029": [
+     "6GVA"
+    ],
+    "31309634": [
+     "6P3W"
+    ],
+    "33422522": [
+     "6SG4"
+    ],
+    "33711765": [
+     "7ACK"
+    ],
+    "33536622": [
+     "7B5L",
+     "7B5R"
+    ],
+    "34288692": [
+     "7B7S"
+    ],
+    "35749742": [
+     "7QHL"
+    ],
+    "36931035": [
+     "8B54"
+    ],
+    "37400515": [
+     "8BYA",
+     "8BZO"
+    ],
+    "39733900": [
+     "9GLA"
+    ],
+    "40817109": [
+     "9HIU",
+     "9HIW",
+     "9HJ1"
+    ],
+    "41100585": [
+     "9QCV",
+     "9QCX"
+    ],
+    "42034640": [
+     "9QJJ"
+    ]
+   }
+  },
+  "4G0N": {
+   "pdb": "4G0N",
+   "title": "Crystal Structure of wt H-Ras-GppNHp bound to the RBD of Raf Kinase",
+   "method": [
+    "X-ray diffraction"
+   ],
+   "resolution": 2.45,
+   "pisa_interface_id": "2",
+   "int_area": 614.02207069,
+   "proteins": {
+    "P04049": {
+     "uniprot_id": "RAF1_HUMAN",
+     "name": "RAF proto-oncogene serine/threonine-protein kinase",
+     "length": 648,
+     "chain": "B",
+     "bsa_residues_checked": 17,
+     "interface_residues": [
+      57,
+      59,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      73,
+      84,
+      85,
+      87,
+      88,
+      89,
+      90
+     ],
+     "n_interface_residues": 17,
+     "dropped_name_mismatch": [],
+     "sifts_author_numbers_missing_assumed_equal_unp": false,
+     "features": [
+      {
+       "type": "Domain",
+       "description": "RBD",
+       "start": 56,
+       "end": 131,
+       "interface_residues_inside": 17
+      }
+     ],
+     "all_features_non_disordered": [
+      {
+       "type": "Domain",
+       "description": "RBD",
+       "start": 56,
+       "end": 131,
+       "interface_residues_inside": 17
+      },
+      {
+       "type": "Domain",
+       "description": "Protein kinase",
+       "start": 349,
+       "end": 609,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Zinc finger",
+       "description": "Phorbol-ester/DAG-type",
+       "start": 138,
+       "end": 184,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with PEBP1/RKIP",
+       "start": 331,
+       "end": 349,
+       "interface_residues_inside": 0
+      }
+     ],
+     "n_disordered_features": 1,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    },
+    "P01112": {
+     "uniprot_id": "RASH_HUMAN",
+     "name": "GTPase HRas",
+     "length": 189,
+     "chain": "A",
+     "bsa_residues_checked": 16,
+     "interface_residues": [
+      21,
+      24,
+      25,
+      27,
+      29,
+      31,
+      33,
+      34,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      54,
+      56
+     ],
+     "n_interface_residues": 16,
+     "dropped_name_mismatch": [],
+     "sifts_author_numbers_missing_assumed_equal_unp": false,
+     "features": [
+      {
+       "type": "Motif",
+       "description": "Effector region",
+       "start": 32,
+       "end": 40,
+       "interface_residues_inside": 7
+      }
+     ],
+     "all_features_non_disordered": [
+      {
+       "type": "Region",
+       "description": "Hypervariable region",
+       "start": 166,
+       "end": 185,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "Effector region",
+       "start": 32,
+       "end": 40,
+       "interface_residues_inside": 7
+      }
+     ],
+     "n_disordered_features": 0,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    }
+   },
+   "literature_query": {
+    "term": "HRAS RAF1 interaction binding domain",
+    "top5": [
+     "39894825",
+     "35522713",
+     "34757127",
+     "34356620",
+     "31606273"
+    ],
+    "leaked_pmids": [
+     "34356620"
+    ]
+   },
+   "leaked_pmid_summaries": {
+    "34356620": {
+     "title": "Crystal Structure Reveals the Full Ras-Raf Interface and Advances Mechanistic Understanding of Raf Activation.",
+     "source": "Biomolecules",
+     "pubdate": "2021 Jul 7"
+    }
+   },
+   "co_complex_entries": [
+    "3KUD",
+    "4G0N",
+    "4G3X",
+    "6NTC",
+    "6NTD",
+    "7JHP"
+   ],
+   "co_complex_pmids": {
+    "20361980": [
+     "3KUD"
+    ],
+    "25684575": [
+     "4G0N",
+     "4G3X"
+    ],
+    "32086379": [
+     "6NTC",
+     "6NTD"
+    ],
+    "34356620": [
+     "7JHP"
+    ]
+   }
+  },
+  "1YCR": {
+   "pdb": "1YCR",
+   "title": "MDM2 BOUND TO THE TRANSACTIVATION DOMAIN OF P53",
+   "method": [
+    "X-ray diffraction"
+   ],
+   "resolution": 2.6,
+   "pisa_interface_id": "1",
+   "int_area": 722.35994173,
+   "proteins": {
+    "P04637": {
+     "uniprot_id": "P53_HUMAN",
+     "name": "Cellular tumor antigen p53",
+     "length": 393,
+     "chain": "B",
+     "bsa_residues_checked": 12,
+     "interface_residues": [
+      17,
+      18,
+      19,
+      20,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+     ],
+     "n_interface_residues": 12,
+     "dropped_name_mismatch": [],
+     "sifts_author_numbers_missing_assumed_equal_unp": false,
+     "features": [
+      {
+       "type": "Region",
+       "description": "Interaction with CCAR2",
+       "start": 1,
+       "end": 320,
+       "interface_residues_inside": 12
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with HRMT1L2",
+       "start": 1,
+       "end": 83,
+       "interface_residues_inside": 12
+      },
+      {
+       "type": "Region",
+       "description": "Transcription activation (acidic)",
+       "start": 1,
+       "end": 44,
+       "interface_residues_inside": 12
+      },
+      {
+       "type": "Motif",
+       "description": "TADI",
+       "start": 17,
+       "end": 25,
+       "interface_residues_inside": 8
+      }
+     ],
+     "all_features_non_disordered": [
+      {
+       "type": "Region",
+       "description": "Interaction with CCAR2",
+       "start": 1,
+       "end": 320,
+       "interface_residues_inside": 12
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with HRMT1L2",
+       "start": 1,
+       "end": 83,
+       "interface_residues_inside": 12
+      },
+      {
+       "type": "Region",
+       "description": "Transcription activation (acidic)",
+       "start": 1,
+       "end": 44,
+       "interface_residues_inside": 12
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with WWOX",
+       "start": 66,
+       "end": 110,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with HIPK1",
+       "start": 100,
+       "end": 370,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Required for interaction with ZNF385A",
+       "start": 100,
+       "end": 300,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Required for interaction with FBXO42",
+       "start": 113,
+       "end": 236,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with AXIN1",
+       "start": 116,
+       "end": 292,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with the 53BP2 SH3 domain",
+       "start": 241,
+       "end": 248,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with E4F1",
+       "start": 256,
+       "end": 294,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with DNA",
+       "start": 273,
+       "end": 280,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with CARM1",
+       "start": 300,
+       "end": 393,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with HIPK2",
+       "start": 319,
+       "end": 360,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Oligomerization",
+       "start": 325,
+       "end": 356,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with USP7",
+       "start": 359,
+       "end": 363,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Basic (repression of DNA-binding)",
+       "start": 368,
+       "end": 387,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with MORN3",
+       "start": 374,
+       "end": 393,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "TADI",
+       "start": 17,
+       "end": 25,
+       "interface_residues_inside": 8
+      },
+      {
+       "type": "Motif",
+       "description": "TADII",
+       "start": 48,
+       "end": 56,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "Bipartite nuclear localization signal",
+       "start": 305,
+       "end": 321,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "Nuclear export signal",
+       "start": 339,
+       "end": 350,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "[KR]-[STA]-K motif",
+       "start": 370,
+       "end": 372,
+       "interface_residues_inside": 0
+      }
+     ],
+     "n_disordered_features": 3,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    },
+    "Q00987": {
+     "uniprot_id": "MDM2_HUMAN",
+     "name": "E3 ubiquitin-protein ligase Mdm2",
+     "length": 491,
+     "chain": "A",
+     "bsa_residues_checked": 26,
+     "interface_residues": [
+      25,
+      26,
+      49,
+      50,
+      51,
+      54,
+      55,
+      57,
+      58,
+      61,
+      62,
+      67,
+      70,
+      71,
+      72,
+      73,
+      75,
+      86,
+      91,
+      93,
+      94,
+      96,
+      99,
+      100,
+      103,
+      104
+     ],
+     "n_interface_residues": 26,
+     "dropped_name_mismatch": [],
+     "sifts_author_numbers_missing_assumed_equal_unp": true,
+     "features": [
+      {
+       "type": "Domain",
+       "description": "SWIB/MDM2",
+       "start": 26,
+       "end": 109,
+       "interface_residues_inside": 25
+      },
+      {
+       "type": "Region",
+       "description": "Necessary for interaction with USP2",
+       "start": 1,
+       "end": 110,
+       "interface_residues_inside": 26
+      },
+      {
+       "type": "Region",
+       "description": "Sufficient to promote the mitochondrial pathway of apoptosis",
+       "start": 1,
+       "end": 101,
+       "interface_residues_inside": 24
+      }
+     ],
+     "all_features_non_disordered": [
+      {
+       "type": "Domain",
+       "description": "SWIB/MDM2",
+       "start": 26,
+       "end": 109,
+       "interface_residues_inside": 25
+      },
+      {
+       "type": "Zinc finger",
+       "description": "RanBP2-type",
+       "start": 299,
+       "end": 328,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Zinc finger",
+       "description": "RING-type",
+       "start": 438,
+       "end": 479,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Necessary for interaction with USP2",
+       "start": 1,
+       "end": 110,
+       "interface_residues_inside": 26
+      },
+      {
+       "type": "Region",
+       "description": "Sufficient to promote the mitochondrial pathway of apoptosis",
+       "start": 1,
+       "end": 101,
+       "interface_residues_inside": 24
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with PYHIN1 and necessary for interaction with RFFL and RNF34",
+       "start": 150,
+       "end": 230,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with MTBP",
+       "start": 170,
+       "end": 306,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Mediates interaction with RAD54B",
+       "start": 200,
+       "end": 290,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "ARF-binding",
+       "start": 210,
+       "end": 304,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with USP7",
+       "start": 223,
+       "end": 232,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Region II",
+       "start": 242,
+       "end": 331,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Necessary for interaction with USP2",
+       "start": 276,
+       "end": 491,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "Nuclear localization signal",
+       "start": 179,
+       "end": 185,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "Nuclear export signal",
+       "start": 190,
+       "end": 202,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "Nucleolar localization signal",
+       "start": 466,
+       "end": 473,
+       "interface_residues_inside": 0
+      }
+     ],
+     "n_disordered_features": 4,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    }
+   },
+   "literature_query": {
+    "term": "MDM2 p53 interaction binding domain",
+    "top5": [
+     "42560601",
+     "42557376",
+     "42556724",
+     "42425489",
+     "41951044"
+    ],
+    "leaked_pmids": []
+   },
+   "leaked_pmid_summaries": {},
+   "co_complex_entries": [
+    "1YCR",
+    "4HFZ"
+   ],
+   "co_complex_pmids": {
+    "8875929": [
+     "1YCR"
+    ],
+    "23897459": [
+     "4HFZ"
+    ]
+   }
+  },
+  "1BXL": {
+   "pdb": "1BXL",
+   "title": "STRUCTURE OF BCL-XL/BAK PEPTIDE COMPLEX, NMR, MINIMIZED AVERAGE STRUCTURE",
+   "method": [
+    "Solution NMR"
+   ],
+   "resolution": null,
+   "pisa_interface_id": "1",
+   "int_area": 865.67860691,
+   "proteins": {
+    "Q07817": {
+     "uniprot_id": "B2CL1_HUMAN",
+     "name": "Bcl-2-like protein 1",
+     "length": 233,
+     "chain": "A",
+     "bsa_residues_checked": 30,
+     "interface_residues": [
+      93,
+      96,
+      97,
+      100,
+      101,
+      104,
+      105,
+      107,
+      108,
+      111,
+      112,
+      125,
+      126,
+      129,
+      130,
+      132,
+      136,
+      137,
+      138,
+      139,
+      141,
+      142,
+      146,
+      194,
+      195,
+      199,
+      200,
+      203,
+      204
+     ],
+     "n_interface_residues": 29,
+     "dropped_name_mismatch": [
+      {
+       "chain": "A",
+       "author_seq": 210,
+       "pdb_residue": "LEU",
+       "unp_pos": 210,
+       "unp_residue": "F"
+      }
+     ],
+     "sifts_author_numbers_missing_assumed_equal_unp": false,
+     "features": [
+      {
+       "type": "Motif",
+       "description": "BH3",
+       "start": 86,
+       "end": 100,
+       "interface_residues_inside": 4
+      },
+      {
+       "type": "Motif",
+       "description": "BH1",
+       "start": 129,
+       "end": 148,
+       "interface_residues_inside": 10
+      },
+      {
+       "type": "Motif",
+       "description": "BH2",
+       "start": 180,
+       "end": 195,
+       "interface_residues_inside": 2
+      }
+     ],
+     "all_features_non_disordered": [
+      {
+       "type": "Motif",
+       "description": "BH4",
+       "start": 4,
+       "end": 24,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "BH3",
+       "start": 86,
+       "end": 100,
+       "interface_residues_inside": 4
+      },
+      {
+       "type": "Motif",
+       "description": "BH1",
+       "start": 129,
+       "end": 148,
+       "interface_residues_inside": 10
+      },
+      {
+       "type": "Motif",
+       "description": "BH2",
+       "start": 180,
+       "end": 195,
+       "interface_residues_inside": 2
+      }
+     ],
+     "n_disordered_features": 1,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    },
+    "Q16611": {
+     "uniprot_id": "BAK_HUMAN",
+     "name": "Bcl-2 homologous antagonist/killer",
+     "length": 211,
+     "chain": "B",
+     "bsa_residues_checked": 15,
+     "interface_residues": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      84,
+      85,
+      86,
+      87
+     ],
+     "n_interface_residues": 15,
+     "dropped_name_mismatch": [],
+     "sifts_author_numbers_missing_assumed_equal_unp": false,
+     "features": [
+      {
+       "type": "Motif",
+       "description": "BH3",
+       "start": 74,
+       "end": 88,
+       "interface_residues_inside": 13
+      }
+     ],
+     "all_features_non_disordered": [
+      {
+       "type": "Motif",
+       "description": "BH3",
+       "start": 74,
+       "end": 88,
+       "interface_residues_inside": 13
+      },
+      {
+       "type": "Motif",
+       "description": "BH1",
+       "start": 117,
+       "end": 136,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Motif",
+       "description": "BH2",
+       "start": 169,
+       "end": 184,
+       "interface_residues_inside": 0
+      }
+     ],
+     "n_disordered_features": 1,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    }
+   },
+   "literature_query": {
+    "term": "BCL2L1 BAK1 interaction binding region",
+    "top5": [
+     "17699158",
+     "16028929",
+     "15826183",
+     "11283018",
+     "9463381"
+    ],
+    "leaked_pmids": []
+   },
+   "leaked_pmid_summaries": {},
+   "co_complex_entries": [
+    "1BXL",
+    "2LP8",
+    "5FMK"
+   ],
+   "co_complex_pmids": {
+    "9020082": [
+     "1BXL"
+    ],
+    "22515821": [
+     "2LP8"
+    ],
+    "27198225": [
+     "5FMK"
+    ]
+   }
+  },
+  "1AXC": {
+   "pdb": "1AXC",
+   "title": "HUMAN PCNA",
+   "method": [
+    "X-ray diffraction"
+   ],
+   "resolution": 2.6,
+   "pisa_interface_id": "1",
+   "int_area": 1087.4542735,
+   "proteins": {
+    "P38936": {
+     "uniprot_id": "CDN1A_HUMAN",
+     "name": "Cyclin-dependent kinase inhibitor 1",
+     "length": 164,
+     "chain": "D",
+     "bsa_residues_checked": 17,
+     "interface_residues": [
+      143,
+      144,
+      145,
+      146,
+      147,
+      148,
+      150,
+      151,
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158,
+      159,
+      160
+     ],
+     "n_interface_residues": 17,
+     "dropped_name_mismatch": [],
+     "sifts_author_numbers_missing_assumed_equal_unp": false,
+     "features": [
+      {
+       "type": "Region",
+       "description": "Interaction with TRIM39",
+       "start": 152,
+       "end": 164,
+       "interface_residues_inside": 9
+      },
+      {
+       "type": "Motif",
+       "description": "PIP-box K+4 motif",
+       "start": 140,
+       "end": 164,
+       "interface_residues_inside": 17
+      },
+      {
+       "type": "Motif",
+       "description": "Nuclear localization signal",
+       "start": 141,
+       "end": 156,
+       "interface_residues_inside": 13
+      }
+     ],
+     "all_features_non_disordered": [
+      {
+       "type": "Zinc finger",
+       "description": "C4-type",
+       "start": 13,
+       "end": 41,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Required for binding cyclins",
+       "start": 17,
+       "end": 24,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Required for binding CDKs",
+       "start": 53,
+       "end": 58,
+       "interface_residues_inside": 0
+      },
+      {
+       "type": "Region",
+       "description": "Interaction with TRIM39",
+       "start": 152,
+       "end": 164,
+       "interface_residues_inside": 9
+      },
+      {
+       "type": "Motif",
+       "description": "PIP-box K+4 motif",
+       "start": 140,
+       "end": 164,
+       "interface_residues_inside": 17
+      },
+      {
+       "type": "Motif",
+       "description": "Nuclear localization signal",
+       "start": 141,
+       "end": 156,
+       "interface_residues_inside": 13
+      }
+     ],
+     "n_disordered_features": 1,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    },
+    "P12004": {
+     "uniprot_id": "PCNA_HUMAN",
+     "name": "DNA sliding clamp PCNA",
+     "length": 261,
+     "chain": "C",
+     "bsa_residues_checked": 38,
+     "interface_residues": [
+      27,
+      29,
+      40,
+      43,
+      44,
+      45,
+      46,
+      47,
+      67,
+      68,
+      69,
+      96,
+      97,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      131,
+      133,
+      208,
+      211,
+      232,
+      233,
+      234,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
+     ],
+     "n_interface_residues": 38,
+     "dropped_name_mismatch": [],
+     "sifts_author_numbers_missing_assumed_equal_unp": false,
+     "features": [
+      {
+       "type": "Region",
+       "description": "Interaction with NUDT15",
+       "start": 7,
+       "end": 100,
+       "interface_residues_inside": 13
+      }
+     ],
+     "all_features_non_disordered": [
+      {
+       "type": "Region",
+       "description": "Interaction with NUDT15",
+       "start": 7,
+       "end": 100,
+       "interface_residues_inside": 13
+      }
+     ],
+     "n_disordered_features": 0,
+     "ground_truth_pdb_id_in_uniprot": {
+      "comments": false,
+      "features": false,
+      "uniProtKBCrossReferences": true
+     }
+    }
+   },
+   "literature_query": {
+    "term": "PCNA CDKN1A p21 interaction binding region",
+    "top5": [
+     "41105927",
+     "40392971",
+     "39988732",
+     "27740454",
+     "24200966"
+    ],
+    "leaked_pmids": []
+   },
+   "leaked_pmid_summaries": {},
+   "co_complex_entries": [
+    "1AXC",
+    "4RJF",
+    "5E0U",
+    "6CBI",
+    "7KQ0",
+    "7KQ1"
+   ],
+   "co_complex_pmids": {
+    "8861913": [
+     "1AXC"
+    ],
+    "25972089": [
+     "4RJF"
+    ],
+    "26688547": [
+     "5E0U"
+    ],
+    "29917264": [
+     "6CBI"
+    ],
+    "33984330": [
+     "7KQ0",
+     "7KQ1"
+    ]
+   }
+  }
+ },
+ "endpoint_probes": {
+  "https://www.ebi.ac.uk/pdbe/api/pisa/interfaces/1fin": "HTTP Error 404: Not Found",
+  "https://www.ebi.ac.uk/pdbe/api/pdb/entry/interfaces/1fin": "HTTP Error 404: Not Found",
+  "https://data.rcsb.org/rest/v1/core/interface/1FIN/1": "HTTP Error 404: Not Found"
+ }
+}

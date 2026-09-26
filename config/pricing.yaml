@@ -1,0 +1,25 @@
+{
+  "_format": "JSON, which is valid YAML; kept as JSON so it loads with the standard library",
+  "_generated_by": "scripts/update_pricing.py — do not edit numbers by hand",
+  "unit": "USD per 1M tokens",
+  "last_checked": "2026-09-25T14:49:48Z",
+  "source_url": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+  "source_type": "third-party community price map (LiteLLM), not the official DeepSeek page",
+  "source_sha256": "e1ed31bbf608a61c1929f19f0f41395959785bc4fde07fbc2f8284df4396d669",
+  "official_page": "https://api-docs.deepseek.com/quick_start/pricing",
+  "official_page_status": "unreachable when checked (URLError: <urlopen error Tunnel connection failed: 403 Forbidden>)",
+  "models": {
+    "deepseek-chat": {
+      "input_cache_miss": 0.28,
+      "input_cache_hit": 0.028,
+      "output": 0.42,
+      "source_key": "deepseek/deepseek-chat"
+    },
+    "deepseek-reasoner": {
+      "input_cache_miss": 0.28,
+      "input_cache_hit": 0.028,
+      "output": 0.42,
+      "source_key": "deepseek/deepseek-reasoner"
+    }
+  }
+}

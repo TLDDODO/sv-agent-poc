@@ -5,7 +5,8 @@ import re
 import urllib.request
 from dataclasses import asdict
 
-from .structures import offline_structures, canonical_map
+from .structures import (FAT10_UNIPROT, NTERM_UBL_RANGE, canonical_map,
+                         mcp_structures, offline_structures)
 
 
 # Tools whose per-residue interface scores the team has NOT produced yet. We do not
@@ -68,7 +69,7 @@ def get_expected_interface_region(uniprot: str = "O15205") -> dict:
     return {
         "uniprot": uniprot,
         "expected_region": "Ubiquitin-like 1 (N-terminal domain)",
-        "residue_range": [6, 81],   # UniProt O15205 DOMAIN "Ubiquitin-like 1" (verified)
+        "residue_range": list(NTERM_UBL_RANGE),   # UniProt O15205 DOMAIN "Ubiquitin-like 1" (verified)
         "other_domains": {"Ubiquitin-like 2 (C-term)": [90, 163], "C-terminal tail": [164, 165]},
         "evidence_type": "CITED literature fact (not derived by this agent)",
         "source": "Domain ranges: UniProt O15205 feature table (verified). Binding region: "
@@ -82,8 +83,31 @@ def get_expected_interface_region(uniprot: str = "O15205") -> dict:
 
 # --- tool implementations (the agent calls these) ----------------------------
 def fetch_structures(uniprot: str) -> dict:
-    hits = offline_structures()          # verified PDBe snapshot (or --mcp live on HPC)
-    return {"uniprot": uniprot, "structures": [asdict(h) for h in hits]}
+    """PDB structures for a UniProt accession. Tries the live PDBe MCP search server
+    first; if it cannot be reached, falls back to the verified snapshot, which exists
+    only for FAT10 (O15205). PDBE_SOURCE=snapshot skips the live query (offline runs);
+    PDBE_SOURCE=mcp disables the fallback."""
+    source = os.environ.get("PDBE_SOURCE", "auto")
+    live_error = None
+    if source in ("auto", "mcp"):
+        try:
+            hits = mcp_structures(uniprot)
+            return {"uniprot": uniprot, "source": "pdbe_mcp_live",
+                    "structures": [asdict(h) for h in hits]}
+        except Exception as exc:
+            live_error = f"{type(exc).__name__}: {exc}"[:300]
+            if source == "mcp":
+                return {"uniprot": uniprot, "source": "pdbe_mcp_live", "structures": [],
+                        "error": live_error}
+    if uniprot == FAT10_UNIPROT:
+        out = {"uniprot": uniprot, "source": "verified_snapshot",
+               "structures": [asdict(h) for h in offline_structures()]}
+    else:
+        out = {"uniprot": uniprot, "source": "unavailable", "structures": [],
+               "note": "live PDBe query failed and there is no snapshot for this accession"}
+    if live_error:
+        out["live_error"] = live_error
+    return out
 
 
 def list_interface_tools() -> dict:
@@ -104,7 +128,8 @@ def get_tool_prediction(tool: str) -> dict:
     return {"error": f"unknown tool '{tool}'", "available": list(preds)}
 
 
-def map_residues(residues: list, uniprot: str, domain_lo: int = 1, domain_hi: int = 80) -> dict:
+def map_residues(residues: list, uniprot: str, domain_lo: int = NTERM_UBL_RANGE[0],
+                 domain_hi: int = NTERM_UBL_RANGE[1]) -> dict:
     ms = canonical_map(residues, uniprot=uniprot, domain=(domain_lo, domain_hi))
     return {"mappings": [asdict(m) for m in ms]}
 

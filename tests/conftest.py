@@ -1,8 +1,8 @@
 """Shared test setup.
 
 - Every test runs from the repo root (the code uses repo-relative data paths).
-- Offline tests have the network blocked and DEEPSEEK_API_KEY unset, so nothing can
-  silently reach PubMed, UniProt, PDBe or DeepSeek.
+- Offline tests have the network blocked, DEEPSEEK_API_KEY unset and PDBE_SOURCE=snapshot,
+  so nothing can silently reach PubMed, UniProt, PDBe or DeepSeek.
 - Tests marked ``live`` are skipped unless ``--run-live`` is given.
 - ``fake_llm(script)`` swaps a scripted FakeClient into the agent loop.
 - Run logs go to a per-test temp file (``RUNLOG_PATH``), never into the repo.
@@ -55,6 +55,8 @@ def _offline(request, monkeypatch):
     monkeypatch.setattr(socket.socket, "connect", _blocked)
     monkeypatch.setattr(socket, "create_connection", _blocked)
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    # the PDBe MCP query runs in a subprocess the socket block cannot reach
+    monkeypatch.setenv("PDBE_SOURCE", "snapshot")
 
 
 @pytest.fixture

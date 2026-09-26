@@ -1,10 +1,11 @@
 from __future__ import annotations
+import os
 import re
 from dataclasses import dataclass
 
 FAT10_UNIPROT = "O15205"        # UBD / FAT10
 MAD2_UNIPROT = "Q13257"         # MAD2L1
-NTERM_UBL_RANGE = (1, 80)       # FAT10 N-terminal ubiquitin-like domain (MAD2-binding)
+NTERM_UBL_RANGE = (6, 81)       # FAT10 UBL1, UniProt O15205 DOMAIN "Ubiquitin-like 1" (verified)
 
 _THREE = {
     "A": "ALA", "R": "ARG", "N": "ASN", "D": "ASP", "C": "CYS", "Q": "GLN",
@@ -59,11 +60,11 @@ def offline_structures() -> list[StructureHit]:
 
 
 # --- Real PDBe MCP query (HPC / online) --------------------------------------
-def _pdbe_payload() -> dict:
+def _pdbe_payload(uniprot: str = FAT10_UNIPROT) -> dict:
     # Filter by UniProt accession (reliable) rather than a free-text molecule name,
     # which Solr treated as match-all and returned the whole PDB by resolution.
     return {
-        "query": f"uniprot_accession:{FAT10_UNIPROT}",
+        "query": f"uniprot_accession:{uniprot}",
         "fl": ["pdb_id", "title", "resolution", "experimental_method"],
         "rows": 10,
     }
@@ -101,27 +102,45 @@ def _parse(text: str) -> list[StructureHit]:
     return hits
 
 
-def mcp_structures(uvx: str = "uvx") -> list[StructureHit]:
-    """Query the official PDBe MCP search server for FAT10 structures (live; needs
-    network + `uvx`). This is the real MCP client — a stdio session to the PDBe
-    server. Falls back to offline_structures() for the offline/demo path."""
+# The MCP stdio client only passes HOME/PATH/SHELL/TERM to the server process. Behind
+# an HTTPS proxy the server also needs the proxy and CA settings, so pass exactly those
+# through (never the whole environment: that would hand API keys to the subprocess).
+_PASSTHROUGH_ENV = ("HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy", "NO_PROXY",
+                    "no_proxy", "REQUESTS_CA_BUNDLE", "SSL_CERT_FILE", "CURL_CA_BUNDLE")
+
+
+def mcp_structures(uniprot: str = FAT10_UNIPROT, uvx: str | None = None,
+                   timeout: float | None = None) -> list[StructureHit]:
+    """Query the official PDBe MCP search server for a UniProt accession's structures
+    (live; needs network + `uvx`). This is the real MCP client — a stdio session to
+    the PDBe server. Raises on any failure; `agent.tools.fetch_structures` decides
+    what to fall back to."""
     import asyncio
     from mcp import ClientSession, StdioServerParameters
-    from mcp.client.stdio import stdio_client
+    from mcp.client.stdio import get_default_environment, stdio_client
+
+    uvx = uvx or os.environ.get("UVX", "uvx")
+    timeout = timeout or float(os.environ.get("PDBE_MCP_TIMEOUT", "90"))
+    env = {**get_default_environment(),
+           **{k: os.environ[k] for k in _PASSTHROUGH_ENV if k in os.environ}}
 
     async def _run() -> str:
         params = StdioServerParameters(
             command=uvx,
             args=["--from", "pdbe-mcp-server", "pdbe-mcp-server",
                   "--server-type", "pdbe_search_server", "--transport", "stdio"],
+            env=env,
         )
         async with stdio_client(params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
-                result = await session.call_tool("run_pdbe_search_query", _pdbe_payload())
+                result = await session.call_tool("run_pdbe_search_query", _pdbe_payload(uniprot))
                 return "\n".join(getattr(c, "text", str(c)) for c in result.content)
 
-    return _parse(asyncio.run(_run()))
+    text = asyncio.run(asyncio.wait_for(_run(), timeout))
+    if "Documents:" not in text:
+        raise RuntimeError(f"unexpected PDBe MCP response: {text[:200]}")
+    return _parse(text)
 
 
 def canonical_map(residue_labels: list[str], uniprot: str = FAT10_UNIPROT,

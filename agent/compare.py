@@ -13,6 +13,7 @@ from pathlib import Path
 
 from .llm_client import make_client
 from .tools import _predictions, validate_residues, fetch_structures, map_residues
+from .structures import NTERM_UBL_RANGE
 
 # Per-tool caveats attached to the evidence bundle (kept here to keep the agent
 # package self-contained). Only tools with real per-residue scores appear.
@@ -23,13 +24,13 @@ _CAVEATS = {
     "HADDOCK":
         "HADDOCK scores depend on the input restraints and sampling; they reflect "
         "docking energetics, not direct observation.",
-    "PISA-contacts":
+    "PISA":
         "PISA contacts come from a single static pose; they are sensitive to which "
         "docked model was chosen.",
 }
 
 
-def gather_evidence(uniprot: str, domain=(1, 80)) -> tuple[list, dict]:
+def gather_evidence(uniprot: str, domain=NTERM_UBL_RANGE) -> tuple[list, dict]:
     preds = _predictions()
     residues = sorted({r for scores in preds.values() for r in scores},
                       key=lambda x: int(re.sub(r"\D", "", x) or 0))

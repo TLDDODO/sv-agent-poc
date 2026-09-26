@@ -99,6 +99,8 @@ AFM/HADDOCK/PISA 返回 `pending`。
 2. README 写 FAT10 结构域边界 "UBL1 6–81 ✅ verified";但 `map_residues` 默认 `domain_hi=80`、`agent/structures.py` 的 `NTERM_UBL_RANGE = (1, 80)`、`agent/compare.py` 的 `gather_evidence(domain=(1, 80))` 仍在用旧的、未经核实的 1–80。
 3. pending 工具名不一致:`agent/tools.py` 用 `PISA`,`agent/compare.py` 的 `_CAVEATS` 用 `PISA-contacts`(对 pending 状态无实际影响)。
 
+> 以上 3 处已在 S1b 处理(见 `docs/progress.md`);本节保留为 S1 时的原始盘点。
+
 其余条目(ReAct 循环、MD 数据、`validate_residues`、引用的预期区域、辩论、弱强对比、pending 三件套)与 README 一致。
 
 ## 5. 本地运行

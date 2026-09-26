@@ -32,7 +32,7 @@ goal ─▶ [ReAct agent: DeepSeek plans + calls tools in a loop]
              │
              ├─ search_literature            → PubMed abstracts (live) / cited fallback
              ├─ get_expected_interface_region→ UBL1 6–81 (UniProt + Theng 2014, CITED)
-             ├─ fetch_structures             → PDBe (live MCP client or verified snapshot)
+             ├─ fetch_structures             → PDBe live MCP query → fallback: verified FAT10 snapshot
              ├─ validate_residues            → real UniProt sequence (catches bad numbering)
              ├─ get_md_interface_scores      → real 100 ns MD contact occupancy
              └─ convene_debate  ─▶ [MD advocate] vs [NMR advocate] ─▶ [Judge → calibrated verdict]
@@ -51,7 +51,7 @@ are not declared); every residue and score originates from a tool, never the mod
 | ReAct agent loop (LLM plans, calls tools, reasons, in a loop) | ✅ real |
 | 100 ns MD contact occupancy (per-residue MAD2 contact fraction) | ✅ real evidence (own Amber run) |
 | `validate_residues` vs the real UniProt O15205 sequence | ✅ real |
-| PDBe retrieval — live MCP client or verified snapshot (6GF1, 6GF2, 2MBE, 7PYV) | ✅ real (all genuine FAT10; none are FAT10:MAD2 complexes — none exist) |
+| PDBe retrieval — `fetch_structures` queries the PDBe MCP search server live (`uvx pdbe-mcp-server`) and falls back to a verified FAT10 snapshot (6GF1, 6GF2, 2MBE, 7PYV) when `uvx` or the network is unavailable | ✅ snapshot entries are genuine FAT10 structures (none are FAT10:MAD2 complexes — none exist) · ⏳ the live path inside the agent is wired and unit-tested, but its `live` test has not yet run against PDBe (see `docs/progress.md`) |
 | FAT10 domain boundaries (UBL1 6–81, UBL2 90–163) | ✅ verified from the UniProt feature table |
 | Expected binding region (MAD2 → UBL1) | 📚 cited (Theng et al. 2014 PNAS; NMR PDB 2MBE) — not derived here |
 | Multi-agent debate + calibrated judge | ✅ real mechanism |

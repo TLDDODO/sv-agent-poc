@@ -372,6 +372,7 @@ def test_the_fat10_contradiction_comes_from_structured_data_using_the_real_agent
     f = d["conclusion"]["findings"][0]
     assert "不一致" in f["plain"]["zh"] and "第 6–81 位" in f["plain"]["zh"] and "不判断哪一方正确" in f["plain"]["zh"]
     assert "disagree" in f["plain"]["en"] and "residues 6–81" in f["plain"]["en"]
+    assert "FAT10" in f["plain"]["en"] and "FAT10" in f["plain"]["zh"]        # protein name comes from the case
     assert [x["raw"] for x in d["conclusion"]["flags"]] == real      # every raw flag is kept for technical details
 
 

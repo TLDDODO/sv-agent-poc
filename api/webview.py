@@ -191,21 +191,22 @@ def findings(case: Case, transcript: list[dict]) -> list[dict]:
             nums = [_num(r) for r in core if _num(r) is not None]
             span = f"{min(nums)}–{max(nums)}"
             names = ", ".join(core)
+            pa = case.name_a
             basis = (f"MD contact fraction >= {INTERFACE_CUTOFF}: {names}; literature-expected region {lo}–{hi}; "
                      f"{len(outside)} of {len(core)} outside it")
             if outside:
                 which_zh = "全部" if len(outside) == len(core) else f"其中 {len(outside)} 个"
                 which_en = "all of them" if len(outside) == len(core) else f"{len(outside)} of them"
                 out.append({"plain": T(
-                    f"分子动力学里稳定接触的 FAT10 残基({names},位于第 {span} 位),{which_zh}在文献预期的第 {lo}–{hi} 位之外:"
+                    f"分子动力学里稳定接触的 {pa} 残基({names},位于第 {span} 位),{which_zh}在文献预期的第 {lo}–{hi} 位之外:"
                     f"两者不一致。系统只报告这个矛盾,不判断哪一方正确。",
-                    f"The FAT10 residues in stable contact in the molecular dynamics ({names}, at positions {span}): "
+                    f"The {pa} residues in stable contact in the molecular dynamics ({names}, at positions {span}): "
                     f"{which_en} lie outside the literature-expected region (residues {lo}–{hi}), so the two disagree. "
                     f"The system only reports this contradiction and does not say which side is right."), "basis": basis})
             else:
                 out.append({"plain": T(
-                    f"分子动力学里稳定接触的 FAT10 残基({names})都在文献预期的第 {lo}–{hi} 位之内,两者一致。",
-                    f"The FAT10 residues in stable contact in the molecular dynamics ({names}) all lie inside the "
+                    f"分子动力学里稳定接触的 {pa} 残基({names})都在文献预期的第 {lo}–{hi} 位之内,两者一致。",
+                    f"The {pa} residues in stable contact in the molecular dynamics ({names}) all lie inside the "
                     f"literature-expected region (residues {lo}–{hi}); the two agree."), "basis": basis})
     if md is not None and (md.get("status") == "pending" or "occupancy" not in md):
         out.append({"plain": T("这一对蛋白没有分子动力学数据,相关证据标为“待定”。",

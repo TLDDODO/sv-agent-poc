@@ -28,7 +28,8 @@ def main(argv=None) -> int:
     bj = out / "benchmark.json"
     if bj.exists():
         bench = json.loads(bj.read_text(encoding="utf-8"))
-        bench.pop("error_injection", None)              # write_outputs re-attaches the fresh file
+        for key in benchmark.ATTACHED:
+            bench.pop(key, None)                        # write_outputs re-attaches the fresh files
         benchmark.write_outputs(bench, args.out)
         print(f"updated {args.out}/benchmark.json and benchmark.md")
     return 0

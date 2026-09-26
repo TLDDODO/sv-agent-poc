@@ -215,6 +215,8 @@ def render_markdown(data: dict) -> str:
         diff = o["agent"]["mean_score"] - o["baseline"]["mean_score"]
     ei = data.get("error_injection")
     L_ei = _render_error_injection(ei) if ei else []
+    if data.get("workload", {}).get("status") == "ok":
+        L_ei += _render_workload(data["workload"])
     L += ["", f"Overall accuracy: agent {_f(o['agent']['mean_score'])}, baseline "
           f"{_f(o['baseline']['mean_score'])}; agent minus baseline {_f(diff, '{:+.2f}')}. "
           f"Failed runs (counted as misses): agent {o['agent']['n_errors']}, "
@@ -231,12 +233,39 @@ def render_markdown(data: dict) -> str:
           "tools added nothing measurable on these cases.",
           f"- **Small sample**: {len(data['cases'])} pairs, {data['runs_per_case']} run(s) each. Differences "
           "are indicative, not statistically established.",
+          "- **Runs vary**: the model is not deterministic, so re-running the benchmark can change the "
+          "scores (an earlier run of this benchmark scored differently). Compare only within one run.",
           "- **Leakage**: the agent never sees any experimental complex of the pair, nor its papers "
           "(docs/benchmark_design.md, section 5). The baseline gets only names and accessions, so "
           "training-data memory is its only source.",
           "- Latency and cost come from the run logs in results/runs.jsonl; costs use "
           "config/pricing.yaml (third-party price map, see its source note).", ""]
     return "\n".join(L + L_ei)
+
+
+ATTACHED = ("error_injection", "workload")      # <name>.json files next to benchmark.json
+
+
+def _render_workload(w: dict) -> list[str]:
+    L = ["## Workload per query", "",
+         f"Measured from the run log ({w['source']}), not estimated. Data API calls are requests our code "
+         "made to PDBe, UniProt and PubMed (attempted, including failed ones); records are what came back "
+         "from or were checked against those sources, plus rows read from the local MD result file. "
+         f"Log lines written before these counters existed ({w['excluded_lines_without_activity']}) are "
+         "excluded. **Manual (human) effort was not measured**, so nothing here compares against it.", "",
+         "| queries | tool calls | databases reached | data API calls | LLM calls | records processed | "
+         "median time s | mean cost |", "|---|---|---|---|---|---|---|---|"]
+    names = {"benchmark_agent": "agent (benchmark pairs)", "benchmark_baseline": "no-tool baseline",
+             "other_agent": "agent (web / CLI queries)"}
+    rows = []
+    for key, g in w["groups"].items():
+        rows.append(f"| {names.get(key, key)}: {g['queries']} | {_f(g['mean_tool_calls'], '{:.1f}')} | "
+                    f"{_f(g['mean_databases'], '{:.1f}')} | {_f(g['mean_data_api_calls'], '{:.1f}')} | "
+                    f"{_f(g['mean_llm_calls'], '{:.1f}')} | {_f(g['mean_records_processed'], '{:.0f}')} | "
+                    f"{_f(g['median_wall_clock_s'], '{:.1f}')} | {_cost(g['mean_cost_usd'])} |")
+    L += rows + ["", "Means per query. Databases reached: " + "; ".join(
+        f"{names.get(k, k)}: {', '.join(g['databases_used']) or 'none'}" for k, g in w["groups"].items()) + ".", ""]
+    return L
 
 
 def _render_error_injection(ei: dict) -> list[str]:
@@ -262,8 +291,10 @@ def _render_error_injection(ei: dict) -> list[str]:
 def write_outputs(data: dict, out_dir="results") -> None:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    ei_path = out / "error_injection.json"
-    if data.get("status") == "ok" and "error_injection" not in data and ei_path.exists():
-        data = dict(data, error_injection=json.loads(ei_path.read_text(encoding="utf-8")))
+    if data.get("status") == "ok":
+        for key in ATTACHED:
+            path = out / f"{key}.json"
+            if key not in data and path.exists():
+                data = dict(data, **{key: json.loads(path.read_text(encoding="utf-8"))})
     (out / "benchmark.json").write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     (out / "benchmark.md").write_text(render_markdown(data), encoding="utf-8")

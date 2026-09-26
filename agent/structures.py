@@ -137,10 +137,17 @@ def mcp_structures(uniprot: str = FAT10_UNIPROT, uvx: str | None = None,
                 result = await session.call_tool("run_pdbe_search_query", _pdbe_payload(uniprot))
                 return "\n".join(getattr(c, "text", str(c)) for c in result.content)
 
-    text = asyncio.run(asyncio.wait_for(_run(), timeout))
-    if "Documents:" not in text:
-        raise RuntimeError(f"unexpected PDBe MCP response: {text[:200]}")
-    return _parse(text)
+    from . import metrics
+    try:
+        text = asyncio.run(asyncio.wait_for(_run(), timeout))
+        if "Documents:" not in text:
+            raise RuntimeError(f"unexpected PDBe MCP response: {text[:200]}")
+        hits = _parse(text)
+    except Exception:
+        metrics.call("PDBe", 0, ok=False)
+        raise
+    metrics.call("PDBe", len(hits))
+    return hits
 
 
 def canonical_map(residue_labels: list[str], uniprot: str = FAT10_UNIPROT,

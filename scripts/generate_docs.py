@@ -11,12 +11,11 @@ results are never turned into numbers.
 import argparse
 import json
 import re
-import statistics
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TBD = "TBD — 人工基线"
+MANUAL_NOTE = "人工耗时未测量"
 
 
 def _load(root: Path) -> dict:
@@ -72,8 +71,11 @@ def readme_block(data: dict) -> str:
 
 
 # --- business case block --------------------------------------------------------------
-def _runs(data: dict, arm: str) -> list[dict]:
-    return [r for c in data["cases"] for r in c[arm]["runs"]]
+def _wl_row(label, g):
+    return (f"| {label} | {g['queries']} | {_f(g['mean_tool_calls'], '{:.1f}')} | "
+            f"{_f(g['mean_databases'], '{:.1f}')} | {_f(g['mean_data_api_calls'], '{:.1f}')} | "
+            f"{_f(g['mean_llm_calls'], '{:.1f}')} | {_f(g['mean_records_processed'], '{:.0f}')} | "
+            f"{_f(g['median_wall_clock_s'], '{:.1f}')} 秒 | {_cost(g['mean_cost_usd'])} |")
 
 
 def business_block(data: dict) -> str:
@@ -81,27 +83,30 @@ def business_block(data: dict) -> str:
         why = "dry run" if data.get("dry_run") else data.get("status")
         return (f"_`results/benchmark.json` 没有真实运行结果({why}),所以这里不填数字。"
                 "请先运行 `python scripts/run_benchmark.py`。_")
-    rows = []
-    for arm, label in (("agent", "调查 agent(带工具)"), ("baseline", "无工具基线(同一模型直接回答)")):
-        runs = _runs(data, arm)
-        calls = [r["llm_calls"] for r in runs if r.get("llm_calls") is not None]
-        costs = [r["cost_usd"] for r in runs if r.get("cost_usd") is not None]
-        lats = [r["latency_s"] for r in runs if r.get("latency_s") is not None]
-        rows.append(f"| {label} | {len(runs)} | {_f(statistics.mean(calls) if calls else None, '{:.1f}')} | "
-                    f"{_cost(statistics.mean(costs) if costs else None)} | "
-                    f"{_f(statistics.median(lats) if lats else None, '{:.1f}')} 秒 |")
-    total = sum(r["cost_usd"] for arm in ("agent", "baseline") for r in _runs(data, arm)
-                if r.get("cost_usd") is not None)
-    o = data["overall"]
-    L = [f"数据来源:`results/benchmark.json`(模型 `{data['model']}`,生成于 {data['generated_at']},"
-         f"价格表核对日期 {data['pricing_last_checked']},价格来自第三方价格表,见 `config/pricing.yaml`)。", "",
-         "| 流程 | 运行次数 | 平均 LLM 调用次数 | 单次平均成本 | 单次耗时(中位数) |", "|---|---|---|---|---|"]
-    L += rows
-    L.append(f"| 人工流程 | {TBD} | {TBD} | {TBD} | {TBD} |")
-    L += ["", f"整套基准评估(agent 与基线所有运行)的总成本:{_cost(total)}。", "",
-          f"同一批案例上的准确率:agent {_f(o['agent']['mean_score'])},无工具基线 {_f(o['baseline']['mean_score'])}"
-          "(评分规则见 `docs/benchmark_design.md`;基线用来衡量 agent 比"
-          "\"模型自己背答案\"多带来了什么)。", "", _ei_line(data, zh=True)]
+    w = data.get("workload") or {}
+    if w.get("status") != "ok" or not w.get("groups"):
+        return ("_还没有工作量指标。请运行 `python scripts/workload_metrics.py`(它读取 `results/runs.jsonl`)。_")
+    names = {"benchmark_agent": "调查 agent(带工具,基准案例)", "benchmark_baseline": "无工具基线(同一模型直接回答)",
+             "other_agent": "调查 agent(网页 / 命令行查询)"}
+    L = [f"数据来源:`results/runs.jsonl` 经 `scripts/workload_metrics.py` 汇总(`results/workload.json`);"
+         f"模型 `{data['model']}`,价格表核对日期 {data['pricing_last_checked']},价格来自第三方价格表,见 "
+         "`config/pricing.yaml`。以下数字是每次查询的平均值(耗时为中位数),由程序在运行时计数,不是估计。", "",
+         "| 流程 | 查询数 | 工具调用 | 访问的数据库 | 数据接口调用 | 模型调用 | 处理的记录 | 耗时 | 成本 |",
+         "|---|---|---|---|---|---|---|---|---|"]
+    for key, g in w["groups"].items():
+        L.append(_wl_row(names.get(key, key), g))
+    L += ["", "口径:",
+          "- **数据接口调用**:程序向外部数据源(PDBe、UniProt、PubMed)发出的请求次数,发出即计,失败的也算;"
+          "PDBe 的 MCP 查询按一次计。",
+          "- **访问的数据库**:至少成功访问过一次的外部数据库个数(本地 MD 结果文件不算数据库)。",
+          "- **处理的记录**:数据源返回或被核对的记录数(PDBe 条目、PubMed 摘要、UniProt 注释、被核对的残基),"
+          "加上从本地 MD 结果文件读到的残基行数。",
+          f"- 运行日志里在计数功能加入之前写下的 {w['excluded_lines_without_activity']} 行没有这些字段,已排除,没有猜测补全。",
+          "", "**" + MANUAL_NOTE + "。** 没有做过人工基线测量,本文不估计人工耗时和人工成本,因此也不能据此说 agent 节省了多少;"
+          "上表只描述自动化流程本身的工作量。", "",
+          f"同一批案例上的准确率:agent {_f(data['overall']['agent']['mean_score'])},无工具基线 "
+          f"{_f(data['overall']['baseline']['mean_score'])}(评分规则见 `docs/benchmark_design.md`;基线用来衡量 "
+          "agent 比\"模型自己背答案\"多带来了什么)。", "", _ei_line(data, zh=True)]
     return "\n".join(L)
 
 

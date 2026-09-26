@@ -3,7 +3,7 @@
   "dry_run": false,
   "model": "deepseek-chat",
   "runs_per_case": 3,
-  "generated_at": "2026-09-26T08:17:57Z",
+  "generated_at": "2026-09-26T09:04:40Z",
   "scoring": {
     "recall_min": 0.5,
     "max_span_ratio": 2.0
@@ -21,26 +21,26 @@
       "agent": {
         "n_runs": 3,
         "n_errors": 0,
-        "mean_score": 0.5,
-        "protein_hits": 3,
+        "mean_score": 0.6666666666666666,
+        "protein_hits": 4,
         "protein_total": 6,
-        "stability": 1.0,
-        "median_latency_s": 57.927,
-        "mean_cost_usd": 0.003267908,
+        "stability": 0.6666666666666666,
+        "median_latency_s": 42.721,
+        "mean_cost_usd": 0.005090736,
         "runs": [
           {
             "arm": "agent",
             "error": null,
             "predicted_regions": [
               {
-                "uniprot": "Q16611",
-                "start": 74,
-                "end": 88
-              },
-              {
                 "uniprot": "Q07817",
                 "start": 129,
                 "end": 195
+              },
+              {
+                "uniprot": "Q16611",
+                "start": 74,
+                "end": 88
               }
             ],
             "score": 0.5,
@@ -62,9 +62,9 @@
                 "jaccard": 0.7647058823529411
               }
             },
-            "latency_s": 63.712,
-            "cost_usd": 0.004208595999999999,
-            "llm_calls": 6,
+            "latency_s": 43.011,
+            "cost_usd": 0.005026952,
+            "llm_calls": 8,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -73,16 +73,15 @@
               "fetch_structures",
               "get_md_interface_scores",
               "search_literature",
-              "search_literature",
-              "search_literature",
-              "get_tool_prediction",
-              "get_tool_prediction",
-              "get_tool_prediction",
+              "validate_residues",
               "validate_residues",
               "validate_residues",
               "map_residues",
-              "map_residues",
+              "validate_residues",
+              "validate_residues",
+              "search_literature",
               "convene_debate",
+              "validate_residues",
               "submit_adjudication"
             ],
             "run": 1
@@ -92,14 +91,14 @@
             "error": null,
             "predicted_regions": [
               {
-                "uniprot": "Q07817",
-                "start": 129,
-                "end": 195
-              },
-              {
                 "uniprot": "Q16611",
                 "start": 74,
                 "end": 88
+              },
+              {
+                "uniprot": "Q07817",
+                "start": 129,
+                "end": 195
               }
             ],
             "score": 0.5,
@@ -121,9 +120,9 @@
                 "jaccard": 0.7647058823529411
               }
             },
-            "latency_s": 55.565,
-            "cost_usd": 0.003208548,
-            "llm_calls": 5,
+            "latency_s": 38.752,
+            "cost_usd": 0.003445344,
+            "llm_calls": 7,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -132,11 +131,17 @@
               "fetch_structures",
               "get_md_interface_scores",
               "search_literature",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "search_literature",
               "search_literature",
               "validate_residues",
               "validate_residues",
               "map_residues",
               "map_residues",
+              "validate_residues",
+              "validate_residues",
               "convene_debate",
               "submit_adjudication"
             ],
@@ -153,19 +158,19 @@
               },
               {
                 "uniprot": "Q07817",
-                "start": 129,
+                "start": 90,
                 "end": 195
               }
             ],
-            "score": 0.5,
+            "score": 1.0,
             "per_protein": {
               "Q07817": {
-                "hit": false,
-                "recall": 0.41379310344827586,
-                "predicted_length": 67,
+                "hit": true,
+                "recall": 0.8620689655172413,
+                "predicted_length": 106,
                 "true_span": 112,
-                "f1": 0.25,
-                "jaccard": 0.14285714285714285
+                "f1": 0.37037037037037035,
+                "jaccard": 0.22727272727272727
               },
               "Q16611": {
                 "hit": true,
@@ -176,9 +181,9 @@
                 "jaccard": 0.7647058823529411
               }
             },
-            "latency_s": 57.927,
-            "cost_usd": 0.00238658,
-            "llm_calls": 5,
+            "latency_s": 42.721,
+            "cost_usd": 0.006799912,
+            "llm_calls": 8,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -188,13 +193,19 @@
               "get_md_interface_scores",
               "search_literature",
               "get_tool_prediction",
+              "get_tool_prediction",
+              "get_tool_prediction",
               "search_literature",
-              "get_tool_prediction",
-              "get_tool_prediction",
+              "search_literature",
               "validate_residues",
               "validate_residues",
               "map_residues",
               "map_residues",
+              "validate_residues",
+              "validate_residues",
+              "validate_residues",
+              "validate_residues",
+              "convene_debate",
               "submit_adjudication"
             ],
             "run": 3
@@ -208,7 +219,7 @@
         "protein_hits": 0,
         "protein_total": 6,
         "stability": 1.0,
-        "median_latency_s": 0.773,
+        "median_latency_s": 0.832,
         "mean_cost_usd": 5.88e-05,
         "runs": [
           {
@@ -217,13 +228,13 @@
             "predicted_regions": [
               {
                 "uniprot": "Q07817",
-                "start": 18,
-                "end": 45
+                "start": 16,
+                "end": 80
               },
               {
                 "uniprot": "Q16611",
                 "start": 16,
-                "end": 40
+                "end": 186
               }
             ],
             "score": 0.0,
@@ -231,65 +242,25 @@
               "Q07817": {
                 "hit": false,
                 "recall": 0.0,
-                "predicted_length": 28,
+                "predicted_length": 65,
                 "true_span": 112,
                 "f1": 0.0,
                 "jaccard": 0.0
               },
               "Q16611": {
                 "hit": false,
-                "recall": 0.0,
-                "predicted_length": 25,
+                "recall": 1.0,
+                "predicted_length": 171,
                 "true_span": 16,
-                "f1": 0.0,
-                "jaccard": 0.0
+                "f1": 0.16129032258064516,
+                "jaccard": 0.08771929824561403
               }
             },
-            "latency_s": 0.773,
+            "latency_s": 0.693,
             "cost_usd": 5.8800000000000006e-05,
             "llm_calls": 1,
             "tools": [],
             "run": 1
-          },
-          {
-            "arm": "baseline",
-            "error": null,
-            "predicted_regions": [
-              {
-                "uniprot": "Q07817",
-                "start": 18,
-                "end": 45
-              },
-              {
-                "uniprot": "Q16611",
-                "start": 16,
-                "end": 40
-              }
-            ],
-            "score": 0.0,
-            "per_protein": {
-              "Q07817": {
-                "hit": false,
-                "recall": 0.0,
-                "predicted_length": 28,
-                "true_span": 112,
-                "f1": 0.0,
-                "jaccard": 0.0
-              },
-              "Q16611": {
-                "hit": false,
-                "recall": 0.0,
-                "predicted_length": 25,
-                "true_span": 16,
-                "f1": 0.0,
-                "jaccard": 0.0
-              }
-            },
-            "latency_s": 0.665,
-            "cost_usd": 5.8800000000000006e-05,
-            "llm_calls": 1,
-            "tools": [],
-            "run": 2
           },
           {
             "arm": "baseline",
@@ -325,7 +296,47 @@
                 "jaccard": 0.08771929824561403
               }
             },
-            "latency_s": 0.981,
+            "latency_s": 0.906,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 2
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q07817",
+                "start": 18,
+                "end": 45
+              },
+              {
+                "uniprot": "Q16611",
+                "start": 16,
+                "end": 40
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "Q07817": {
+                "hit": false,
+                "recall": 0.0,
+                "predicted_length": 28,
+                "true_span": 112,
+                "f1": 0.0,
+                "jaccard": 0.0
+              },
+              "Q16611": {
+                "hit": false,
+                "recall": 0.0,
+                "predicted_length": 25,
+                "true_span": 16,
+                "f1": 0.0,
+                "jaccard": 0.0
+              }
+            },
+            "latency_s": 0.832,
             "cost_usd": 5.8800000000000006e-05,
             "llm_calls": 1,
             "tools": [],
@@ -345,12 +356,12 @@
       "agent": {
         "n_runs": 3,
         "n_errors": 0,
-        "mean_score": 0.16666666666666666,
-        "protein_hits": 1,
+        "mean_score": 0.5,
+        "protein_hits": 3,
         "protein_total": 6,
-        "stability": 0.6666666666666666,
-        "median_latency_s": 67.188,
-        "mean_cost_usd": 0.003140498666666667,
+        "stability": 0.3333333333333333,
+        "median_latency_s": 32.254,
+        "mean_cost_usd": 0.002665665333333334,
         "runs": [
           {
             "arm": "agent",
@@ -358,37 +369,37 @@
             "predicted_regions": [
               {
                 "uniprot": "P24941",
-                "start": 45,
-                "end": 170
+                "start": 4,
+                "end": 286
               },
               {
                 "uniprot": "P20248",
-                "start": 200,
-                "end": 270
+                "start": 170,
+                "end": 300
               }
             ],
-            "score": 0.5,
+            "score": 1.0,
             "per_protein": {
               "P24941": {
                 "hit": true,
-                "recall": 0.6153846153846154,
-                "predicted_length": 126,
+                "recall": 1.0,
+                "predicted_length": 283,
                 "true_span": 243,
-                "f1": 0.3595505617977528,
-                "jaccard": 0.2191780821917808
+                "f1": 0.31044776119402984,
+                "jaccard": 0.18374558303886926
               },
               "P20248": {
-                "hit": false,
-                "recall": 0.19047619047619047,
-                "predicted_length": 71,
+                "hit": true,
+                "recall": 0.7380952380952381,
+                "predicted_length": 131,
                 "true_span": 145,
-                "f1": 0.1415929203539823,
-                "jaccard": 0.0761904761904762
+                "f1": 0.35838150289017345,
+                "jaccard": 0.21830985915492956
               }
             },
-            "latency_s": 66.781,
-            "cost_usd": 0.0032897760000000003,
-            "llm_calls": 6,
+            "latency_s": 25.13,
+            "cost_usd": 0.0016218720000000001,
+            "llm_calls": 5,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -398,12 +409,11 @@
               "get_md_interface_scores",
               "search_literature",
               "search_literature",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "get_tool_prediction",
               "search_literature",
               "convene_debate",
-              "validate_residues",
-              "validate_residues",
-              "map_residues",
-              "map_residues",
               "submit_adjudication"
             ],
             "run": 1
@@ -414,42 +424,37 @@
             "predicted_regions": [
               {
                 "uniprot": "P24941",
-                "start": 45,
-                "end": 65
+                "start": 40,
+                "end": 100
               },
               {
                 "uniprot": "P20248",
-                "start": 70,
-                "end": 120
-              },
-              {
-                "uniprot": "P20248",
-                "start": 220,
-                "end": 295
+                "start": 170,
+                "end": 300
               }
             ],
-            "score": 0.0,
+            "score": 0.5,
             "per_protein": {
               "P24941": {
                 "hit": false,
-                "recall": 0.17307692307692307,
-                "predicted_length": 21,
+                "recall": 0.36538461538461536,
+                "predicted_length": 61,
                 "true_span": 243,
-                "f1": 0.24657534246575344,
-                "jaccard": 0.140625
+                "f1": 0.336283185840708,
+                "jaccard": 0.20212765957446807
               },
               "P20248": {
-                "hit": false,
-                "recall": 0.40476190476190477,
-                "predicted_length": 127,
+                "hit": true,
+                "recall": 0.7380952380952381,
+                "predicted_length": 131,
                 "true_span": 145,
-                "f1": 0.20118343195266275,
-                "jaccard": 0.1118421052631579
+                "f1": 0.35838150289017345,
+                "jaccard": 0.21830985915492956
               }
             },
-            "latency_s": 67.188,
-            "cost_usd": 0.0031746680000000003,
-            "llm_calls": 6,
+            "latency_s": 42.59,
+            "cost_usd": 0.003500336,
+            "llm_calls": 7,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -460,11 +465,17 @@
               "search_literature",
               "search_literature",
               "search_literature",
+              "search_literature",
+              "search_literature",
+              "validate_residues",
+              "validate_residues",
               "convene_debate",
-              "validate_residues",
-              "validate_residues",
               "map_residues",
-              "map_residues",
+              "search_literature",
+              "search_literature",
+              "search_literature",
+              "search_literature",
+              "search_literature",
               "submit_adjudication"
             ],
             "run": 2
@@ -480,8 +491,8 @@
               },
               {
                 "uniprot": "P20248",
-                "start": 200,
-                "end": 270
+                "start": 210,
+                "end": 295
               }
             ],
             "score": 0.0,
@@ -496,15 +507,15 @@
               },
               "P20248": {
                 "hit": false,
-                "recall": 0.19047619047619047,
-                "predicted_length": 71,
+                "recall": 0.40476190476190477,
+                "predicted_length": 86,
                 "true_span": 145,
-                "f1": 0.1415929203539823,
-                "jaccard": 0.0761904761904762
+                "f1": 0.265625,
+                "jaccard": 0.15315315315315314
               }
             },
-            "latency_s": 72.199,
-            "cost_usd": 0.002957052,
+            "latency_s": 32.254,
+            "cost_usd": 0.002874788,
             "llm_calls": 6,
             "tools": [
               "get_expected_interface_region",
@@ -516,9 +527,8 @@
               "search_literature",
               "search_literature",
               "search_literature",
-              "get_tool_prediction",
-              "get_tool_prediction",
-              "get_tool_prediction",
+              "search_literature",
+              "convene_debate",
               "validate_residues",
               "validate_residues",
               "map_residues",
@@ -536,7 +546,7 @@
         "protein_hits": 0,
         "protein_total": 6,
         "stability": 1.0,
-        "median_latency_s": 0.642,
+        "median_latency_s": 0.894,
         "mean_cost_usd": 5.88e-05,
         "runs": [
           {
@@ -573,7 +583,7 @@
                 "jaccard": 0.15492957746478872
               }
             },
-            "latency_s": 0.596,
+            "latency_s": 0.672,
             "cost_usd": 5.8800000000000006e-05,
             "llm_calls": 1,
             "tools": [],
@@ -613,7 +623,7 @@
                 "jaccard": 0.15492957746478872
               }
             },
-            "latency_s": 0.642,
+            "latency_s": 0.894,
             "cost_usd": 5.8800000000000006e-05,
             "llm_calls": 1,
             "tools": [],
@@ -653,7 +663,7 @@
                 "jaccard": 0.15492957746478872
               }
             },
-            "latency_s": 1.019,
+            "latency_s": 1.009,
             "cost_usd": 5.8800000000000006e-05,
             "llm_calls": 1,
             "tools": [],
@@ -677,8 +687,8 @@
         "protein_hits": 6,
         "protein_total": 6,
         "stability": 1.0,
-        "median_latency_s": 50.804,
-        "mean_cost_usd": 0.0027191173333333337,
+        "median_latency_s": 30.751,
+        "mean_cost_usd": 0.0025139426666666667,
         "runs": [
           {
             "arm": "agent",
@@ -686,8 +696,8 @@
             "predicted_regions": [
               {
                 "uniprot": "Q00987",
-                "start": 26,
-                "end": 109
+                "start": 54,
+                "end": 99
               },
               {
                 "uniprot": "P04637",
@@ -699,11 +709,11 @@
             "per_protein": {
               "Q00987": {
                 "hit": true,
-                "recall": 0.9615384615384616,
-                "predicted_length": 84,
+                "recall": 0.6923076923076923,
+                "predicted_length": 46,
                 "true_span": 80,
-                "f1": 0.45454545454545453,
-                "jaccard": 0.29411764705882354
+                "f1": 0.5,
+                "jaccard": 0.3333333333333333
               },
               "P04637": {
                 "hit": true,
@@ -714,9 +724,9 @@
                 "jaccard": 0.9230769230769231
               }
             },
-            "latency_s": 50.804,
-            "cost_usd": 0.0039627560000000004,
-            "llm_calls": 5,
+            "latency_s": 27.601,
+            "cost_usd": 0.002044784,
+            "llm_calls": 4,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -740,8 +750,8 @@
             "predicted_regions": [
               {
                 "uniprot": "Q00987",
-                "start": 25,
-                "end": 110
+                "start": 50,
+                "end": 99
               },
               {
                 "uniprot": "P04637",
@@ -753,11 +763,11 @@
             "per_protein": {
               "Q00987": {
                 "hit": true,
-                "recall": 1.0,
-                "predicted_length": 86,
+                "recall": 0.7692307692307693,
+                "predicted_length": 50,
                 "true_span": 80,
-                "f1": 0.46428571428571425,
-                "jaccard": 0.3023255813953488
+                "f1": 0.5263157894736842,
+                "jaccard": 0.35714285714285715
               },
               "P04637": {
                 "hit": true,
@@ -768,9 +778,9 @@
                 "jaccard": 0.9230769230769231
               }
             },
-            "latency_s": 50.948,
-            "cost_usd": 0.0022119720000000004,
-            "llm_calls": 4,
+            "latency_s": 31.476,
+            "cost_usd": 0.0031799880000000003,
+            "llm_calls": 6,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -778,8 +788,11 @@
               "fetch_structures",
               "fetch_structures",
               "get_md_interface_scores",
-              "get_tool_prediction",
               "search_literature",
+              "search_literature",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "get_tool_prediction",
               "validate_residues",
               "validate_residues",
               "map_residues",
@@ -822,9 +835,9 @@
                 "jaccard": 0.9230769230769231
               }
             },
-            "latency_s": 47.938,
-            "cost_usd": 0.001982624,
-            "llm_calls": 4,
+            "latency_s": 30.751,
+            "cost_usd": 0.002317056,
+            "llm_calls": 5,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -832,8 +845,11 @@
               "fetch_structures",
               "fetch_structures",
               "get_md_interface_scores",
-              "get_tool_prediction",
               "search_literature",
+              "search_literature",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "get_tool_prediction",
               "validate_residues",
               "validate_residues",
               "map_residues",
@@ -851,7 +867,7 @@
         "protein_hits": 6,
         "protein_total": 6,
         "stability": 1.0,
-        "median_latency_s": 0.664,
+        "median_latency_s": 0.708,
         "mean_cost_usd": 5.852e-05,
         "runs": [
           {
@@ -888,7 +904,7 @@
                 "jaccard": 0.9230769230769231
               }
             },
-            "latency_s": 0.641,
+            "latency_s": 0.708,
             "cost_usd": 5.852e-05,
             "llm_calls": 1,
             "tools": [],
@@ -928,7 +944,7 @@
                 "jaccard": 0.9230769230769231
               }
             },
-            "latency_s": 0.786,
+            "latency_s": 1.425,
             "cost_usd": 5.852e-05,
             "llm_calls": 1,
             "tools": [],
@@ -968,7 +984,7 @@
                 "jaccard": 0.9230769230769231
               }
             },
-            "latency_s": 0.664,
+            "latency_s": 0.642,
             "cost_usd": 5.852e-05,
             "llm_calls": 1,
             "tools": [],
@@ -992,8 +1008,8 @@
         "protein_hits": 3,
         "protein_total": 6,
         "stability": 1.0,
-        "median_latency_s": 59.111,
-        "mean_cost_usd": 0.0028940240000000002,
+        "median_latency_s": 30.551,
+        "mean_cost_usd": 0.0031449040000000004,
         "runs": [
           {
             "arm": "agent",
@@ -1001,7 +1017,118 @@
             "predicted_regions": [
               {
                 "uniprot": "P38936",
-                "start": 147,
+                "start": 140,
+                "end": 164
+              },
+              {
+                "uniprot": "P12004",
+                "start": 121,
+                "end": 133
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "P12004": {
+                "hit": false,
+                "recall": 0.2894736842105263,
+                "predicted_length": 13,
+                "true_span": 229,
+                "f1": 0.4313725490196079,
+                "jaccard": 0.275
+              },
+              "P38936": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 25,
+                "true_span": 18,
+                "f1": 0.8095238095238095,
+                "jaccard": 0.68
+              }
+            },
+            "latency_s": 30.551,
+            "cost_usd": 0.002609824,
+            "llm_calls": 5,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "search_literature",
+              "validate_residues",
+              "map_residues",
+              "validate_residues",
+              "validate_residues",
+              "search_literature",
+              "convene_debate",
+              "submit_adjudication"
+            ],
+            "run": 1
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P38936",
+                "start": 140,
+                "end": 164
+              },
+              {
+                "uniprot": "P12004",
+                "start": 121,
+                "end": 133
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "P12004": {
+                "hit": false,
+                "recall": 0.2894736842105263,
+                "predicted_length": 13,
+                "true_span": 229,
+                "f1": 0.4313725490196079,
+                "jaccard": 0.275
+              },
+              "P38936": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 25,
+                "true_span": 18,
+                "f1": 0.8095238095238095,
+                "jaccard": 0.68
+              }
+            },
+            "latency_s": 30.385,
+            "cost_usd": 0.002693404,
+            "llm_calls": 7,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "validate_residues",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "convene_debate",
+              "search_literature",
+              "submit_adjudication"
+            ],
+            "run": 2
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P38936",
+                "start": 144,
                 "end": 160
               },
               {
@@ -1022,15 +1149,15 @@
               },
               "P38936": {
                 "hit": true,
-                "recall": 0.7647058823529411,
-                "predicted_length": 14,
+                "recall": 0.9411764705882353,
+                "predicted_length": 17,
                 "true_span": 18,
-                "f1": 0.8387096774193549,
-                "jaccard": 0.7222222222222222
+                "f1": 0.9411764705882353,
+                "jaccard": 0.8888888888888888
               }
             },
-            "latency_s": 59.837,
-            "cost_usd": 0.002988104,
+            "latency_s": 34.74,
+            "cost_usd": 0.004131484,
             "llm_calls": 6,
             "tools": [
               "get_expected_interface_region",
@@ -1039,125 +1166,17 @@
               "fetch_structures",
               "fetch_structures",
               "get_md_interface_scores",
-              "search_literature",
-              "search_literature",
-              "validate_residues",
-              "map_residues",
-              "convene_debate",
-              "validate_residues",
-              "validate_residues",
               "search_literature",
               "get_tool_prediction",
-              "submit_adjudication"
-            ],
-            "run": 1
-          },
-          {
-            "arm": "agent",
-            "error": null,
-            "predicted_regions": [
-              {
-                "uniprot": "P38936",
-                "start": 140,
-                "end": 164
-              },
-              {
-                "uniprot": "P12004",
-                "start": 121,
-                "end": 138
-              }
-            ],
-            "score": 0.5,
-            "per_protein": {
-              "P12004": {
-                "hit": false,
-                "recall": 0.2894736842105263,
-                "predicted_length": 18,
-                "true_span": 229,
-                "f1": 0.3928571428571429,
-                "jaccard": 0.24444444444444444
-              },
-              "P38936": {
-                "hit": true,
-                "recall": 1.0,
-                "predicted_length": 25,
-                "true_span": 18,
-                "f1": 0.8095238095238095,
-                "jaccard": 0.68
-              }
-            },
-            "latency_s": 58.274,
-            "cost_usd": 0.0025362400000000004,
-            "llm_calls": 6,
-            "tools": [
-              "get_expected_interface_region",
-              "get_expected_interface_region",
-              "list_interface_tools",
-              "fetch_structures",
-              "fetch_structures",
-              "get_md_interface_scores",
-              "search_literature",
+              "get_tool_prediction",
+              "get_tool_prediction",
               "search_literature",
               "validate_residues",
-              "map_residues",
               "validate_residues",
-              "map_residues",
-              "convene_debate",
-              "submit_adjudication"
-            ],
-            "run": 2
-          },
-          {
-            "arm": "agent",
-            "error": null,
-            "predicted_regions": [
-              {
-                "uniprot": "P38936",
-                "start": 140,
-                "end": 164
-              },
-              {
-                "uniprot": "P12004",
-                "start": 121,
-                "end": 133
-              }
-            ],
-            "score": 0.5,
-            "per_protein": {
-              "P12004": {
-                "hit": false,
-                "recall": 0.2894736842105263,
-                "predicted_length": 13,
-                "true_span": 229,
-                "f1": 0.4313725490196079,
-                "jaccard": 0.275
-              },
-              "P38936": {
-                "hit": true,
-                "recall": 1.0,
-                "predicted_length": 25,
-                "true_span": 18,
-                "f1": 0.8095238095238095,
-                "jaccard": 0.68
-              }
-            },
-            "latency_s": 59.111,
-            "cost_usd": 0.0031577280000000007,
-            "llm_calls": 6,
-            "tools": [
-              "get_expected_interface_region",
-              "get_expected_interface_region",
-              "list_interface_tools",
-              "fetch_structures",
-              "fetch_structures",
-              "search_literature",
-              "get_md_interface_scores",
               "validate_residues",
               "validate_residues",
               "map_residues",
-              "validate_residues",
-              "validate_residues",
-              "convene_debate",
+              "map_residues",
               "submit_adjudication"
             ],
             "run": 3
@@ -1171,7 +1190,7 @@
         "protein_hits": 3,
         "protein_total": 6,
         "stability": 1.0,
-        "median_latency_s": 0.714,
+        "median_latency_s": 0.684,
         "mean_cost_usd": 5.88e-05,
         "runs": [
           {
@@ -1208,7 +1227,7 @@
                 "jaccard": 0.6538461538461539
               }
             },
-            "latency_s": 0.714,
+            "latency_s": 0.72,
             "cost_usd": 5.8800000000000006e-05,
             "llm_calls": 1,
             "tools": [],
@@ -1248,7 +1267,7 @@
                 "jaccard": 0.6538461538461539
               }
             },
-            "latency_s": 0.73,
+            "latency_s": 0.684,
             "cost_usd": 5.8800000000000006e-05,
             "llm_calls": 1,
             "tools": [],
@@ -1288,7 +1307,7 @@
                 "jaccard": 0.6538461538461539
               }
             },
-            "latency_s": 0.625,
+            "latency_s": 0.608,
             "cost_usd": 5.8800000000000006e-05,
             "llm_calls": 1,
             "tools": [],
@@ -1312,8 +1331,8 @@
         "protein_hits": 0,
         "protein_total": 6,
         "stability": 1.0,
-        "median_latency_s": 53.483,
-        "mean_cost_usd": 0.0024824053333333336,
+        "median_latency_s": 27.619,
+        "mean_cost_usd": 0.002216872,
         "runs": [
           {
             "arm": "agent",
@@ -1349,9 +1368,9 @@
                 "jaccard": 0.2236842105263158
               }
             },
-            "latency_s": 53.483,
-            "cost_usd": 0.0023033920000000005,
-            "llm_calls": 4,
+            "latency_s": 28.712,
+            "cost_usd": 0.0025361840000000004,
+            "llm_calls": 6,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -1360,12 +1379,15 @@
               "fetch_structures",
               "get_md_interface_scores",
               "search_literature",
-              "validate_residues",
-              "validate_residues",
               "search_literature",
               "get_tool_prediction",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "validate_residues",
+              "validate_residues",
               "map_residues",
               "map_residues",
+              "convene_debate",
               "submit_adjudication"
             ],
             "run": 1
@@ -1404,9 +1426,9 @@
                 "jaccard": 0.2236842105263158
               }
             },
-            "latency_s": 62.915,
-            "cost_usd": 0.0032339160000000003,
-            "llm_calls": 6,
+            "latency_s": 27.619,
+            "cost_usd": 0.001927464,
+            "llm_calls": 5,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -1415,13 +1437,14 @@
               "fetch_structures",
               "get_md_interface_scores",
               "search_literature",
-              "get_tool_prediction",
               "search_literature",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "get_tool_prediction",
               "validate_residues",
               "validate_residues",
               "map_residues",
               "map_residues",
-              "convene_debate",
               "submit_adjudication"
             ],
             "run": 2
@@ -1460,9 +1483,9 @@
                 "jaccard": 0.2236842105263158
               }
             },
-            "latency_s": 51.412,
-            "cost_usd": 0.0019099079999999999,
-            "llm_calls": 5,
+            "latency_s": 25.87,
+            "cost_usd": 0.0021869679999999996,
+            "llm_calls": 4,
             "tools": [
               "get_expected_interface_region",
               "get_expected_interface_region",
@@ -1470,8 +1493,6 @@
               "fetch_structures",
               "fetch_structures",
               "get_md_interface_scores",
-              "search_literature",
-              "search_literature",
               "search_literature",
               "validate_residues",
               "validate_residues",
@@ -1490,7 +1511,7 @@
         "protein_hits": 0,
         "protein_total": 6,
         "stability": 1.0,
-        "median_latency_s": 0.67,
+        "median_latency_s": 0.714,
         "mean_cost_usd": 5.8240000000000005e-05,
         "runs": [
           {
@@ -1504,7 +1525,7 @@
               },
               {
                 "uniprot": "P04049",
-                "start": 56,
+                "start": 51,
                 "end": 131
               }
             ],
@@ -1521,13 +1542,13 @@
               "P04049": {
                 "hit": false,
                 "recall": 1.0,
-                "predicted_length": 76,
+                "predicted_length": 81,
                 "true_span": 34,
-                "f1": 0.3655913978494624,
-                "jaccard": 0.2236842105263158
+                "f1": 0.346938775510204,
+                "jaccard": 0.20987654320987653
               }
             },
-            "latency_s": 0.723,
+            "latency_s": 0.991,
             "cost_usd": 5.8240000000000005e-05,
             "llm_calls": 1,
             "tools": [],
@@ -1544,7 +1565,7 @@
               },
               {
                 "uniprot": "P04049",
-                "start": 56,
+                "start": 51,
                 "end": 131
               }
             ],
@@ -1561,13 +1582,13 @@
               "P04049": {
                 "hit": false,
                 "recall": 1.0,
-                "predicted_length": 76,
+                "predicted_length": 81,
                 "true_span": 34,
-                "f1": 0.3655913978494624,
-                "jaccard": 0.2236842105263158
+                "f1": 0.346938775510204,
+                "jaccard": 0.20987654320987653
               }
             },
-            "latency_s": 0.67,
+            "latency_s": 0.707,
             "cost_usd": 5.8240000000000005e-05,
             "llm_calls": 1,
             "tools": [],
@@ -1607,7 +1628,7 @@
                 "jaccard": 0.2236842105263158
               }
             },
-            "latency_s": 0.634,
+            "latency_s": 0.714,
             "cost_usd": 5.8240000000000005e-05,
             "llm_calls": 1,
             "tools": [],
@@ -1621,12 +1642,12 @@
     "agent": {
       "n_runs": 15,
       "n_errors": 0,
-      "mean_score": 0.43333333333333335,
-      "protein_hits": 13,
+      "mean_score": 0.5333333333333333,
+      "protein_hits": 16,
       "protein_total": 30,
-      "stability": 0.9333333333333332,
-      "median_latency_s": 58.274,
-      "mean_cost_usd": 0.002900790666666667
+      "stability": 0.8,
+      "median_latency_s": 30.751,
+      "mean_cost_usd": 0.0031264240000000005
     },
     "baseline": {
       "n_runs": 15,
@@ -1635,7 +1656,7 @@
       "protein_hits": 9,
       "protein_total": 30,
       "stability": 1.0,
-      "median_latency_s": 0.67,
+      "median_latency_s": 0.714,
       "mean_cost_usd": 5.8632000000000004e-05
     }
   },
@@ -1821,5 +1842,52 @@
       "inconclusive": 0,
       "intercept_rate": 0.8571428571428571
     }
+  },
+  "workload": {
+    "status": "ok",
+    "source": "results/runs.jsonl",
+    "log_lines": 60,
+    "excluded_lines_without_activity": 30,
+    "groups": {
+      "benchmark_agent": {
+        "queries": 15,
+        "mean_tool_calls": 16.466666666666665,
+        "mean_databases": 3.0,
+        "databases_used": [
+          "PDBe",
+          "PubMed",
+          "UniProt"
+        ],
+        "mean_data_api_calls": 14.666666666666666,
+        "mean_failed_data_api_calls": 0.0,
+        "mean_llm_calls": 5.933333333333334,
+        "mean_records_processed": 445.6666666666667,
+        "median_wall_clock_s": 30.751,
+        "mean_cost_usd": 0.0031264240000000005,
+        "mean_prompt_tokens": 34086.0,
+        "mean_completion_tokens": 2358.266666666667,
+        "mean_calls_by_database": {
+          "PDBe": 4.0,
+          "PubMed": 3.8666666666666667,
+          "UniProt": 6.8
+        }
+      },
+      "benchmark_baseline": {
+        "queries": 15,
+        "mean_tool_calls": 0.0,
+        "mean_databases": 0.0,
+        "databases_used": [],
+        "mean_data_api_calls": 0.0,
+        "mean_failed_data_api_calls": 0.0,
+        "mean_llm_calls": 1.0,
+        "mean_records_processed": 0.0,
+        "median_wall_clock_s": 0.714,
+        "mean_cost_usd": 5.8632000000000004e-05,
+        "mean_prompt_tokens": 122.4,
+        "mean_completion_tokens": 58.0,
+        "mean_calls_by_database": {}
+      }
+    },
+    "manual_time": "not measured"
   }
 }

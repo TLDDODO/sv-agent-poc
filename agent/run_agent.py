@@ -39,6 +39,7 @@ def run(user_goal: str, model: str = MODEL, max_steps: int = 16, verbose: bool =
         case: Case | None = None):
     case = case or default_case()
     token = set_active_case(case)               # the tools act on this protein pair, for this run only
+    leakage.clear_cache()                       # the leak filter's live PDBe lookups are per run
     try:
         return _loop(user_goal, model, max_steps, verbose, case)
     finally:

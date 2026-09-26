@@ -5,7 +5,7 @@ import re
 import urllib.request
 from dataclasses import asdict
 
-from . import leakage
+from . import leakage, metrics
 from .cases import active_case
 from .structures import (FAT10_UNIPROT, NTERM_UBL_RANGE, canonical_map,
                          mcp_structures, offline_structures)
@@ -41,6 +41,7 @@ def get_md_interface_scores(scores_path: str | None = None) -> dict:
     with open(scores_path) as fh:
         data = json.load(fh)
     method, occ = next(iter(data.items()))
+    metrics.local("MD result file", len(occ))
     return {"method": method, "occupancy": occ,
             "note": "fraction of MD frames each FAT10 residue contacts MAD2 (real)"}
 
@@ -87,12 +88,17 @@ def convene_debate() -> dict:
 
 def _uniprot_features(acc: str) -> dict:
     url = f"https://rest.uniprot.org/uniprotkb/{acc}.json"
-    with urllib.request.urlopen(url, timeout=20) as resp:
-        j = json.loads(resp.read().decode())
+    try:
+        with urllib.request.urlopen(url, timeout=20) as resp:
+            j = json.loads(resp.read().decode())
+    except Exception:
+        metrics.call("UniProt", 0, ok=False)
+        raise
     feats = [{"type": f["type"], "description": f.get("description"),
               "start": f["location"]["start"]["value"], "end": f["location"]["end"]["value"]}
              for f in j.get("features", [])
              if f["type"] in ("Domain", "Region", "Motif", "Repeat", "Zinc finger")]
+    metrics.call("UniProt", len(feats))
     return {"name": j["proteinDescription"].get("recommendedName", {}).get("fullName", {}).get("value"),
             "length": j["sequence"]["length"], "features": feats}
 
@@ -194,6 +200,7 @@ def validate_residues(uniprot: str, residues: list) -> dict:
         with urllib.request.urlopen(url, timeout=20) as resp:
             fasta = resp.read().decode()
     except Exception as exc:
+        metrics.call("UniProt", 0, ok=False)
         out = {"error": f"could not fetch UniProt {uniprot}: {type(exc).__name__}",
                "validated": [], "note": "residues are NOT grounded against a real sequence"}
         if getattr(exc, "code", None) is not None:      # HTTPError: keep the status for callers
@@ -211,6 +218,7 @@ def validate_residues(uniprot: str, residues: list) -> dict:
         out.append({"residue": lab, "expected": aa, "actual_in_sequence": actual,
                     "valid": actual == aa})
     n_bad = sum(1 for v in out if not v.get("valid"))
+    metrics.call("UniProt", len(residues))
     return {"uniprot": uniprot, "sequence_length": len(seq),
             "n_mismatches": n_bad, "validated": out}
 

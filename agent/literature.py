@@ -14,6 +14,8 @@ import re
 import urllib.parse
 import urllib.request
 
+from . import metrics
+
 from .llm_client import make_client, MODEL
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
@@ -38,11 +40,22 @@ def search_pubmed(query: str, retmax: int = 5, exclude_pmids=()):
     """`exclude_pmids` (benchmark leak filter): fetch extra hits, drop those PMIDs, keep retmax."""
     q = urllib.parse.quote(query)
     fetch_n = retmax + len(exclude_pmids)
-    es = _get(f"{EUTILS}/esearch.fcgi?db=pubmed&retmode=json&retmax={fetch_n}&term={q}")
-    ids = [i for i in json.loads(es)["esearchresult"]["idlist"] if i not in exclude_pmids][:retmax]
+    try:
+        es = _get(f"{EUTILS}/esearch.fcgi?db=pubmed&retmode=json&retmax={fetch_n}&term={q}")
+    except Exception:
+        metrics.call("PubMed", 0, ok=False)
+        raise
+    found = json.loads(es)["esearchresult"]["idlist"]
+    metrics.call("PubMed", len(found))
+    ids = [i for i in found if i not in exclude_pmids][:retmax]
     if not ids:
         return [], ""
-    abstracts = _get(f"{EUTILS}/efetch.fcgi?db=pubmed&rettype=abstract&retmode=text&id={','.join(ids)}")
+    try:
+        abstracts = _get(f"{EUTILS}/efetch.fcgi?db=pubmed&rettype=abstract&retmode=text&id={','.join(ids)}")
+    except Exception:
+        metrics.call("PubMed", 0, ok=False)
+        raise
+    metrics.call("PubMed", len(ids))
     return ids, abstracts
 
 

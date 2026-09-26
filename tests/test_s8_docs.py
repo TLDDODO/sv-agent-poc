@@ -70,10 +70,10 @@ def test_numbers_come_only_from_the_json(tmp_path):
     assert "0.43" not in readme and "0.43" not in biz       # the old value is gone
 
 
-def test_business_case_manual_time_is_tbd_and_untyped(tmp_path):
+def test_business_case_states_manual_time_is_unmeasured():
+    # C3 replaced the `TBD — 人工基线` row with automated metrics; manual time is still not estimated
     biz = _read(ROOT / "docs" / "business_case.md")
-    row = next(l for l in biz.splitlines() if l.startswith("| 人工流程"))
-    assert row.count("TBD — 人工基线") == 4 and not re.search(r"\d", row)
+    assert "TBD" not in biz and "人工耗时未测量" in biz and "不估计人工耗时" in biz
 
 
 @pytest.mark.parametrize("state", ["dry_run", "blocked", "missing"])

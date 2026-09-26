@@ -69,16 +69,16 @@ expectation (UBL1 6–81) are reported as a contradiction, without declaring a w
 ### Results
 
 <!-- GENERATED:BENCHMARK:START -->
-Model `deepseek-chat`, 3 run(s) per case and arm, generated 2026-09-26T08:17:57Z. Score = mean of the two proteins' region hits (recall ≥ 50%, predicted length ≤ 2× the true span).
+Model `deepseek-chat`, 3 run(s) per case and arm, generated 2026-09-26T09:04:40Z. Score = mean of the two proteins' region hits (recall ≥ 50%, predicted length ≤ 2× the true span).
 
 | pair | truth PDB | agent | no-tool baseline |
 |---|---|---|---|
-| B2CL1-BAK | 1BXL | 0.50 | 0.00 |
-| CDK2-CCNA2 | 1FIN | 0.17 | 0.00 |
+| B2CL1-BAK | 1BXL | 0.67 | 0.00 |
+| CDK2-CCNA2 | 1FIN | 0.50 | 0.00 |
 | MDM2-P53 | 1YCR | 1.00 | 1.00 |
 | PCNA-CDN1A | 1AXC | 0.50 | 0.50 |
 | RASH-RAF1 | 4G0N | 0.00 | 0.00 |
-| **overall** | | **0.43** | **0.30** |
+| **overall** | | **0.53** | **0.30** |
 
 Error injection (FAT10–MAD2): 6 of 7 injected errors caught (86%); passed through 1; inconclusive 0.
 

@@ -162,6 +162,7 @@ def run_query(case: Case, max_steps: int = 12) -> dict:
         "usage": {"seconds": rec.get("wall_clock_s"), "cost_usd": rec.get("cost_usd"),
                   "llm_calls": rec.get("llm_calls"), "prompt_tokens": rec.get("prompt_tokens"),
                   "completion_tokens": rec.get("completion_tokens"), "model": rec.get("model"),
+                  "activity": rec.get("activity"),
                   "pricing_last_checked": rec.get("pricing_last_checked")},
         "steps": [{"tool": a["tool"], "args": a.get("args")} for s in transcript for a in s["actions"]],
     }

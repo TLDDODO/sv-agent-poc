@@ -14,8 +14,10 @@ import json
 import re
 import urllib.parse
 import urllib.request
+from functools import lru_cache
 from pathlib import Path
 
+from . import metrics
 from .cases import Case
 
 EVIDENCE_PATH = Path(__file__).resolve().parent.parent / "docs" / "benchmark_evidence" / "evidence.json"
@@ -31,12 +33,25 @@ def _committed(case: Case) -> dict:
         return {}
 
 
-def _live_entries(acc: str, timeout: float = 20) -> set[str]:
+@lru_cache(maxsize=64)
+def _live_entries(acc: str, timeout: float = 20) -> frozenset[str]:
+    """Live PDBe entries for one accession. Cached within a run (run() clears the cache), so
+    the guard does not repeat the same two PDBe requests after every tool call."""
     q = urllib.parse.urlencode({"q": f"uniprot_accession:{acc}", "fl": "pdb_id",
                                 "rows": "20000", "wt": "json"})
-    with urllib.request.urlopen("https://www.ebi.ac.uk/pdbe/search/pdb/select?" + q,
-                                timeout=timeout) as r:
-        return {d["pdb_id"].upper() for d in json.load(r)["response"]["docs"]}
+    try:
+        with urllib.request.urlopen("https://www.ebi.ac.uk/pdbe/search/pdb/select?" + q,
+                                    timeout=timeout) as r:
+            ids = frozenset(d["pdb_id"].upper() for d in json.load(r)["response"]["docs"])
+    except Exception:
+        metrics.call("PDBe", 0, ok=False)
+        raise
+    metrics.call("PDBe", len(ids))
+    return ids
+
+
+def clear_cache() -> None:
+    _live_entries.cache_clear()
 
 
 def co_complex_entries(case: Case) -> set[str]:
@@ -45,7 +60,7 @@ def co_complex_entries(case: Case) -> set[str]:
     if case.ground_truth:
         ids.add(case.ground_truth["pdb"].upper())
     try:
-        ids |= _live_entries(case.uniprot_a) & _live_entries(case.uniprot_b)
+        ids |= set(_live_entries(case.uniprot_a) & _live_entries(case.uniprot_b))
     except Exception:
         pass                                  # offline: the committed set still applies
     return ids

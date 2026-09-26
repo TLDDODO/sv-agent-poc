@@ -16,6 +16,8 @@ from contextvars import ContextVar
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import metrics
+
 PRICING_PATH = Path(__file__).resolve().parent.parent / "config" / "pricing.yaml"
 DEFAULT_LOG = "results/runs.jsonl"
 
@@ -54,6 +56,7 @@ class RunRecorder:
         self.completion_tokens = 0
         self.cache_hit_tokens = 0
         self.tools: list[str] = []
+        self._activity = metrics.start()          # counts this run's data-source requests
 
     def llm(self, response) -> None:
         self.llm_calls += 1
@@ -84,6 +87,7 @@ class RunRecorder:
             "cache_hit_tokens": self.cache_hit_tokens,
             "wall_clock_s": round(time.perf_counter() - self._t0, 3),
             "tools": list(self.tools),
+            "activity": metrics.summary(self._activity),
             "verdict": verdict,
             "cost_usd": cost_usd(self.model, self.prompt_tokens, self.completion_tokens,
                                  self.cache_hit_tokens, pricing),
@@ -94,6 +98,7 @@ class RunRecorder:
         try:
             line = self.record(verdict)
             LAST_RECORD.set(line)
+            metrics.stop()
             path = Path(os.environ.get("RUNLOG_PATH", DEFAULT_LOG))
             path.parent.mkdir(parents=True, exist_ok=True)
             with path.open("a", encoding="utf-8") as fh:

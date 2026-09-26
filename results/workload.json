@@ -1,0 +1,47 @@
+{
+  "status": "ok",
+  "source": "results/runs.jsonl",
+  "log_lines": 60,
+  "excluded_lines_without_activity": 30,
+  "groups": {
+    "benchmark_agent": {
+      "queries": 15,
+      "mean_tool_calls": 16.466666666666665,
+      "mean_databases": 3.0,
+      "databases_used": [
+        "PDBe",
+        "PubMed",
+        "UniProt"
+      ],
+      "mean_data_api_calls": 14.666666666666666,
+      "mean_failed_data_api_calls": 0.0,
+      "mean_llm_calls": 5.933333333333334,
+      "mean_records_processed": 445.6666666666667,
+      "median_wall_clock_s": 30.751,
+      "mean_cost_usd": 0.0031264240000000005,
+      "mean_prompt_tokens": 34086.0,
+      "mean_completion_tokens": 2358.266666666667,
+      "mean_calls_by_database": {
+        "PDBe": 4.0,
+        "PubMed": 3.8666666666666667,
+        "UniProt": 6.8
+      }
+    },
+    "benchmark_baseline": {
+      "queries": 15,
+      "mean_tool_calls": 0.0,
+      "mean_databases": 0.0,
+      "databases_used": [],
+      "mean_data_api_calls": 0.0,
+      "mean_failed_data_api_calls": 0.0,
+      "mean_llm_calls": 1.0,
+      "mean_records_processed": 0.0,
+      "median_wall_clock_s": 0.714,
+      "mean_cost_usd": 5.8632000000000004e-05,
+      "mean_prompt_tokens": 122.4,
+      "mean_completion_tokens": 58.0,
+      "mean_calls_by_database": {}
+    }
+  },
+  "manual_time": "not measured"
+}

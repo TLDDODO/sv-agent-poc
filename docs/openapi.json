@@ -353,7 +353,7 @@
           "web"
         ],
         "summary": "Run one query and return a plain-language answer with labelled evidence",
-        "description": "Runs the agent on a preset case or on a protein pair given by two UniProt accessions. Returns `conclusion` (plain language), `evidence` rows each labelled `live`, `cited` or `pending`, and `usage` (seconds and cost of this query). Needs DEEPSEEK_API_KEY (otherwise HTTP 400), costs a little money and can take a while. A malformed accession gives HTTP 422.",
+        "description": "Runs the agent on a preset case or on a protein pair given by two UniProt accessions. Returns `conclusion` (plain language), `evidence` rows each labelled `live`, `cited` or `pending`, and `usage` (seconds and cost of this query). Every user-facing sentence comes in both languages as `{zh, en}`, so a client can switch language without re-running the query. `conclusion.findings` are points to watch computed by code from the tool outputs (with their `basis`); `conclusion.flags` are the agent's own flags, each a plain-language rewording by the model (one extra model call, numbers checked to match) plus the raw wording (`raw`) for a technical-details view. Interface residues are sorted by sequence number. Needs DEEPSEEK_API_KEY (otherwise HTTP 400), costs a little money and can take a while. A malformed accession gives HTTP 422.",
         "operationId": "run_query",
         "requestBody": {
           "content": {
@@ -383,22 +383,55 @@
                     "uniprot_b": "<accession>"
                   },
                   "conclusion": {
-                    "headline": "<plain-language answer>",
+                    "headline": {
+                      "zh": "<answer>",
+                      "en": "<answer>"
+                    },
                     "points": [
-                      "<...>"
+                      {
+                        "zh": "<...>",
+                        "en": "<...>"
+                      }
+                    ],
+                    "findings": [
+                      {
+                        "plain": {
+                          "zh": "<sentence computed from tool outputs>",
+                          "en": "<...>"
+                        },
+                        "basis": "<the numbers it was computed from>"
+                      }
                     ],
                     "flags": [
-                      "<...>"
+                      {
+                        "plain": {
+                          "zh": "<model's plain rewording>",
+                          "en": "<...>"
+                        },
+                        "raw": "<the system's original wording>"
+                      }
                     ],
-                    "caveat": "<what this is not>",
-                    "details": "<agent explanation>"
+                    "caveat": {
+                      "zh": "<what this is not>",
+                      "en": "<what this is not>"
+                    },
+                    "details": "<the system's explanation, original wording>"
                   },
                   "evidence": [
                     {
-                      "item": "<what>",
-                      "detail": "<detail>",
+                      "item": {
+                        "zh": "<what>",
+                        "en": "<what>"
+                      },
+                      "detail": {
+                        "zh": "<detail>",
+                        "en": "<detail>"
+                      },
                       "label": "<live | cited | pending>",
-                      "source": "<where from>",
+                      "source": {
+                        "zh": "<where from>",
+                        "en": "<where from>"
+                      },
                       "records": "<count>"
                     }
                   ],

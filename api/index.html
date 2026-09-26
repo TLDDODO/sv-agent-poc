@@ -16,9 +16,13 @@
   * { box-sizing:border-box; }
   body { margin:0; font:16px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--ink); }
   main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
   h1 { font-size:1.5rem; margin:0 0 4px; }
   h2 { font-size:1.1rem; margin:0 0 8px; }
   .sub { color:var(--muted); margin:0 0 20px; }
+  .lang { display:flex; gap:4px; flex-shrink:0; }
+  .lang button { padding:4px 10px; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:6px; cursor:pointer; font:inherit; font-size:.9rem; }
+  .lang button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); font-weight:600; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
   label { display:block; font-weight:600; margin:0 0 6px; }
   select, input { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); font:inherit; }
@@ -30,9 +34,10 @@
   .run { margin-top:14px; padding:10px 22px; background:var(--accent); color:#fff; border:0; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; }
   .run:disabled { opacity:.55; cursor:progress; }
   .notice { background:var(--warn-bg); color:var(--warn); border-radius:8px; padding:10px 12px; margin-bottom:16px; }
-  .error { background:#fde8e8; color:#8a1c1c; border-radius:8px; padding:10px 12px; }
+  .error { background:#fde8e8; color:#8a1c1c; border-radius:8px; padding:10px 12px; margin-bottom:16px; }
   .headline { font-size:1.15rem; font-weight:600; margin:0 0 8px; }
   ul { margin:6px 0; padding-left:20px; }
+  code { font-family:ui-monospace,Consolas,monospace; font-size:.85rem; word-break:break-word; }
   table { width:100%; border-collapse:collapse; font-size:.95rem; }
   th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
   th { color:var(--muted); font-weight:600; }
@@ -43,75 +48,248 @@
   .legend { color:var(--muted); font-size:.9rem; margin-top:10px; }
   .usage { display:flex; flex-wrap:wrap; gap:8px 24px; }
   .usage b { display:block; font-size:1.1rem; }
+  details { margin-top:8px; }
   details summary { cursor:pointer; color:var(--accent); }
+  details h3 { font-size:.95rem; margin:10px 0 4px; }
   [hidden] { display:none !important; }
-  @media (max-width:560px) { .pair { grid-template-columns:1fr; } }
+  @media (max-width:560px) { .pair { grid-template-columns:1fr; } header { flex-direction:column; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>蛋白质界面裁决器</h1>
-  <p class="sub">查一查两个蛋白在哪里结合。系统会去查真实数据、对照文献,并说明每条证据从哪来。它不做实验,也不会编造数据。</p>
+  <header>
+    <div>
+      <h1 data-i18n="title">蛋白质界面裁决器</h1>
+      <p class="sub" data-i18n="subtitle"></p>
+    </div>
+    <div class="lang" role="group" aria-label="Language / 语言">
+      <button type="button" id="lang-zh" aria-pressed="true">中文</button>
+      <button type="button" id="lang-en" aria-pressed="false">English</button>
+    </div>
+  </header>
 
-  <div id="nokey" class="notice" hidden>服务器还没有配置模型密钥(DEEPSEEK_API_KEY),现在无法运行查询。</div>
+  <div id="nokey" class="notice" data-i18n="nokey" hidden></div>
 
   <section class="card">
-    <div class="tabs" role="group" aria-label="选择方式">
-      <button type="button" id="tab-preset" aria-pressed="true">选一个示例</button>
-      <button type="button" id="tab-custom" aria-pressed="false">输入一对蛋白</button>
+    <div class="tabs" role="group">
+      <button type="button" id="tab-preset" aria-pressed="true" data-i18n="tab_preset"></button>
+      <button type="button" id="tab-custom" aria-pressed="false" data-i18n="tab_custom"></button>
     </div>
     <div id="preset-box">
-      <label for="preset">示例</label>
+      <label for="preset" data-i18n="preset_label"></label>
       <select id="preset"></select>
-      <p class="hint">FAT10–MAD2 是本项目的研究案例;其余是已有实验结构的经典蛋白对(系统看不到它们的实验结构)。</p>
+      <p class="hint" data-i18n="preset_hint"></p>
     </div>
     <div id="custom-box" hidden>
       <div class="pair">
-        <div><label for="acc-a">蛋白 A 的 UniProt 号</label><input id="acc-a" placeholder="输入 UniProt 号" autocomplete="off"></div>
-        <div><label for="acc-b">蛋白 B 的 UniProt 号</label><input id="acc-b" placeholder="输入 UniProt 号" autocomplete="off"></div>
+        <div><label for="acc-a" data-i18n="acc_a"></label><input id="acc-a" data-i18n-ph="acc_ph" autocomplete="off"></div>
+        <div><label for="acc-b" data-i18n="acc_b"></label><input id="acc-b" data-i18n-ph="acc_ph" autocomplete="off"></div>
       </div>
-      <p class="hint">UniProt 号可以在 uniprot.org 上查到。自己输入的蛋白对没有分子动力学数据,标为“待定”。</p>
+      <p class="hint" data-i18n="custom_hint"></p>
     </div>
-    <button class="run" id="run" type="button">运行</button>
-    <p class="hint" id="wait" hidden>正在查证据,通常需要一分钟左右,请不要关闭页面……</p>
+    <button class="run" id="run" type="button" data-i18n="run"></button>
+    <p class="hint" id="wait" data-i18n="wait" hidden></p>
   </section>
 
   <div id="error" class="error" hidden></div>
 
   <div id="result" hidden>
     <section class="card">
-      <h2>结论</h2>
+      <h2 data-i18n="h_conclusion"></h2>
       <p class="headline" id="headline"></p>
       <ul id="points"></ul>
-      <div id="flags-box" hidden><strong>需要留意</strong><ul id="flags"></ul></div>
+      <div id="flags-box" hidden><strong data-i18n="h_flags"></strong><ul id="flags"></ul>
+        <p class="hint" id="flags-hint" data-i18n="flags_hint" hidden></p></div>
       <p class="hint" id="caveat"></p>
-      <details id="details-box" hidden><summary>系统给出的详细说明</summary><p id="details"></p></details>
+      <details id="tech-box" hidden>
+        <summary data-i18n="tech"></summary>
+        <div id="tech-basis-box" hidden><h3 data-i18n="tech_basis"></h3><ul id="tech-basis"></ul></div>
+        <div id="tech-flags-box" hidden><h3 data-i18n="tech_flags"></h3><ul id="tech-flags"></ul></div>
+        <div id="tech-details-box" hidden><h3 data-i18n="tech_details"></h3><p id="tech-details"></p></div>
+      </details>
     </section>
 
     <section class="card">
-      <h2>证据</h2>
+      <h2 data-i18n="h_evidence"></h2>
       <table>
-        <thead><tr><th>内容</th><th>细节</th><th>来源类型</th></tr></thead>
+        <thead><tr><th data-i18n="th_item"></th><th data-i18n="th_detail"></th><th data-i18n="th_source"></th></tr></thead>
         <tbody id="evidence"></tbody>
       </table>
-      <p class="legend"><span class="badge live">实时</span> 本次查询里真实取得或读取的数据 &nbsp;
-        <span class="badge cited">引用</span> 已发表的结论或已核实的快照,不是现在重新算的 &nbsp;
-        <span class="badge pending">待定</span> 没有数据,不会用数字凑数</p>
+      <p class="legend">
+        <span class="badge live" data-i18n="live"></span> <span data-i18n="legend_live"></span> &nbsp;
+        <span class="badge cited" data-i18n="cited"></span> <span data-i18n="legend_cited"></span> &nbsp;
+        <span class="badge pending" data-i18n="pending"></span> <span data-i18n="legend_pending"></span></p>
     </section>
 
     <section class="card">
-      <h2>本次查询</h2>
+      <h2 data-i18n="h_usage"></h2>
       <div class="usage" id="usage"></div>
       <p class="hint" id="price-note"></p>
-      <details><summary>系统调用了哪些工具</summary><ol id="steps"></ol></details>
+      <details><summary data-i18n="steps"></summary><ol id="steps"></ol></details>
     </section>
   </div>
 </main>
 
 <script>
 (function () {
+  var I18N = {
+    zh: {
+      title: "蛋白质界面裁决器",
+      subtitle: "查一查两个蛋白在哪里结合。系统会去查真实数据、对照文献,并说明每条证据从哪来。它不做实验,也不会编造数据。",
+      nokey: "服务器还没有配置模型密钥(DEEPSEEK_API_KEY),现在无法运行查询。",
+      tab_preset: "选一个示例", tab_custom: "输入一对蛋白",
+      preset_label: "示例",
+      preset_hint: "FAT10–MAD2 是本项目的研究案例;其余是已有实验结构的经典蛋白对(系统看不到它们的实验结构)。",
+      case_study: "(研究案例)",
+      acc_a: "蛋白 A 的 UniProt 号", acc_b: "蛋白 B 的 UniProt 号", acc_ph: "输入 UniProt 号",
+      custom_hint: "UniProt 号可以在 uniprot.org 上查到。自己输入的蛋白对没有分子动力学数据,标为“待定”。",
+      run: "运行", wait: "正在查证据,通常需要一分钟左右,请不要关闭页面……",
+      failed: "没有成功:",
+      err_400: "服务器还没有配置模型密钥,无法运行查询。",
+      err_422: "输入不正确:请选择一个示例,或输入两个有效的 UniProt 号。",
+      err_502: "这次查询没有成功(上游的模型或数据服务出错),请稍后再试。",
+      err_other: "出现了未预料的错误。",
+      h_conclusion: "结论", h_flags: "需要留意", tech: "技术细节",
+      flags_hint: "前面几条是程序根据工具的输出直接算出来的;其余是模型对系统原始标记的通俗改写(可能不完美,数字已核对一致),原文见“技术细节”。",
+      tech_basis: "上面直接算出的几条,依据是",
+      tech_flags: "系统给出的原始标记", tech_details: "系统的详细说明(原文)",
+      h_evidence: "证据", th_item: "内容", th_detail: "细节", th_source: "来源类型",
+      live: "实时", cited: "引用", pending: "待定",
+      legend_live: "本次查询里真实取得或读取的数据",
+      legend_cited: "已发表的结论或已核实的快照,不是现在重新算的",
+      legend_pending: "没有数据,不会用数字凑数",
+      h_usage: "本次查询", steps: "系统调用了哪些工具",
+      s_time: "耗时", s_cost: "费用", s_calls: "模型调用", s_dbs: "访问的数据库", s_api: "数据接口调用", s_rec: "处理的记录",
+      u_sec: " 秒", u_times: " 次", u_dbs: " 个", u_rec: " 条", unrecorded: "未记录",
+      price_note: function (d) { return "费用按第三方价格表估算(价格核对日期 " + (d || "未知") + "),不是账单。"; }
+    },
+    en: {
+      title: "Protein Interface Adjudicator",
+      subtitle: "Find out where two proteins bind. The system fetches real data, compares it with the literature, and says where each piece of evidence came from. It runs no experiments and never makes up data.",
+      nokey: "The server has no model key (DEEPSEEK_API_KEY) configured, so queries cannot run right now.",
+      tab_preset: "Pick an example", tab_custom: "Enter a protein pair",
+      preset_label: "Example",
+      preset_hint: "FAT10–MAD2 is this project's case study; the others are classic protein pairs with experimental structures (the system cannot see those structures).",
+      case_study: " (case study)",
+      acc_a: "UniProt accession of protein A", acc_b: "UniProt accession of protein B", acc_ph: "Enter a UniProt accession",
+      custom_hint: "You can look up UniProt accessions on uniprot.org. A pair you enter has no molecular-dynamics data, so that evidence is marked “pending”.",
+      run: "Run", wait: "Gathering evidence. This usually takes about a minute; please keep the page open…",
+      failed: "It did not work: ",
+      err_400: "The server has no model key configured, so the query cannot run.",
+      err_422: "Invalid input: pick an example, or enter two valid UniProt accessions.",
+      err_502: "The query failed (an upstream model or data service returned an error). Please try again later.",
+      err_other: "An unexpected error occurred.",
+      h_conclusion: "Conclusion", h_flags: "Points to watch", tech: "Technical details",
+      flags_hint: "The first items are computed directly from the tools' outputs; the rest are the model's plain-language rewording of the system's raw flags (may be imperfect; the numbers were checked to match). Original wording is under “Technical details”.",
+      tech_basis: "What the directly computed items above are based on",
+      tech_flags: "Raw flags from the system", tech_details: "The system's detailed explanation (original wording)",
+      h_evidence: "Evidence", th_item: "Item", th_detail: "Detail", th_source: "Source type",
+      live: "Live", cited: "Cited", pending: "Pending",
+      legend_live: "real data fetched or read during this query",
+      legend_cited: "a published result or a verified snapshot, not recomputed now",
+      legend_pending: "no data; never filled in with a number",
+      h_usage: "This query", steps: "Which tools the system called",
+      s_time: "Time", s_cost: "Cost", s_calls: "Model calls", s_dbs: "Databases reached", s_api: "Data API calls", s_rec: "Records processed",
+      u_sec: " s", u_times: "", u_dbs: "", u_rec: "", unrecorded: "not recorded",
+      price_note: function (d) { return "Cost is estimated from a third-party price list (prices last checked " + (d || "unknown") + "); it is not a bill."; }
+    }
+  };
   var $ = function (id) { return document.getElementById(id); };
-  var mode = "preset";
+  var lang = "zh", mode = "preset", last = null, cases = [], lastErr = null;
+  var t = function (k) { return I18N[lang][k]; };
+  var pick = function (o) { return o && typeof o === "object" ? o[lang] : o; };
+
+  function fill(id, items) {
+    var el = $(id); el.textContent = "";
+    items.forEach(function (s) { var li = document.createElement("li"); li.textContent = s; el.appendChild(li); });
+  }
+  function fillCode(id, items) {
+    var el = $(id); el.textContent = "";
+    items.forEach(function (s) {
+      var li = document.createElement("li"), c = document.createElement("code");
+      c.textContent = s; li.appendChild(c); el.appendChild(li);
+    });
+  }
+
+  function renderPresets() {
+    var sel = $("preset"), keep = sel.value;
+    sel.textContent = "";
+    cases.forEach(function (c) {
+      var o = document.createElement("option"); o.value = c.id;
+      o.textContent = c.name + (c.kind === "case_study" ? t("case_study") : ""); sel.appendChild(o);
+    });
+    if (keep) { sel.value = keep; }
+  }
+
+  function show(data) {
+    var c = data.conclusion;
+    $("headline").textContent = pick(c.headline);
+    fill("points", c.points.map(pick));
+    fill("flags", c.findings.map(function (f) { return pick(f.plain); })
+                   .concat(c.flags.map(function (f) { return pick(f.plain); })));
+    $("flags-box").hidden = c.findings.length + c.flags.length === 0;
+    $("flags-hint").hidden = c.flags.length === 0;
+    $("caveat").textContent = pick(c.caveat);
+
+    // raw flag wording and the system's own explanation live under "Technical details"
+    fillCode("tech-basis", c.findings.map(function (f) { return f.basis; }));
+    $("tech-basis-box").hidden = c.findings.length === 0;
+    fillCode("tech-flags", c.flags.map(function (f) { return f.raw; }));
+    $("tech-flags-box").hidden = c.flags.length === 0;
+    $("tech-details").textContent = c.details || "";
+    $("tech-details-box").hidden = !c.details;
+    $("tech-box").hidden = c.flags.length === 0 && c.findings.length === 0 && !c.details;
+
+    var tb = $("evidence"); tb.textContent = "";
+    data.evidence.forEach(function (r) {
+      var tr = document.createElement("tr");
+      [pick(r.item), pick(r.detail)].forEach(function (s) { var td = document.createElement("td"); td.textContent = s; tr.appendChild(td); });
+      var td = document.createElement("td"), b = document.createElement("span");
+      b.className = "badge " + r.label; b.textContent = t(r.label);
+      td.appendChild(b); td.appendChild(document.createTextNode(" " + pick(r.source)));
+      tr.appendChild(td); tb.appendChild(tr);
+    });
+
+    var u = data.usage, box = $("usage"); box.textContent = "";
+    function stat(name, val) {
+      var d = document.createElement("div"), b = document.createElement("b");
+      b.textContent = val; d.appendChild(b); d.appendChild(document.createTextNode(name)); box.appendChild(d);
+    }
+    stat(t("s_time"), u.seconds == null ? t("unrecorded") : u.seconds.toFixed(1) + t("u_sec"));
+    stat(t("s_cost"), u.cost_usd == null ? t("unrecorded") : "$" + u.cost_usd.toFixed(4));
+    stat(t("s_calls"), u.llm_calls == null ? t("unrecorded") : u.llm_calls + t("u_times"));
+    var a = u.activity;
+    if (a) {
+      stat(t("s_dbs"), a.databases.length + t("u_dbs"));
+      stat(t("s_api"), a.data_api_calls + t("u_times"));
+      stat(t("s_rec"), a.records_processed + t("u_rec"));
+    }
+    $("price-note").textContent = u.cost_usd == null ? "" : t("price_note")(u.pricing_last_checked);
+    fill("steps", data.steps.map(function (s) { return s.tool; }));
+    $("result").hidden = false;
+  }
+
+  function renderError() {
+    if (!lastErr) { $("error").hidden = true; return; }
+    var key = { 400: "err_400", 422: "err_422", 502: "err_502" }[lastErr.status] || "err_other";
+    $("error").textContent = t("failed") + t(key) + (lastErr.detail ? " (" + lastErr.detail + ")" : "");
+    $("error").hidden = false;
+  }
+
+  function apply() {
+    document.documentElement.lang = lang;
+    document.title = t("title");
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-ph]"), function (el) { el.placeholder = t(el.getAttribute("data-i18n-ph")); });
+    $("lang-zh").setAttribute("aria-pressed", lang === "zh");
+    $("lang-en").setAttribute("aria-pressed", lang === "en");
+    renderPresets();
+    renderError();
+    if (last) { show(last); }        // switching language re-renders the same answer; nothing is re-run
+  }
+  function setLang(l) { lang = l; apply(); }
+  $("lang-zh").onclick = function () { setLang("zh"); };
+  $("lang-en").onclick = function () { setLang("en"); };
 
   function setMode(m) {
     mode = m;
@@ -123,74 +301,23 @@
   $("tab-preset").onclick = function () { setMode("preset"); };
   $("tab-custom").onclick = function () { setMode("custom"); };
 
-  function fill(id, items) {
-    var el = $(id); el.textContent = "";
-    items.forEach(function (t) { var li = document.createElement("li"); li.textContent = t; el.appendChild(li); });
-  }
-  var LABEL = { live: "实时", cited: "引用", pending: "待定" };
-
-  function show(data) {
-    var c = data.conclusion;
-    $("headline").textContent = c.headline;
-    fill("points", c.points);
-    fill("flags", c.flags); $("flags-box").hidden = c.flags.length === 0;
-    $("caveat").textContent = c.caveat;
-    $("details").textContent = c.details || ""; $("details-box").hidden = !c.details;
-
-    var tb = $("evidence"); tb.textContent = "";
-    data.evidence.forEach(function (r) {
-      var tr = document.createElement("tr");
-      [r.item, r.detail].forEach(function (t) { var td = document.createElement("td"); td.textContent = t; tr.appendChild(td); });
-      var td = document.createElement("td"), b = document.createElement("span");
-      b.className = "badge " + r.label; b.textContent = LABEL[r.label];
-      td.appendChild(b); td.appendChild(document.createTextNode(" " + r.source));
-      tr.appendChild(td); tb.appendChild(tr);
-    });
-
-    var u = data.usage, box = $("usage"); box.textContent = "";
-    function stat(name, val) {
-      var d = document.createElement("div"), b = document.createElement("b");
-      b.textContent = val; d.appendChild(b); d.appendChild(document.createTextNode(name)); box.appendChild(d);
-    }
-    stat("耗时", u.seconds == null ? "未记录" : u.seconds.toFixed(1) + " 秒");
-    stat("费用", u.cost_usd == null ? "未记录" : "$" + u.cost_usd.toFixed(4));
-    stat("模型调用", u.llm_calls == null ? "未记录" : u.llm_calls + " 次");
-    var a = u.activity;
-    if (a) {
-      stat("访问的数据库", a.databases.length + " 个");
-      stat("数据接口调用", a.data_api_calls + " 次");
-      stat("处理的记录", a.records_processed + " 条");
-    }
-    $("price-note").textContent = u.cost_usd == null ? "" :
-      "费用按第三方价格表估算(价格核对日期 " + (u.pricing_last_checked || "未知") + "),不是账单。";
-    fill("steps", data.steps.map(function (s) { return s.tool; }));
-    $("result").hidden = false;
-  }
-
   $("run").onclick = function () {
     var body = mode === "preset" ? { case_id: $("preset").value }
                                  : { uniprot_a: $("acc-a").value, uniprot_b: $("acc-b").value };
-    $("error").hidden = true; $("result").hidden = true; $("wait").hidden = false; $("run").disabled = true;
+    lastErr = null; renderError(); $("result").hidden = true; last = null; $("wait").hidden = false; $("run").disabled = true;
     fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
       .then(function (x) {
-        if (!x.ok) { throw new Error(typeof x.j.detail === "string" ? x.j.detail : JSON.stringify(x.j.detail)); }
-        show(x.j);
+        if (!x.ok) { lastErr = { status: x.status, detail: typeof x.j.detail === "string" ? x.j.detail : "" }; renderError(); return; }
+        last = x.j; show(x.j);
       })
-      .catch(function (e) { $("error").textContent = "没有成功:" + e.message; $("error").hidden = false; })
+      .catch(function () { lastErr = { status: 0, detail: "" }; renderError(); })
       .then(function () { $("wait").hidden = true; $("run").disabled = false; });
   };
 
-  fetch("/api/cases").then(function (r) { return r.json(); }).then(function (cases) {
-    var sel = $("preset");
-    cases.forEach(function (c) {
-      var o = document.createElement("option"); o.value = c.id;
-      o.textContent = c.name + (c.kind === "case_study" ? "(研究案例)" : ""); sel.appendChild(o);
-    });
-  });
-  fetch("/health").then(function (r) { return r.json(); }).then(function (h) {
-    if (!h.llm_configured) { $("nokey").hidden = false; }
-  });
+  apply();
+  fetch("/api/cases").then(function (r) { return r.json(); }).then(function (list) { cases = list; renderPresets(); });
+  fetch("/health").then(function (r) { return r.json(); }).then(function (h) { if (!h.llm_configured) { $("nokey").hidden = false; } });
 })();
 </script>
 </body>

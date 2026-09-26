@@ -210,8 +210,12 @@ def test_workload_aggregation():
 
 def test_the_committed_workload_matches_the_committed_run_log():
     ids = {c.id for c in cases.load_benchmark()}
-    want = workload.compute(workload.read_log(ROOT / "results" / "runs.jsonl"), ids)
     got = json.loads((ROOT / "results" / "workload.json").read_text(encoding="utf-8"))
+    # workload.json covers the first `log_lines` lines of the log; anything appended later (someone
+    # using the app) is not part of it yet, and must not make this check fail
+    lines = workload.read_log(ROOT / "results" / "runs.jsonl")
+    assert len(lines) >= got["log_lines"]
+    want = workload.compute(lines[:got["log_lines"]], ids)
     assert got == want
     assert got["groups"]["benchmark_agent"]["queries"] > 0 and got["groups"]["benchmark_baseline"]["queries"] > 0
 
@@ -292,4 +296,4 @@ def test_web_usage_includes_the_activity(fake_llm, monkeypatch):
     d = TestClient(api.app).post("/api/run", json={"case_id": "mdm2_p53"}).json()
     a = d["usage"]["activity"]
     assert "UniProt" in a["databases"] and a["data_api_calls"] >= 2 and a["records_processed"] >= 1
-    assert 'stat("访问的数据库"' in TestClient(api.app).get("/").text
+    assert 'stat(t("s_dbs")' in TestClient(api.app).get("/").text          # the page shows the counters

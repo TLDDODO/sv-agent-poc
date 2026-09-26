@@ -18,6 +18,11 @@
   Re-checked 2026-09-26T05:45Z after the human reported the network opened: all of these
   hosts still return 403 from this container (likely the new setting applies only to a
   newly started session). Still BLOCKED.
+  Re-checked 2026-09-26T06:53Z (new session), `curl https://<host>/` via the proxy:
+  rest.uniprot.org 403, www.ebi.ac.uk 403, data.rcsb.org 403,
+  eutils.ncbi.nlm.nih.gov 403, api.deepseek.com 403 (all "CONNECT tunnel failed,
+  response 403"; proxy status: connect_rejected, policy denial). Stopped per the human's
+  instruction: `pytest --run-live` not run, S4 not started. Still BLOCKED.
 - [ ] S5 — Generalise inputs
 - [ ] S6 — Benchmark runner
 - [ ] S7 — Non-technical access (Dify)

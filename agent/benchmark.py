@@ -256,7 +256,9 @@ def _render_workload(w: dict) -> list[str]:
          "| queries | tool calls | databases reached | data API calls | LLM calls | records processed | "
          "median time s | mean cost |", "|---|---|---|---|---|---|---|---|"]
     names = {"benchmark_agent": "agent (benchmark pairs)", "benchmark_baseline": "no-tool baseline",
-             "other_agent": "agent (web / CLI queries)"}
+             "other_agent": "agent (non-benchmark: web app / CLI use)",
+             "other_debate": "debate (no benchmark case recorded: web app / CLI use)"}
+    comp = w.get("log_composition") or {}
     rows = []
     for key, g in w["groups"].items():
         rows.append(f"| {names.get(key, key)}: {g['queries']} | {_f(g['mean_tool_calls'], '{:.1f}')} | "
@@ -265,6 +267,12 @@ def _render_workload(w: dict) -> list[str]:
                     f"{_f(g['median_wall_clock_s'], '{:.1f}')} | {_cost(g['mean_cost_usd'])} |")
     L += rows + ["", "Means per query. Databases reached: " + "; ".join(
         f"{names.get(k, k)}: {', '.join(g['databases_used']) or 'none'}" for k, g in w["groups"].items()) + ".", ""]
+    if comp:
+        kinds = ", ".join(f"{n} {k}" for k, n in comp["non_benchmark_by_kind"].items()) or "none"
+        L += [f"Log composition: {comp['benchmark_case_lines']} of {w['log_lines']} lines carry a "
+              f"benchmark case id (the log does not record which program wrote them). The other {comp['non_benchmark_lines']} ({kinds}) "
+              "carry no benchmark case id, so they are treated as queries run through the web app or the CLI; "
+              "they are reported separately and are not part of any benchmark score.", ""]
     return L
 
 

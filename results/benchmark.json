@@ -1846,7 +1846,16 @@
   "workload": {
     "status": "ok",
     "source": "results/runs.jsonl",
-    "log_lines": 60,
+    "log_lines": 65,
+    "log_composition": {
+      "benchmark_case_lines": 60,
+      "non_benchmark_lines": 5,
+      "non_benchmark_by_kind": {
+        "agent": 2,
+        "debate": 2,
+        "flag_paraphrase": 1
+      }
+    },
     "excluded_lines_without_activity": 30,
     "groups": {
       "benchmark_agent": {
@@ -1885,6 +1894,44 @@
         "mean_cost_usd": 5.8632000000000004e-05,
         "mean_prompt_tokens": 122.4,
         "mean_completion_tokens": 58.0,
+        "mean_calls_by_database": {}
+      },
+      "other_agent": {
+        "queries": 2,
+        "mean_tool_calls": 8.5,
+        "mean_databases": 3.0,
+        "databases_used": [
+          "PDBe",
+          "PubMed",
+          "UniProt"
+        ],
+        "mean_data_api_calls": 4.0,
+        "mean_failed_data_api_calls": 0.0,
+        "mean_llm_calls": 4.0,
+        "mean_records_processed": 40.0,
+        "median_wall_clock_s": 23.7085,
+        "mean_cost_usd": 0.0020260240000000004,
+        "mean_prompt_tokens": 15512.5,
+        "mean_completion_tokens": 1471.0,
+        "mean_calls_by_database": {
+          "PDBe": 1.0,
+          "PubMed": 2.0,
+          "UniProt": 1.0
+        }
+      },
+      "other_debate": {
+        "queries": 2,
+        "mean_tool_calls": 0.0,
+        "mean_databases": 0.0,
+        "databases_used": [],
+        "mean_data_api_calls": 0.0,
+        "mean_failed_data_api_calls": 0.0,
+        "mean_llm_calls": 3.0,
+        "mean_records_processed": 0.0,
+        "median_wall_clock_s": 7.922499999999999,
+        "mean_cost_usd": 0.001158542,
+        "mean_prompt_tokens": 3213.5,
+        "mean_completion_tokens": 1230.5,
         "mean_calls_by_database": {}
       }
     },

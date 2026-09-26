@@ -297,3 +297,14 @@ def test_web_usage_includes_the_activity(fake_llm, monkeypatch):
     a = d["usage"]["activity"]
     assert "UniProt" in a["databases"] and a["data_api_calls"] >= 2 and a["records_processed"] >= 1
     assert 'stat(t("s_dbs")' in TestClient(api.app).get("/").text          # the page shows the counters
+
+
+def test_log_composition_separates_benchmark_case_lines_from_other_queries():
+    ids = {"b1"}
+    lines = [_line("agent", "b1", 1, 1, ["PDBe"]), _line("baseline", "b1", 0, 0, []),
+             _line("agent", "fat10_mad2", 1, 1, ["PDBe"]), _line("debate", None, 0, 0, []),
+             _line("flag_paraphrase", "fat10_mad2", 0, 0, [])]
+    w = workload.compute(lines, ids)
+    assert w["log_composition"] == {"benchmark_case_lines": 2, "non_benchmark_lines": 3,
+                                    "non_benchmark_by_kind": {"agent": 1, "debate": 1, "flag_paraphrase": 1}}
+    assert w["groups"]["other_debate"]["queries"] == 1 and "flag_paraphrase" not in str(w["groups"].keys())

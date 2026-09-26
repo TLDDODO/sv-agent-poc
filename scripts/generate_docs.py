@@ -87,7 +87,9 @@ def business_block(data: dict) -> str:
     if w.get("status") != "ok" or not w.get("groups"):
         return ("_还没有工作量指标。请运行 `python scripts/workload_metrics.py`(它读取 `results/runs.jsonl`)。_")
     names = {"benchmark_agent": "调查 agent(带工具,基准案例)", "benchmark_baseline": "无工具基线(同一模型直接回答)",
-             "other_agent": "调查 agent(网页 / 命令行查询)"}
+             "other_agent": "调查 agent(非基准:网页 / 命令行使用)",
+             "other_debate": "辩论(未记录基准案例:网页 / 命令行使用)"}
+    comp = w.get("log_composition") or {}
     L = [f"数据来源:`results/runs.jsonl` 经 `scripts/workload_metrics.py` 汇总(`results/workload.json`);"
          f"模型 `{data['model']}`,价格表核对日期 {data['pricing_last_checked']},价格来自第三方价格表,见 "
          "`config/pricing.yaml`。以下数字是每次查询的平均值(耗时为中位数),由程序在运行时计数,不是估计。", "",
@@ -102,6 +104,9 @@ def business_block(data: dict) -> str:
           "- **处理的记录**:数据源返回或被核对的记录数(PDBe 条目、PubMed 摘要、UniProt 注释、被核对的残基),"
           "加上从本地 MD 结果文件读到的残基行数。",
           f"- 运行日志里在计数功能加入之前写下的 {w['excluded_lines_without_activity']} 行没有这些字段,已排除,没有猜测补全。",
+          (f"- 日志构成:共 {w['log_lines']} 行,其中 {comp['benchmark_case_lines']} 行带有基准案例编号(日志不记录是哪个程序写的);"
+           f"其余 {comp['non_benchmark_lines']} 行不带基准案例编号,按网页或命令行使用的非基准查询处理(日志不区分两者),"
+           "单独列出,不计入任何基准分数。") if comp else "",
           "", "**" + MANUAL_NOTE + "。** 没有做过人工基线测量,本文不估计人工耗时和人工成本,因此也不能据此说 agent 节省了多少;"
           "上表只描述自动化流程本身的工作量。", "",
           f"同一批案例上的准确率:agent {_f(data['overall']['agent']['mean_score'])},无工具基线 "

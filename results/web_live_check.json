@@ -1,0 +1,324 @@
+{
+  "case": {
+    "id": "fat10_mad2",
+    "name": "FAT10 – MAD2",
+    "uniprot_a": "O15205",
+    "uniprot_b": "Q13257"
+  },
+  "conclusion": {
+    "headline": {
+      "zh": "系统给出的 FAT10 界面残基(依据分子动力学接触数据,由系统综合判断):没有。注意:文献 / NMR 预期的结合区域是 FAT10 的第 6–81 位(引用,不是本系统推导),两者是否一致见下面的“需要留意”。",
+      "en": "FAT10 interface residues reported by the system (based on the molecular-dynamics contact data, judged by the system): none. Note: the literature/NMR-expected binding region is residues 6–81 of FAT10 (cited, not derived by this system); whether the two agree is under “Points to watch” below."
+    },
+    "points": [
+      {
+        "zh": "系统自评的把握程度:0.25(0 表示没把握,1 表示很有把握)。",
+        "en": "The system's own confidence: 0.25 (0 = none, 1 = very confident)."
+      }
+    ],
+    "findings": [
+      {
+        "plain": {
+          "zh": "分子动力学里稳定接触的 FAT10 残基(C160, Y161, C162, I163, G164, G165,位于第 160–165 位),全部在文献预期的第 6–81 位之外:两者不一致。系统只报告这个矛盾,不判断哪一方正确。",
+          "en": "The FAT10 residues in stable contact in the molecular dynamics (C160, Y161, C162, I163, G164, G165, at positions 160–165): all of them lie outside the literature-expected region (residues 6–81), so the two disagree. The system only reports this contradiction and does not say which side is right."
+        },
+        "basis": "MD contact fraction >= 0.5: C160, Y161, C162, I163, G164, G165; literature-expected region 6–81; 6 of 6 outside it"
+      }
+    ],
+    "flags": [
+      {
+        "plain": {
+          "zh": "界面位于预期的 UBL1 区域之外。",
+          "en": "The interface is outside the expected UBL1 region."
+        },
+        "raw": "interface_outside_expected_UBL1_region"
+      },
+      {
+        "plain": {
+          "zh": "界面主要由 UBL2 和 C 端尾部主导。",
+          "en": "The interface is dominated by UBL2 and the C-terminal tail."
+        },
+        "raw": "interface_dominated_by_UBL2_and_C_terminal_tail"
+      },
+      {
+        "plain": {
+          "zh": "柔性的 Gly-Gly 尾部接触是可能的，可能是 AF3 错误对接的假象。",
+          "en": "A flexible Gly-Gly tail contact is possible, possibly an AF3 mis-docking artifact."
+        },
+        "raw": "flexible_Gly_Gly_tail_contact_possible_AF3_mis-docking_artifact"
+      },
+      {
+        "plain": {
+          "zh": "MD 接触与 AF3 起始构象自洽，属于循环证据。",
+          "en": "The MD contacts are self-consistent with the AF3 starting pose, which is circular evidence."
+        },
+        "raw": "MD_contacts_self-consistent_with_AF3_starting_pose_circular_evidence"
+      },
+      {
+        "plain": {
+          "zh": "没有全长 FAT10-MAD2 复合物的实验结构。",
+          "en": "There is no experimental structure of the full-length FAT10-MAD2 complex."
+        },
+        "raw": "no_experimental_structure_of_full-length_FAT10_MAD2_complex"
+      },
+      {
+        "plain": {
+          "zh": "文献预期来自分离的 UBL1 NMR 和功能研究，而非全长复合物。",
+          "en": "The literature expectation comes from isolated UBL1 NMR and functional studies, not from the full-length complex."
+        },
+        "raw": "literature_expectation_from_isolated_UBL1_NMR_and_functional_studies_not_full_length_complex"
+      },
+      {
+        "plain": {
+          "zh": "所有 15 个 MD 残基均针对 UniProt O15205 验证，0 个不匹配。",
+          "en": "All 15 MD residues were validated against UniProt O15205 with 0 mismatches."
+        },
+        "raw": "all_15_MD_residues_validated_0_mismatches_against_UniProt_O15205"
+      }
+    ],
+    "caveat": {
+      "zh": "FAT10–MAD2 没有实验解出的复合物结构:如果 MD 结果与文献预期不一致,系统只报告矛盾,不判定哪一方正确。",
+      "en": "There is no experimentally solved FAT10–MAD2 complex: if the MD result and the literature expectation disagree, the system only reports the contradiction and does not decide which side is right."
+    },
+    "details": "Literature/NMR expectation (UniProt O15205 feature table; Theng et al. 2014 PNAS; PDB 2MBE) places the MAD2-binding region in the N-terminal ubiquitin-like domain UBL1 (residues 6-81). The real 100 ns MD contact occupancy instead concentrates on the C-terminal region: I163 (1.0), C162 (0.998), G164 (0.957), C160 (0.706), G165 (0.656), Y161 (0.613), plus D97 (0.471), K137 (0.43), A159 (0.349), R138 (0.227) - all in UBL2 (90-163) or the C-terminal tail (164-165), OUTSIDE UBL1. Only K31 (0.115) and R60 (0.076) fall inside UBL1, and both are weak. All 15 MD residue labels validated against the real UniProt sequence with 0 mismatches, so the data is not fabricated - the conflict is real, not a numbering artifact. The debate confirms the contradiction (confidence 0.9) but low confidence in which side is correct (0.2): the literature expectation derives from isolated-UBL1 NMR and functional studies, while the MD interface is a 100 ns trajectory seeded from an AlphaFold3 pose and may reflect a mis-docked flexible Gly-Gly C-terminal tail that MD then preserves (partly circular evidence). No experimental full-length FAT10-MAD2 structure exists, so neither side is ground truth. I therefore report the contradiction as fact without declaring a winner, and recommend orthogonal experiments (CSP-NMR titrating full-length FAT10 and separate UBL1/UBL2 constructs with MAD2, XL-MS, HDX-MS), independent MD re-runs from a UBL1-docked pose, and a G164A/G165A tail mutant to test whether the C-terminal contact is required."
+  },
+  "evidence": [
+    {
+      "item": {
+        "zh": "PubMed 文献",
+        "en": "PubMed literature"
+      },
+      "detail": {
+        "zh": "1 篇摘要(PMID 10200259)",
+        "en": "1 abstracts (PMID 10200259)"
+      },
+      "label": "live",
+      "source": {
+        "zh": "PubMed 实时检索",
+        "en": "PubMed live search"
+      },
+      "records": 1
+    },
+    {
+      "item": {
+        "zh": "文献预期的结合区域",
+        "en": "Literature-expected binding region"
+      },
+      "detail": {
+        "zh": "Ubiquitin-like 1 (N-terminal domain),第 6–81 位",
+        "en": "Ubiquitin-like 1 (N-terminal domain), residues 6–81"
+      },
+      "label": "cited",
+      "source": {
+        "zh": "文献 / NMR(不是本系统推导)",
+        "en": "Literature / NMR (not derived by this system)"
+      },
+      "records": 1
+    },
+    {
+      "item": {
+        "zh": "分子动力学接触数据",
+        "en": "Molecular-dynamics contact data"
+      },
+      "detail": {
+        "zh": "15 个残基的接触比例(100 ns 模拟)",
+        "en": "contact fractions for 15 residues (100 ns simulation)"
+      },
+      "label": "live",
+      "source": {
+        "zh": "本地真实 MD 结果文件",
+        "en": "Local real MD result file"
+      },
+      "records": 15
+    },
+    {
+      "item": {
+        "zh": "PDBe 结构 (O15205)",
+        "en": "PDBe structures (O15205)"
+      },
+      "detail": {
+        "zh": "8 个条目:28mq, 28mk, 9e8o, 28mj, 6gf2",
+        "en": "8 entries: 28mq, 28mk, 9e8o, 28mj, 6gf2"
+      },
+      "label": "live",
+      "source": {
+        "zh": "PDBe 实时查询",
+        "en": "PDBe live query"
+      },
+      "records": 8
+    },
+    {
+      "item": {
+        "zh": "残基核对 (O15205)",
+        "en": "Residue check (O15205)"
+      },
+      "detail": {
+        "zh": "15 个残基,其中 0 个与真实序列不符",
+        "en": "15 residues, 0 of which do not match the real sequence"
+      },
+      "label": "live",
+      "source": {
+        "zh": "UniProt 实时序列",
+        "en": "UniProt live sequence"
+      },
+      "records": 15
+    }
+  ],
+  "usage": {
+    "seconds": 24.647,
+    "cost_usd": 0.00189364,
+    "llm_calls": 5,
+    "prompt_tokens": 15637,
+    "completion_tokens": 1764,
+    "paraphrase_llm_calls": 1,
+    "model": "deepseek-chat",
+    "activity": {
+      "databases": [
+        "PDBe",
+        "PubMed",
+        "UniProt"
+      ],
+      "data_api_calls": 4,
+      "failed_calls": 0,
+      "by_database": {
+        "PubMed": {
+          "calls": 2,
+          "failed": 0,
+          "records": 2
+        },
+        "PDBe": {
+          "calls": 1,
+          "failed": 0,
+          "records": 8
+        },
+        "UniProt": {
+          "calls": 1,
+          "failed": 0,
+          "records": 15
+        }
+      },
+      "local_files": [
+        "MD result file"
+      ],
+      "records_processed": 40
+    },
+    "pricing_last_checked": "2026-09-25T14:49:48Z"
+  },
+  "steps": [
+    {
+      "tool": "search_literature",
+      "args": {
+        "query": "FAT10 MAD2 binding region domain"
+      }
+    },
+    {
+      "tool": "get_expected_interface_region",
+      "args": {
+        "uniprot": "O15205"
+      }
+    },
+    {
+      "tool": "get_md_interface_scores",
+      "args": {}
+    },
+    {
+      "tool": "fetch_structures",
+      "args": {
+        "uniprot": "O15205"
+      }
+    },
+    {
+      "tool": "validate_residues",
+      "args": {
+        "uniprot": "O15205",
+        "residues": [
+          "I163",
+          "C162",
+          "G164",
+          "C160",
+          "G165",
+          "Y161",
+          "D97",
+          "K137",
+          "A159",
+          "R138",
+          "N135",
+          "K31",
+          "G136",
+          "R60",
+          "F157"
+        ]
+      }
+    },
+    {
+      "tool": "map_residues",
+      "args": {
+        "uniprot": "O15205",
+        "residues": [
+          "I163",
+          "C162",
+          "G164",
+          "C160",
+          "G165",
+          "Y161",
+          "D97",
+          "K137",
+          "A159",
+          "R138",
+          "N135",
+          "K31",
+          "G136",
+          "R60",
+          "F157"
+        ],
+        "domain_lo": 6,
+        "domain_hi": 81
+      }
+    },
+    {
+      "tool": "convene_debate",
+      "args": {}
+    },
+    {
+      "tool": "submit_adjudication",
+      "args": {
+        "consensus_interface": [],
+        "disputed": [
+          "I163",
+          "C162",
+          "G164",
+          "C160",
+          "G165",
+          "Y161",
+          "D97",
+          "K137",
+          "A159",
+          "R138",
+          "N135",
+          "G136",
+          "F157",
+          "K31",
+          "R60"
+        ],
+        "weak": [
+          "K31",
+          "R60",
+          "F157",
+          "N135",
+          "G136"
+        ],
+        "confidence": 0.25,
+        "reasoning": "Literature/NMR expectation (UniProt O15205 feature table; Theng et al. 2014 PNAS; PDB 2MBE) places the MAD2-binding region in the N-terminal ubiquitin-like domain UBL1 (residues 6-81). The real 100 ns MD contact occupancy instead concentrates on the C-terminal region: I163 (1.0), C162 (0.998), G164 (0.957), C160 (0.706), G165 (0.656), Y161 (0.613), plus D97 (0.471), K137 (0.43), A159 (0.349), R138 (0.227) - all in UBL2 (90-163) or the C-terminal tail (164-165), OUTSIDE UBL1. Only K31 (0.115) and R60 (0.076) fall inside UBL1, and both are weak. All 15 MD residue labels validated against the real UniProt sequence with 0 mismatches, so the data is not fabricated - the conflict is real, not a numbering artifact. The debate confirms the contradiction (confidence 0.9) but low confidence in which side is correct (0.2): the literature expectation derives from isolated-UBL1 NMR and functional studies, while the MD interface is a 100 ns trajectory seeded from an AlphaFold3 pose and may reflect a mis-docked flexible Gly-Gly C-terminal tail that MD then preserves (partly circular evidence). No experimental full-length FAT10-MAD2 structure exists, so neither side is ground truth. I therefore report the contradiction as fact without declaring a winner, and recommend orthogonal experiments (CSP-NMR titrating full-length FAT10 and separate UBL1/UBL2 constructs with MAD2, XL-MS, HDX-MS), independent MD re-runs from a UBL1-docked pose, and a G164A/G165A tail mutant to test whether the C-terminal contact is required.",
+        "flags": [
+          "interface_outside_expected_UBL1_region",
+          "interface_dominated_by_UBL2_and_C_terminal_tail",
+          "flexible_Gly_Gly_tail_contact_possible_AF3_mis-docking_artifact",
+          "MD_contacts_self-consistent_with_AF3_starting_pose_circular_evidence",
+          "no_experimental_structure_of_full-length_FAT10_MAD2_complex",
+          "literature_expectation_from_isolated_UBL1_NMR_and_functional_studies_not_full_length_complex",
+          "all_15_MD_residues_validated_0_mismatches_against_UniProt_O15205"
+        ]
+      }
+    }
+  ]
+}

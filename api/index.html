@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>蛋白质界面裁决器</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1f2933; --muted:#616e7c; --line:#d9dee4; --accent:#2b6cb0;
+          --live:#1b7f4b; --live-bg:#e3f5ea; --cited:#2b6cb0; --cited-bg:#e3eefb; --pending:#616e7c; --pending-bg:#eceff2;
+          --warn:#8a5a00; --warn-bg:#fff4d6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12161b; --card:#1c222a; --ink:#e6eaee; --muted:#9aa5b1; --line:#2f3844; --accent:#7ab0f0;
+            --live:#6fdc9c; --live-bg:#173a28; --cited:#8ec0ff; --cited-bg:#1a2f4a; --pending:#b3bcc6; --pending-bg:#2a323c;
+            --warn:#f2c46b; --warn-bg:#3a2f12; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; }
+  h2 { font-size:1.1rem; margin:0 0 8px; }
+  .sub { color:var(--muted); margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin:0 0 6px; }
+  select, input { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); font:inherit; }
+  .tabs { display:flex; gap:8px; margin-bottom:12px; }
+  .tabs button { flex:1; padding:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:8px; cursor:pointer; font:inherit; }
+  .tabs button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); font-weight:600; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .hint { color:var(--muted); font-size:.9rem; margin:6px 0 0; }
+  .run { margin-top:14px; padding:10px 22px; background:var(--accent); color:#fff; border:0; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; }
+  .run:disabled { opacity:.55; cursor:progress; }
+  .notice { background:var(--warn-bg); color:var(--warn); border-radius:8px; padding:10px 12px; margin-bottom:16px; }
+  .error { background:#fde8e8; color:#8a1c1c; border-radius:8px; padding:10px 12px; }
+  .headline { font-size:1.15rem; font-weight:600; margin:0 0 8px; }
+  ul { margin:6px 0; padding-left:20px; }
+  table { width:100%; border-collapse:collapse; font-size:.95rem; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  .badge { display:inline-block; padding:1px 9px; border-radius:99px; font-size:.85rem; font-weight:600; white-space:nowrap; }
+  .badge.live { background:var(--live-bg); color:var(--live); }
+  .badge.cited { background:var(--cited-bg); color:var(--cited); }
+  .badge.pending { background:var(--pending-bg); color:var(--pending); }
+  .legend { color:var(--muted); font-size:.9rem; margin-top:10px; }
+  .usage { display:flex; flex-wrap:wrap; gap:8px 24px; }
+  .usage b { display:block; font-size:1.1rem; }
+  details summary { cursor:pointer; color:var(--accent); }
+  [hidden] { display:none !important; }
+  @media (max-width:560px) { .pair { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>蛋白质界面裁决器</h1>
+  <p class="sub">查一查两个蛋白在哪里结合。系统会去查真实数据、对照文献,并说明每条证据从哪来。它不做实验,也不会编造数据。</p>
+
+  <div id="nokey" class="notice" hidden>服务器还没有配置模型密钥(DEEPSEEK_API_KEY),现在无法运行查询。</div>
+
+  <section class="card">
+    <div class="tabs" role="group" aria-label="选择方式">
+      <button type="button" id="tab-preset" aria-pressed="true">选一个示例</button>
+      <button type="button" id="tab-custom" aria-pressed="false">输入一对蛋白</button>
+    </div>
+    <div id="preset-box">
+      <label for="preset">示例</label>
+      <select id="preset"></select>
+      <p class="hint">FAT10–MAD2 是本项目的研究案例;其余是已有实验结构的经典蛋白对(系统看不到它们的实验结构)。</p>
+    </div>
+    <div id="custom-box" hidden>
+      <div class="pair">
+        <div><label for="acc-a">蛋白 A 的 UniProt 号</label><input id="acc-a" placeholder="输入 UniProt 号" autocomplete="off"></div>
+        <div><label for="acc-b">蛋白 B 的 UniProt 号</label><input id="acc-b" placeholder="输入 UniProt 号" autocomplete="off"></div>
+      </div>
+      <p class="hint">UniProt 号可以在 uniprot.org 上查到。自己输入的蛋白对没有分子动力学数据,标为“待定”。</p>
+    </div>
+    <button class="run" id="run" type="button">运行</button>
+    <p class="hint" id="wait" hidden>正在查证据,通常需要一分钟左右,请不要关闭页面……</p>
+  </section>
+
+  <div id="error" class="error" hidden></div>
+
+  <div id="result" hidden>
+    <section class="card">
+      <h2>结论</h2>
+      <p class="headline" id="headline"></p>
+      <ul id="points"></ul>
+      <div id="flags-box" hidden><strong>需要留意</strong><ul id="flags"></ul></div>
+      <p class="hint" id="caveat"></p>
+      <details id="details-box" hidden><summary>系统给出的详细说明</summary><p id="details"></p></details>
+    </section>
+
+    <section class="card">
+      <h2>证据</h2>
+      <table>
+        <thead><tr><th>内容</th><th>细节</th><th>来源类型</th></tr></thead>
+        <tbody id="evidence"></tbody>
+      </table>
+      <p class="legend"><span class="badge live">实时</span> 本次查询里真实取得或读取的数据 &nbsp;
+        <span class="badge cited">引用</span> 已发表的结论或已核实的快照,不是现在重新算的 &nbsp;
+        <span class="badge pending">待定</span> 没有数据,不会用数字凑数</p>
+    </section>
+
+    <section class="card">
+      <h2>本次查询</h2>
+      <div class="usage" id="usage"></div>
+      <p class="hint" id="price-note"></p>
+      <details><summary>系统调用了哪些工具</summary><ol id="steps"></ol></details>
+    </section>
+  </div>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var mode = "preset";
+
+  function setMode(m) {
+    mode = m;
+    $("tab-preset").setAttribute("aria-pressed", m === "preset");
+    $("tab-custom").setAttribute("aria-pressed", m === "custom");
+    $("preset-box").hidden = m !== "preset";
+    $("custom-box").hidden = m !== "custom";
+  }
+  $("tab-preset").onclick = function () { setMode("preset"); };
+  $("tab-custom").onclick = function () { setMode("custom"); };
+
+  function fill(id, items) {
+    var el = $(id); el.textContent = "";
+    items.forEach(function (t) { var li = document.createElement("li"); li.textContent = t; el.appendChild(li); });
+  }
+  var LABEL = { live: "实时", cited: "引用", pending: "待定" };
+
+  function show(data) {
+    var c = data.conclusion;
+    $("headline").textContent = c.headline;
+    fill("points", c.points);
+    fill("flags", c.flags); $("flags-box").hidden = c.flags.length === 0;
+    $("caveat").textContent = c.caveat;
+    $("details").textContent = c.details || ""; $("details-box").hidden = !c.details;
+
+    var tb = $("evidence"); tb.textContent = "";
+    data.evidence.forEach(function (r) {
+      var tr = document.createElement("tr");
+      [r.item, r.detail].forEach(function (t) { var td = document.createElement("td"); td.textContent = t; tr.appendChild(td); });
+      var td = document.createElement("td"), b = document.createElement("span");
+      b.className = "badge " + r.label; b.textContent = LABEL[r.label];
+      td.appendChild(b); td.appendChild(document.createTextNode(" " + r.source));
+      tr.appendChild(td); tb.appendChild(tr);
+    });
+
+    var u = data.usage, box = $("usage"); box.textContent = "";
+    function stat(name, val) {
+      var d = document.createElement("div"), b = document.createElement("b");
+      b.textContent = val; d.appendChild(b); d.appendChild(document.createTextNode(name)); box.appendChild(d);
+    }
+    stat("耗时", u.seconds == null ? "未记录" : u.seconds.toFixed(1) + " 秒");
+    stat("费用", u.cost_usd == null ? "未记录" : "$" + u.cost_usd.toFixed(4));
+    stat("模型调用", u.llm_calls == null ? "未记录" : u.llm_calls + " 次");
+    $("price-note").textContent = u.cost_usd == null ? "" :
+      "费用按第三方价格表估算(价格核对日期 " + (u.pricing_last_checked || "未知") + "),不是账单。";
+    fill("steps", data.steps.map(function (s) { return s.tool; }));
+    $("result").hidden = false;
+  }
+
+  $("run").onclick = function () {
+    var body = mode === "preset" ? { case_id: $("preset").value }
+                                 : { uniprot_a: $("acc-a").value, uniprot_b: $("acc-b").value };
+    $("error").hidden = true; $("result").hidden = true; $("wait").hidden = false; $("run").disabled = true;
+    fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (x) {
+        if (!x.ok) { throw new Error(typeof x.j.detail === "string" ? x.j.detail : JSON.stringify(x.j.detail)); }
+        show(x.j);
+      })
+      .catch(function (e) { $("error").textContent = "没有成功:" + e.message; $("error").hidden = false; })
+      .then(function () { $("wait").hidden = true; $("run").disabled = false; });
+  };
+
+  fetch("/api/cases").then(function (r) { return r.json(); }).then(function (cases) {
+    var sel = $("preset");
+    cases.forEach(function (c) {
+      var o = document.createElement("option"); o.value = c.id;
+      o.textContent = c.name + (c.kind === "case_study" ? "(研究案例)" : ""); sel.appendChild(o);
+    });
+  });
+  fetch("/health").then(function (r) { return r.json(); }).then(function (h) {
+    if (!h.llm_configured) { $("nokey").hidden = false; }
+  });
+})();
+</script>
+</body>
+</html>

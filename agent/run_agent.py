@@ -49,7 +49,7 @@ def _loop(user_goal: str, model: str, max_steps: int, verbose: bool, case: Case)
     tools = tools_for(case)
     client = make_client()
     messages = [
-        {"role": "system", "content": PAIR_PROMPT if case.benchmark else SYSTEM_PROMPT},
+        {"role": "system", "content": PAIR_PROMPT if case.generic else SYSTEM_PROMPT},
         {"role": "user", "content": user_goal},
     ]
     transcript = []   # rich per-step record incl. the agent's reasoning
@@ -96,13 +96,13 @@ def _loop(user_goal: str, model: str, max_steps: int, verbose: bool, case: Case)
                 done = True
                 break
 
-            if case.benchmark:
+            if case.generic:
                 # only schema arguments: no off-schema path arguments (e.g. scores_path)
                 allowed = next((t["function"]["parameters"]["properties"] for t in tools
                                 if t["function"]["name"] == name), {})
                 args = {k: v for k, v in args.items() if k in allowed}
             out = DISPATCH[name](**args) if name in DISPATCH else {"error": f"unknown tool {name}"}
-            if case.benchmark and name == "map_residues" and not {"domain_lo", "domain_hi"} <= args.keys():
+            if case.generic and name == "map_residues" and not {"domain_lo", "domain_hi"} <= args.keys():
                 out = {"error": "domain_lo and domain_hi are required for this protein pair"}
             if case.benchmark:
                 out = leakage.guard(out, case)  # never show a held-out complex to the agent

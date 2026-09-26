@@ -12,11 +12,16 @@ import json
 import os
 import sys
 import time
+from contextvars import ContextVar
 from datetime import datetime, timezone
 from pathlib import Path
 
 PRICING_PATH = Path(__file__).resolve().parent.parent / "config" / "pricing.yaml"
 DEFAULT_LOG = "results/runs.jsonl"
+
+# The record of the most recently finished run in this context (the web client reads the
+# run's time and cost from here without changing run()'s return value).
+LAST_RECORD: ContextVar[dict | None] = ContextVar("last_run_record", default=None)
 
 
 def load_pricing(path: Path = PRICING_PATH) -> dict:
@@ -88,6 +93,7 @@ class RunRecorder:
     def finish(self, verdict) -> dict | None:
         try:
             line = self.record(verdict)
+            LAST_RECORD.set(line)
             path = Path(os.environ.get("RUNLOG_PATH", DEFAULT_LOG))
             path.parent.mkdir(parents=True, exist_ok=True)
             with path.open("a", encoding="utf-8") as fh:

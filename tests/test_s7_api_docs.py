@@ -27,8 +27,9 @@ def test_exported_openapi_matches_the_app_schema():
 
 
 def test_every_endpoint_has_summary_description_and_operation_id():
-    assert {(p, m) for p, m, _ in OPS} == {("/", "get"), ("/health", "get"), ("/evidence", "get"),
-                                          ("/adjudicate", "post"), ("/debate", "post")}
+    assert {(p, m) for p, m, _ in OPS} == {("/info", "get"), ("/health", "get"), ("/evidence", "get"),
+                                          ("/adjudicate", "post"), ("/debate", "post"),
+                                          ("/api/cases", "get"), ("/api/run", "post")}
     ids = [op["operationId"] for _, _, op in OPS]
     assert len(set(ids)) == len(ids)
     for path, method, op in OPS:

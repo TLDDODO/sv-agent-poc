@@ -52,10 +52,11 @@ def search_literature(query: str | None = None) -> dict:
     is no fallback claim."""
     case = active_case()
     query = query or case.literature_query
-    if case.benchmark:
+    if case.generic:
         try:
             from .literature import search_pubmed
-            ids, abstracts = search_pubmed(query, exclude_pmids=leakage.co_complex_pmids(case))
+            ids, abstracts = search_pubmed(
+                query, exclude_pmids=leakage.co_complex_pmids(case) if case.benchmark else ())
         except Exception as exc:
             return {"retrieved_live": False, "error": type(exc).__name__}
         return {"retrieved_live": bool(abstracts.strip()), "pmids": ids, "abstracts": abstracts[:4000]}
@@ -77,7 +78,7 @@ def convene_debate() -> dict:
     """Convene the multi-agent debate (MD advocate vs NMR advocate + judge) over the
     current real evidence, and return the judge's calibrated verdict. Call this when
     the MD interface and the literature/domain expectation conflict."""
-    if active_case().benchmark:
+    if active_case().generic:
         return {"status": "pending", "real": False,
                 "note": "no MD run and no NMR/literature conflict exist for this pair, so there is nothing to debate"}
     from .debate import run as _run_debate
@@ -103,7 +104,7 @@ def get_expected_interface_region(uniprot: str = "O15205") -> dict:
     prior: it returns the live UniProt domain/region/motif table of both proteins
     (features only - no comments or cross-references, which can name the complex)."""
     case = active_case()
-    if case.benchmark:
+    if case.generic:
         try:
             return {"evidence_type": "UniProt feature table (live) - annotations, NOT a known interface",
                     "proteins": {a: _uniprot_features(a) for a in (case.uniprot_a, case.uniprot_b)}}
@@ -307,7 +308,7 @@ _PREDICTED_REGIONS = {
 
 
 def tools_for(case) -> list:
-    if not case.benchmark:
+    if not case.generic:
         return TOOLS
     import copy
     tools = copy.deepcopy(TOOLS)

@@ -12,7 +12,7 @@
     }
   ],
   "paths": {
-    "/": {
+    "/info": {
       "get": {
         "tags": [
           "meta"
@@ -278,6 +278,155 @@
           }
         }
       }
+    },
+    "/api/cases": {
+      "get": {
+        "tags": [
+          "web"
+        ],
+        "summary": "List the preset cases for the web page",
+        "description": "The FAT10-MAD2 case study plus the benchmark protein pairs. Benchmark pairs are run with their experimental complex hidden from the agent; no answers are returned here.",
+        "operationId": "list_cases",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {},
+                  "type": "array",
+                  "title": "Response List Cases"
+                },
+                "example": [
+                  {
+                    "id": "fat10_mad2",
+                    "name": "FAT10 – MAD2",
+                    "uniprot_a": "O15205",
+                    "uniprot_b": "Q13257",
+                    "kind": "case_study"
+                  },
+                  {
+                    "id": "b2cl1_bak",
+                    "name": "B2CL1 – BAK",
+                    "uniprot_a": "Q07817",
+                    "uniprot_b": "Q16611",
+                    "kind": "benchmark"
+                  },
+                  {
+                    "id": "cdk2_ccna2",
+                    "name": "CDK2 – CCNA2",
+                    "uniprot_a": "P24941",
+                    "uniprot_b": "P20248",
+                    "kind": "benchmark"
+                  },
+                  {
+                    "id": "mdm2_p53",
+                    "name": "MDM2 – P53",
+                    "uniprot_a": "Q00987",
+                    "uniprot_b": "P04637",
+                    "kind": "benchmark"
+                  },
+                  {
+                    "id": "pcna_cdn1a",
+                    "name": "PCNA – CDN1A",
+                    "uniprot_a": "P12004",
+                    "uniprot_b": "P38936",
+                    "kind": "benchmark"
+                  },
+                  {
+                    "id": "rash_raf1",
+                    "name": "RASH – RAF1",
+                    "uniprot_a": "P01112",
+                    "uniprot_b": "P04049",
+                    "kind": "benchmark"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/run": {
+      "post": {
+        "tags": [
+          "web"
+        ],
+        "summary": "Run one query and return a plain-language answer with labelled evidence",
+        "description": "Runs the agent on a preset case or on a protein pair given by two UniProt accessions. Returns `conclusion` (plain language), `evidence` rows each labelled `live`, `cited` or `pending`, and `usage` (seconds and cost of this query). Needs DEEPSEEK_API_KEY (otherwise HTTP 400), costs a little money and can take a while. A malformed accession gives HTTP 422.",
+        "operationId": "run_query",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Run Query"
+                },
+                "example": {
+                  "case": {
+                    "id": "<case id>",
+                    "name": "<A – B>",
+                    "uniprot_a": "<accession>",
+                    "uniprot_b": "<accession>"
+                  },
+                  "conclusion": {
+                    "headline": "<plain-language answer>",
+                    "points": [
+                      "<...>"
+                    ],
+                    "flags": [
+                      "<...>"
+                    ],
+                    "caveat": "<what this is not>",
+                    "details": "<agent explanation>"
+                  },
+                  "evidence": [
+                    {
+                      "item": "<what>",
+                      "detail": "<detail>",
+                      "label": "<live | cited | pending>",
+                      "source": "<where from>",
+                      "records": "<count>"
+                    }
+                  ],
+                  "usage": {
+                    "seconds": "<n>",
+                    "cost_usd": "<n>",
+                    "llm_calls": "<n>",
+                    "model": "<model>"
+                  },
+                  "steps": [
+                    {
+                      "tool": "<tool name>",
+                      "args": {}
+                    }
+                  ],
+                  "_note": "shape only: placeholders in angle brackets, not data"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DEEPSEEK_API_KEY is not set."
+          },
+          "422": {
+            "description": "Neither a valid case_id nor two valid UniProt accessions."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -327,6 +476,57 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "RunRequest": {
+        "properties": {
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id",
+            "description": "A preset case id from GET /api/cases.",
+            "examples": [
+              "fat10_mad2"
+            ]
+          },
+          "uniprot_a": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uniprot A",
+            "description": "Protein A UniProt accession (use with uniprot_b instead of case_id).",
+            "examples": [
+              "<UniProt accession>"
+            ]
+          },
+          "uniprot_b": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uniprot B",
+            "description": "Protein B UniProt accession.",
+            "examples": [
+              "<UniProt accession>"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "RunRequest"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -373,6 +573,10 @@
     {
       "name": "meta",
       "description": "Service description and health."
+    },
+    {
+      "name": "web",
+      "description": "Endpoints behind the web page at / (preset cases, run a query)."
     },
     {
       "name": "evidence",

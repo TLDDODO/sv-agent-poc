@@ -130,11 +130,28 @@ uvicorn api.main:app --reload      # http://localhost:8000/docs
 
 | Endpoint | Needs key? | What it does |
 | --- | --- | --- |
+| `GET /` | no | the single-page web client (see below) |
+| `GET /info` | no | service description and endpoint list |
+| `GET /api/cases`, `POST /api/run` | run needs the key | the JSON API behind the web page |
 | `GET /health` | no | liveness + whether the LLM is configured |
 | `GET /evidence` | no | real MD occupancy + expected region + the deterministic conflict flag |
 | `POST /adjudicate` | yes | run the autonomous investigator agent end-to-end |
 | `POST /debate` | yes | run the multi-agent debate and return the judge's verdict |
 | `GET /docs` | no | interactive OpenAPI docs |
+
+### Web client
+
+A single plain-HTML page, served by the same FastAPI app (no extra dependency, no external assets).
+
+```bash
+export DEEPSEEK_API_KEY=...             # needed to run a query; the page itself loads without it
+uvicorn api.main:app --host 127.0.0.1 --port 8000
+# then open http://localhost:8000/      (with Docker: docker compose up --build, same address)
+```
+
+Pick a preset case or type two UniProt accessions and press "运行". The page shows a
+plain-language conclusion, an evidence table where every row is labelled **实时** (live),
+**引用** (cited) or **待定** (pending), and the time and cost of that query.
 
 ### Run the pipeline directly (CLI)
 

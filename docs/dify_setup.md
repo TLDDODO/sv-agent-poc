@@ -21,6 +21,8 @@ uvicorn api.main:app --host 127.0.0.1 --port 8000
 
 检查:浏览器打开 `http://localhost:8000/health`,应看到 `"status": "ok"`。`llm_configured` 为 `false` 时,`/evidence` 仍可用,`/adjudicate` 和 `/debate` 会拒绝(需要在环境变量里设置 `DEEPSEEK_API_KEY`)。
 
+不想搭 Dify 时,直接用浏览器打开 `http://localhost:8000/` 就是一个可用的网页界面(见 README)。
+
 ## 2. 导入 OpenAPI 文件
 
 接口说明文件在 `docs/openapi.json`,由脚本从代码生成(改了接口后重新生成):
@@ -47,6 +49,8 @@ python scripts/export_openapi.py --check    # 检查是否过期
 | `get_evidence` | 真实 MD 证据 + 文献预期区域 + 冲突标记 | 否 | 快 |
 | `health_check` | 服务是否在线、是否配置了 LLM key | 否 | 快 |
 | `service_info` | 服务说明和接口列表 | 否 | 快 |
+| `list_cases` | 网页用的预设案例列表 | 否 | 快 |
+| `run_query` | 网页用的一次完整查询:通俗结论 + 带"实时 / 引用 / 待定"标签的证据 + 本次耗时和费用(参数:`case_id`,或两个 UniProt 号) | 是 | 慢 |
 | `run_adjudication` | 让调查 agent 自己查证并给出结论 | 是 | 慢 |
 | `run_debate` | MD 辩方 / NMR 辩方 / 法官辩论 | 是 | 慢 |
 

@@ -7,17 +7,21 @@ LLM-driven endpoints (the autonomous investigator agent and the multi-agent
 debate) activate only when DEEPSEEK_API_KEY is set in the environment.
 
 Run locally:   uvicorn api.main:app --reload
-Interactive docs at /docs (OpenAPI). The schema is exported to docs/openapi.json by
+The single-page web client is served at / (api/index.html); its JSON API is /api/cases and
+/api/run. Interactive docs at /docs (OpenAPI). The schema is exported to docs/openapi.json by
 scripts/export_openapi.py (import it into Dify as a Custom Tool; see docs/dify_setup.md).
 """
 from __future__ import annotations
 import os
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from agent.tools import get_md_interface_scores, get_expected_interface_region
 from analysis.adjudicate_md import adjudicate as md_adjudicate
+from api import webview
 
 SCORES_PATH = "analysis/md_interface_scores.json"
 
@@ -42,6 +46,7 @@ app = FastAPI(
               "description": "The API as seen from a Dify running in Docker on the same machine"}],
     openapi_tags=[
         {"name": "meta", "description": "Service description and health."},
+        {"name": "web", "description": "Endpoints behind the web page at / (preset cases, run a query)."},
         {"name": "evidence", "description": "Real evidence, no LLM and no key needed."},
         {"name": "agent", "description": "LLM-driven endpoints; need DEEPSEEK_API_KEY and take a while."},
     ],
@@ -85,7 +90,16 @@ _EX = _evidence_example()
 _EVIDENCE_RESPONSES = {200: {"content": {"application/json": {"example": _EX}}}} if _EX else {}
 
 
-@app.get("/", tags=["meta"], operation_id="service_info",
+PAGE = Path(__file__).resolve().parent / "index.html"
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def web_page() -> HTMLResponse:
+    """The single-page web client (plain HTML, no external assets)."""
+    return HTMLResponse(PAGE.read_text(encoding="utf-8"))
+
+
+@app.get("/info", tags=["meta"], operation_id="service_info",
          summary="Describe the service and list its endpoints",
          description="Returns the service name, whether an LLM key is configured, and a one-line "
                      "description of each endpoint. Safe to call any time.",
@@ -98,7 +112,10 @@ def root() -> dict:
         "service": "FAT10-MAD2 Interface Adjudicator",
         "llm_configured": _llm_ready(),
         "endpoints": {
+            "GET /": "the web page (pick a case or a protein pair, read the answer)",
             "GET /health": "liveness + whether the LLM is configured",
+            "GET /api/cases": "preset cases for the web page",
+            "POST /api/run": "run one query for the web page (needs DEEPSEEK_API_KEY)",
             "GET /evidence": "real MD evidence + expected region + conflict flag (no key needed)",
             "POST /adjudicate": "run the autonomous investigator agent (needs DEEPSEEK_API_KEY)",
             "POST /debate": "run the multi-agent debate (needs DEEPSEEK_API_KEY)",
@@ -205,3 +222,53 @@ def debate() -> dict:
     _require_llm()
     from agent.debate import run as run_debate  # lazy import
     return run_debate()
+
+
+# --- web client API ---------------------------------------------------------------------------
+class RunRequest(BaseModel):
+    case_id: str | None = Field(
+        default=None, description="A preset case id from GET /api/cases.", examples=["fat10_mad2"])
+    uniprot_a: str | None = Field(
+        default=None, description="Protein A UniProt accession (use with uniprot_b instead of case_id).",
+        examples=["<UniProt accession>"])
+    uniprot_b: str | None = Field(
+        default=None, description="Protein B UniProt accession.", examples=["<UniProt accession>"])
+
+
+@app.get("/api/cases", tags=["web"], operation_id="list_cases",
+         summary="List the preset cases for the web page",
+         description="The FAT10-MAD2 case study plus the benchmark protein pairs. Benchmark pairs are run "
+                     "with their experimental complex hidden from the agent; no answers are returned here.",
+         responses={200: {"content": {"application/json": {"example": webview.preset_cases()}}}})
+def list_cases() -> list:
+    return webview.preset_cases()
+
+
+@app.post("/api/run", tags=["web"], operation_id="run_query",
+          summary="Run one query and return a plain-language answer with labelled evidence",
+          description="Runs the agent on a preset case or on a protein pair given by two UniProt "
+                      "accessions. Returns `conclusion` (plain language), `evidence` rows each labelled "
+                      "`live`, `cited` or `pending`, and `usage` (seconds and cost of this query). "
+                      "Needs DEEPSEEK_API_KEY (otherwise HTTP 400), costs a little money and can take "
+                      "a while. A malformed accession gives HTTP 422.",
+         responses={200: {"content": {"application/json": {"example": {
+             "case": {"id": "<case id>", "name": "<A – B>", "uniprot_a": "<accession>", "uniprot_b": "<accession>"},
+             "conclusion": {"headline": "<plain-language answer>", "points": ["<...>"], "flags": ["<...>"],
+                            "caveat": "<what this is not>", "details": "<agent explanation>"},
+             "evidence": [{"item": "<what>", "detail": "<detail>", "label": "<live | cited | pending>",
+                           "source": "<where from>", "records": "<count>"}],
+             "usage": {"seconds": "<n>", "cost_usd": "<n>", "llm_calls": "<n>", "model": "<model>"},
+             "steps": [{"tool": "<tool name>", "args": {}}],
+             "_note": _SHAPE_NOTE}}}},
+             400: {"description": "DEEPSEEK_API_KEY is not set."},
+             422: {"description": "Neither a valid case_id nor two valid UniProt accessions."}})
+def run_query(req: RunRequest) -> dict:
+    try:
+        case = webview.resolve_case(req.case_id, req.uniprot_a, req.uniprot_b)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    _require_llm()
+    try:
+        return webview.run_query(case)
+    except Exception as exc:                       # an upstream (LLM / network) failure, not a bad request
+        raise HTTPException(status_code=502, detail=f"the query failed: {type(exc).__name__}")

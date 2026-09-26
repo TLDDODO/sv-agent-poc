@@ -7,6 +7,7 @@ hide); no tool ever returns it to the agent.
 """
 from __future__ import annotations
 from contextvars import ContextVar
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -28,6 +29,12 @@ class Case:
     benchmark: bool = False
     md_scores: str | None = None            # None -> the MD tool reports `pending`
     ground_truth: dict | None = None        # scorer / leak filter only
+    custom: bool = False                    # a pair typed in by a user: generic tools, no held-out complex
+
+    @property
+    def generic(self) -> bool:
+        """Pair mode: pending MD/debate, UniProt feature table, no FAT10-specific claims."""
+        return self.benchmark or self.custom
 
 
 def load_case(path) -> Case:
@@ -72,3 +79,23 @@ def reset_active_case(token) -> None:
 def active_case() -> Case:
     """The case the tools act on; FAT10-MAD2 (v1 behaviour) when none is set."""
     return _ACTIVE.get() or default_case()
+
+
+# official UniProt accession pattern (https://www.uniprot.org/help/accession_numbers)
+_ACC = re.compile(r"^([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2})$")
+
+
+def custom_case(uniprot_a: str, uniprot_b: str, name_a: str | None = None,
+                name_b: str | None = None) -> Case:
+    """A protein pair typed in by a user. Raises ValueError on a malformed accession."""
+    a, b = uniprot_a.strip().upper(), uniprot_b.strip().upper()
+    for acc in (a, b):
+        if not _ACC.match(acc):
+            raise ValueError(f"{acc!r} is not a valid UniProt accession")
+    na, nb = (name_a or a).strip(), (name_b or b).strip()
+    goal = (f"Investigate where {na} (UniProt {a}) and {nb} (UniProt {b}) bind each other. Use the "
+            f"tools to gather evidence, then predict for EACH protein the region of its sequence that "
+            f"forms the interface (UniProt numbering). Tools with no data report 'pending'; never "
+            f"invent residues or scores. Submit with submit_adjudication and fill predicted_regions.")
+    return Case(id=f"custom_{a}_{b}", name_a=na, uniprot_a=a, name_b=nb, uniprot_b=b, goal=goal,
+                literature_query=f"{na} {nb} interaction binding region", custom=True)

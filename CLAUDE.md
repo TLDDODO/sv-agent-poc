@@ -23,7 +23,7 @@ non-technical people (Dify via the existing FastAPI).
   avoids a debian-owned PyJWT that blocks a plain install). This is
   environment setup, not a code change, so it does not break S1's read-only rule.
 - Find the first step not marked `[x]` in `docs/progress.md` (create it on first run,
-  listing S1, S1b, S2–S6, S6b, S7, S8 unchecked). Do that step.
+  listing S1, S1b, S2–S6, S6b, S7, S8, C1–C3 unchecked). Do that step.
 - Each step is small. After finishing it, run its **Self-check**. If it passes, call the
   **`reviewer` subagent** (`.claude/agents/reviewer.md`). Give it only the step number —
   not your reasoning or a summary of what you did; it reads the diff itself.
@@ -167,6 +167,32 @@ measured by the human); never estimate it.
 **Self-check:** running the generator twice gives no diff (README table and
 business_case numbers); business_case has no hand-typed numbers and shows `TBD — 人工基线`
 for manual time. Then write a final summary in `docs/progress.md` and stop.
+
+### C1 — Merge and clean up (git)
+Merge the working branch into `main` and push (conflicts resolved in favour of the
+working branch). Then check whether `claude/eloquent-meitner-xhb070` and
+`claude/exciting-brown-n4qvdu` are fully contained in `main`: delete the remote branch if
+so; if not, keep it and report what is missing. Never delete
+`claude/audio-llm-mental-health-setup-pjrkc0` or `gh-pages`.
+**Self-check:** `pytest -q` passes on merged `main`; `main` pushed; the containment check
+is recorded in `docs/progress.md`.
+
+### C2 — Web client
+A single page served by the existing FastAPI at `/` (no new dependencies): pick a preset
+case or enter a protein pair, run, read a plain-language conclusion, an evidence table
+labelling each item live / cited / pending, and the query's time and cost. Simple, for
+non-technical users. README gives the start command and address.
+**Self-check:** `GET /` returns 200; an end-to-end test with the fake LLM client;
+`pytest -q` passes offline.
+
+### C3 — Workload metrics
+From `results/runs.jsonl` and the tool-call records, count per query: databases
+accessed, API calls, records processed, time, cost; add them to the evaluation report.
+Update `docs/business_case.md`: replace `TBD — 人工基线` with these automated metrics and
+state plainly that manual time was not measured. Never estimate manual time.
+**Self-check:** metrics come from a script reading the result files (no hand-typed
+numbers); regenerating gives no diff; `docs/business_case.md` says manual time is not
+measured.
 
 ## Repo map (v1)
 

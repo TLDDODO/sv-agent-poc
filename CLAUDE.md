@@ -195,6 +195,39 @@ state plainly that manual time was not measured. Never estimate manual time.
 numbers); regenerating gives no diff; `docs/business_case.md` says manual time is not
 measured.
 
+### M1 — MCP server
+Publish the agent as an MCP server with the official MCP Python SDK. At least three
+tools: list cases, get evidence, run adjudication. Return structured results: the
+conclusion, the evidence with live / cited / pending labels, time and cost. Call the
+existing agent functions directly; do not copy logic. Support stdio (Claude Desktop) and
+streamable HTTP (Dify); HTTP listens on localhost only by default.
+**Self-check:** a test with an in-process MCP client and the fake LLM lists the tools and
+calls them successfully; `docs/mcp.md` gives a Windows Claude Desktop config example and
+the HTTP start command; `pytest -q` passes offline.
+
+### M2 — Live process visualisation
+A new SSE streaming endpoint that pushes events as the run proceeds: start, each tool call
+(tool name and argument summary), tool result summary (with a source label), each debate
+and review round, the final conclusion, cost. The web client becomes a live timeline that
+shows step by step, in plain language, what the agent is doing, with the 中文 / English
+switch. Keep the existing non-streaming endpoint.
+**Self-check:** a fake-LLM test checks the event order and that the last event's
+conclusion equals the non-streaming endpoint's result; `pytest -q` passes offline.
+
+### M3 — Dify integration
+Deploy Dify by its official Docker self-hosting method in a separate directory
+`C:\Users\陈钰\dify`, outside this repo (no Dify code in the repo). Connect the M1 HTTP MCP
+server (containers reach the host as `host.docker.internal`), build a Q&A app for
+non-technical users, and export the app configuration as a DSL file into
+`integrations/dify/`. Write `docs/dify_setup.md`: complete steps from a fresh deployment to
+a working Q&A. Wherever the human must act in the browser (creating the admin account,
+screenshots), write the exact steps, then **stop and wait for the human**.
+**Self-check:** the DSL file exists and contains no secrets; `docs/dify_setup.md` steps
+match what was actually run; `pytest -q` passes offline.
+
+All of M1–M3 obey the iron rules: no fabricated data, no change to the FAT10–MAD2
+conclusion.
+
 ## Repo map (v1)
 
 - `agent/run_agent.py` ReAct loop · `agent/tools.py` tools + TOOLS schema

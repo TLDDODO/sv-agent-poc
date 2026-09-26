@@ -4,7 +4,9 @@ import json
 from pathlib import Path
 
 from .llm_client import make_client, MODEL
-from .tools import TOOLS, DISPATCH
+from .cases import Case, default_case, find_case, set_active_case
+from . import leakage
+from .tools import TOOLS, DISPATCH, tools_for
 from .skills import load_skill
 from .runlog import RunRecorder
 
@@ -26,19 +28,30 @@ def _reasoning_of(msg) -> str | None:
     return extra.get("reasoning_content")
 
 
-def run(user_goal: str, model: str = MODEL, max_steps: int = 16, verbose: bool = True):
+# Benchmark pairs: same loop, a generic prompt (skills/pair_investigator.md).
+PAIR_PROMPT = load_skill("pair_investigator",
+    "You are an autonomous interface-investigation agent. Predict, for each of two "
+    "proteins, the sequence region that forms their interface. Every fact comes from a "
+    "tool; tools with no data report 'pending'. Submit once with submit_adjudication.")
+
+
+def run(user_goal: str, model: str = MODEL, max_steps: int = 16, verbose: bool = True,
+        case: Case | None = None):
+    case = case or default_case()
+    set_active_case(case)                       # the tools act on this protein pair
+    tools = tools_for(case)
     client = make_client()
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": PAIR_PROMPT if case.benchmark else SYSTEM_PROMPT},
         {"role": "user", "content": user_goal},
     ]
     transcript = []   # rich per-step record incl. the agent's reasoning
     result = None
-    rec = RunRecorder("agent", model, user_goal)
+    rec = RunRecorder("agent", model, user_goal, case.id)
 
     for step in range(max_steps):
         resp = client.chat.completions.create(
-            model=model, messages=messages, tools=TOOLS,
+            model=model, messages=messages, tools=tools,
             tool_choice="auto", temperature=0)
         rec.llm(resp)
         msg = resp.choices[0].message
@@ -76,7 +89,16 @@ def run(user_goal: str, model: str = MODEL, max_steps: int = 16, verbose: bool =
                 done = True
                 break
 
+            if case.benchmark:
+                # only schema arguments: no off-schema path arguments (e.g. scores_path)
+                allowed = next((t["function"]["parameters"]["properties"] for t in tools
+                                if t["function"]["name"] == name), {})
+                args = {k: v for k, v in args.items() if k in allowed}
             out = DISPATCH[name](**args) if name in DISPATCH else {"error": f"unknown tool {name}"}
+            if case.benchmark and name == "map_residues" and not {"domain_lo", "domain_hi"} <= args.keys():
+                out = {"error": "domain_lo and domain_hi are required for this protein pair"}
+            if case.benchmark:
+                out = leakage.guard(out, case)  # never show a held-out complex to the agent
             entry["actions"].append({"tool": name, "args": args, "result": out})
             messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(out)})
 
@@ -139,11 +161,15 @@ def main() -> None:
         "where the literature expects the interface, get the real MD contact evidence, "
         "and determine whether the current model's interface is consistent with the "
         "literature. If they conflict, convene the debate and reach a calibrated verdict."))
+    ap.add_argument("--case", default=None, help="case id in cases/ or benchmark/ (default: FAT10-MAD2)")
     ap.add_argument("--model", default=MODEL)
     ap.add_argument("--max-steps", type=int, default=16)
     args = ap.parse_args()
 
-    result, transcript = run(args.goal, model=args.model, max_steps=args.max_steps)
+    case = find_case(args.case) if args.case else None
+    if case and args.goal == ap.get_default("goal"):
+        args.goal = case.goal
+    result, transcript = run(args.goal, model=args.model, max_steps=args.max_steps, case=case)
 
     out = Path("outputs")
     out.mkdir(exist_ok=True)

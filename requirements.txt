@@ -3,6 +3,7 @@ openai>=1.30
 fastapi>=0.110
 uvicorn[standard]>=0.29
 pydantic>=2.6
+pyyaml>=6
 
 # Live PDBe MCP client (agent.structures.mcp_structures). Optional at runtime:
 # the offline snapshot path does not import it.

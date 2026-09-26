@@ -34,10 +34,12 @@ def _extract_json(text: str) -> dict:
         return {"raw": (text or "")[:300]}
 
 
-def search_pubmed(query: str, retmax: int = 5):
+def search_pubmed(query: str, retmax: int = 5, exclude_pmids=()):
+    """`exclude_pmids` (benchmark leak filter): fetch extra hits, drop those PMIDs, keep retmax."""
     q = urllib.parse.quote(query)
-    es = _get(f"{EUTILS}/esearch.fcgi?db=pubmed&retmode=json&retmax={retmax}&term={q}")
-    ids = json.loads(es)["esearchresult"]["idlist"]
+    fetch_n = retmax + len(exclude_pmids)
+    es = _get(f"{EUTILS}/esearch.fcgi?db=pubmed&retmode=json&retmax={fetch_n}&term={q}")
+    ids = [i for i in json.loads(es)["esearchresult"]["idlist"] if i not in exclude_pmids][:retmax]
     if not ids:
         return [], ""
     abstracts = _get(f"{EUTILS}/efetch.fcgi?db=pubmed&rettype=abstract&retmode=text&id={','.join(ids)}")

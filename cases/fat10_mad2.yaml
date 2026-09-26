@@ -1,0 +1,15 @@
+# The v1 case study. There is no experimental FAT10-MAD2 complex, so there is no
+# ground truth here (benchmark: false) and the MD-vs-literature contradiction is reported.
+id: fat10_mad2
+name_a: FAT10
+uniprot_a: O15205
+name_b: MAD2
+uniprot_b: Q13257
+benchmark: false
+md_scores: analysis/md_interface_scores.json
+literature_query: FAT10 MAD2 interaction ubiquitin-like domain
+goal: >-
+  Investigate where MAD2 (UniProt Q13257) binds FAT10 (UniProt O15205): find
+  where the literature expects the interface, get the real MD contact evidence,
+  and determine whether the current model's interface is consistent with the
+  literature. If they conflict, convene the debate and reach a calibrated verdict.

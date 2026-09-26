@@ -40,8 +40,8 @@ def cost_usd(model: str, prompt_tokens: int, completion_tokens: int,
 
 
 class RunRecorder:
-    def __init__(self, kind: str, model: str, goal: str):
-        self.kind, self.model, self.goal = kind, model, goal
+    def __init__(self, kind: str, model: str, goal: str, case_id: str | None = None):
+        self.kind, self.model, self.goal, self.case_id = kind, model, goal, case_id
         self.timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         self._t0 = time.perf_counter()
         self.llm_calls = 0
@@ -72,6 +72,7 @@ class RunRecorder:
             "kind": self.kind,
             "model": self.model,
             "goal": self.goal,
+            "case": self.case_id,
             "llm_calls": self.llm_calls,
             "prompt_tokens": self.prompt_tokens,
             "completion_tokens": self.completion_tokens,

@@ -5,6 +5,8 @@ import re
 import urllib.request
 from dataclasses import asdict
 
+from . import leakage
+from .cases import active_case
 from .structures import (FAT10_UNIPROT, NTERM_UBL_RANGE, canonical_map,
                          mcp_structures, offline_structures)
 
@@ -17,17 +19,23 @@ PENDING_TOOLS = ["AlphaFold-Multimer", "HADDOCK", "PISA"]
 
 def _predictions() -> dict:
     """REAL per-tool, per-residue interface scores. Defaults to the real MD output;
-    set INTERFACE_SCORES to override. Returns {} if none present — NO mock data."""
-    path = os.environ.get("INTERFACE_SCORES", "analysis/md_interface_scores.json")
+    set INTERFACE_SCORES to override. Returns {} if none present — NO mock data.
+    A case without an MD score file (every benchmark pair) has none."""
+    path = os.environ.get("INTERFACE_SCORES", active_case().md_scores)
     if path and os.path.exists(path):
         with open(path) as fh:
             return json.load(fh)
     return {}
 
 
-def get_md_interface_scores(scores_path: str = "analysis/md_interface_scores.json") -> dict:
+def get_md_interface_scores(scores_path: str | None = None) -> dict:
     """Real per-residue MAD2-contact occupancy from the 100 ns MD (0..1 = fraction
-    of frames in contact). This is real evidence, not a prediction."""
+    of frames in contact). This is real evidence, not a prediction. A case with no MD
+    run reports `pending` — never placeholder numbers."""
+    scores_path = scores_path or active_case().md_scores
+    if not scores_path:
+        return {"status": "pending", "real": False,
+                "note": "no MD simulation exists for this protein pair — do not use placeholder numbers"}
     if not os.path.exists(scores_path):
         return {"error": f"no MD scores at {scores_path}"}
     with open(scores_path) as fh:
@@ -37,9 +45,20 @@ def get_md_interface_scores(scores_path: str = "analysis/md_interface_scores.jso
             "note": "fraction of MD frames each FAT10 residue contacts MAD2 (real)"}
 
 
-def search_literature(query: str = "FAT10 MAD2 interaction ubiquitin-like domain") -> dict:
-    """Search PubMed for the FAT10-MAD2 binding region and return real abstracts for
-    the agent to read. Falls back to a cited result if PubMed is unreachable."""
+def search_literature(query: str | None = None) -> dict:
+    """Search PubMed for the binding region and return real abstracts for the agent to
+    read. FAT10-MAD2: falls back to a cited result if PubMed is unreachable. Benchmark
+    pairs: papers reporting an experimental complex of the pair are removed, and there
+    is no fallback claim."""
+    case = active_case()
+    query = query or case.literature_query
+    if case.benchmark:
+        try:
+            from .literature import search_pubmed
+            ids, abstracts = search_pubmed(query, exclude_pmids=leakage.co_complex_pmids(case))
+        except Exception as exc:
+            return {"retrieved_live": False, "error": type(exc).__name__}
+        return {"retrieved_live": bool(abstracts.strip()), "pmids": ids, "abstracts": abstracts[:4000]}
     try:
         from .literature import search_pubmed
         ids, abstracts = search_pubmed(query)
@@ -58,14 +77,39 @@ def convene_debate() -> dict:
     """Convene the multi-agent debate (MD advocate vs NMR advocate + judge) over the
     current real evidence, and return the judge's calibrated verdict. Call this when
     the MD interface and the literature/domain expectation conflict."""
+    if active_case().benchmark:
+        return {"status": "pending", "real": False,
+                "note": "no MD run and no NMR/literature conflict exist for this pair, so there is nothing to debate"}
     from .debate import run as _run_debate
     return _run_debate()
+
+
+def _uniprot_features(acc: str) -> dict:
+    url = f"https://rest.uniprot.org/uniprotkb/{acc}.json"
+    with urllib.request.urlopen(url, timeout=20) as resp:
+        j = json.loads(resp.read().decode())
+    feats = [{"type": f["type"], "description": f.get("description"),
+              "start": f["location"]["start"]["value"], "end": f["location"]["end"]["value"]}
+             for f in j.get("features", [])
+             if f["type"] in ("Domain", "Region", "Motif", "Repeat", "Zinc finger")]
+    return {"name": j["proteinDescription"].get("recommendedName", {}).get("fullName", {}).get("value"),
+            "length": j["sequence"]["length"], "features": feats}
 
 
 def get_expected_interface_region(uniprot: str = "O15205") -> dict:
     """Literature/NMR prior for where MAD2 is expected to bind FAT10. Use this as
     the standard to compare the predicted/MD interface against, and FLAG the model
-    if the interface falls outside this region."""
+    if the interface falls outside this region. For a benchmark pair there is no such
+    prior: it returns the live UniProt domain/region/motif table of both proteins
+    (features only - no comments or cross-references, which can name the complex)."""
+    case = active_case()
+    if case.benchmark:
+        try:
+            return {"evidence_type": "UniProt feature table (live) - annotations, NOT a known interface",
+                    "proteins": {a: _uniprot_features(a) for a in (case.uniprot_a, case.uniprot_b)}}
+        except Exception as exc:
+            return {"status": "unavailable", "error": type(exc).__name__,
+                    "note": "UniProt feature table could not be fetched; nothing is substituted"}
     return {
         "uniprot": uniprot,
         "expected_region": "Ubiquitin-like 1 (N-terminal domain)",
@@ -87,6 +131,12 @@ def fetch_structures(uniprot: str) -> dict:
     first; if it cannot be reached, falls back to the verified snapshot, which exists
     only for FAT10 (O15205). PDBE_SOURCE=snapshot skips the live query (offline runs);
     PDBE_SOURCE=mcp disables the fallback."""
+    out = _fetch_structures(uniprot)
+    case = active_case()
+    return leakage.filter_structures(out, case) if case.benchmark else out
+
+
+def _fetch_structures(uniprot: str) -> dict:
     source = os.environ.get("PDBE_SOURCE", "auto")
     live_error = None
     if source in ("auto", "mcp"):
@@ -241,3 +291,28 @@ TOOLS = [
             "reasoning": {"type": "string", "description": "Short justification grounded in the tool outputs."}},
             "required": ["consensus_interface", "disputed", "confidence", "reasoning"]}}},
 ]
+
+
+# submit_adjudication for a benchmark pair also carries the predicted interface regions
+# (scored by the benchmark). The v1 schema (TOOLS) is left untouched for the v1 case.
+_PREDICTED_REGIONS = {
+    "type": "array",
+    "description": "Predicted interface region for EACH of the two proteins, UniProt numbering.",
+    "items": {"type": "object", "properties": {
+        "uniprot": {"type": "string"}, "start": {"type": "integer"}, "end": {"type": "integer"}},
+        "required": ["uniprot", "start", "end"]}}
+
+
+def tools_for(case) -> list:
+    if not case.benchmark:
+        return TOOLS
+    import copy
+    tools = copy.deepcopy(TOOLS)
+    sub = next(t for t in tools if t["function"]["name"] == "submit_adjudication")
+    params = sub["function"]["parameters"]
+    params["properties"]["predicted_regions"] = _PREDICTED_REGIONS
+    params["required"] = params["required"] + ["predicted_regions"]
+    # the 6-81 default is FAT10's UBL1; a benchmark pair has no such default
+    mp = next(t for t in tools if t["function"]["name"] == "map_residues")["function"]["parameters"]
+    mp["required"] = mp["required"] + ["domain_lo", "domain_hi"]
+    return tools

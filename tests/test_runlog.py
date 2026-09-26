@@ -7,7 +7,7 @@ from agent.runlog import cost_usd, load_pricing
 from fakes import FakeClient
 from test_agent_smoke import GOAL, _script
 
-FIELDS = {"timestamp", "kind", "model", "goal", "llm_calls", "prompt_tokens",
+FIELDS = {"timestamp", "kind", "model", "goal", "case", "llm_calls", "prompt_tokens",
           "completion_tokens", "cache_hit_tokens", "wall_clock_s", "tools",
           "verdict", "cost_usd", "pricing_last_checked"}
 

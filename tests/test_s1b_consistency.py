@@ -23,10 +23,10 @@ def test_every_ubl1_copy_agrees():
     assert tuple(adjudicate_md.EXPECTED["residue_range"]) == NTERM_UBL_RANGE
     assert adjudicate_md.DOMAINS[0][1:] == NTERM_UBL_RANGE
     assert debate.DOMAINS[0][1:] == NTERM_UBL_RANGE
-    nb = json.load(open("notebooks/fat10_mad2_pipeline.ipynb"))
+    nb = json.load(open("notebooks/fat10_mad2_pipeline.ipynb", encoding="utf-8"))
     src = "".join("".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code")
     assert re.search(r"\('UBL1 \(N-term\)',\s*6,\s*81\)", src)
-    report_src = open("analysis/build_report.py").read()
+    report_src = open("analysis/build_report.py", encoding="utf-8").read()
     assert '("UBL1 (N-term)", 6, 81)' in report_src
 
 

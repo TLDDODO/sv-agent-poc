@@ -52,7 +52,16 @@ def _offline(request, monkeypatch):
     def _blocked(*args, **kwargs):
         raise OSError("network disabled in offline tests")
 
-    monkeypatch.setattr(socket.socket, "connect", _blocked)
+    real_connect = socket.socket.connect
+
+    def _connect(self, address):
+        # loopback stays open: the Windows asyncio event loop builds a self-pipe
+        # socketpair over 127.0.0.1; no external host is reachable.
+        if isinstance(address, tuple) and address[0] in ("127.0.0.1", "::1"):
+            return real_connect(self, address)
+        return _blocked()
+
+    monkeypatch.setattr(socket.socket, "connect", _connect)
     monkeypatch.setattr(socket, "create_connection", _blocked)
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
     # the PDBe MCP query runs in a subprocess the socket block cannot reach

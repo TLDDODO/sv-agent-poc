@@ -7,7 +7,7 @@ pyyaml>=6
 
 # Live PDBe MCP client (agent.structures.mcp_structures). Optional at runtime:
 # the offline snapshot path does not import it.
-mcp>=1.0
+mcp>=2.0        # MCP server (mcp_server/, uses MCPServer) and the live PDBe MCP client
 
 # Figure regeneration only (analysis/render_structure.py) is NOT listed here;
 # install pymol-open-source + pillow separately if you want to rebuild the render.

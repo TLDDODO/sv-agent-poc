@@ -15,4 +15,20 @@
 - [x] S6 — Benchmark runner — agent/{scoring,baseline,benchmark}.py + scripts/run_benchmark.py; live run N=3 done with the configured key (agent and no-tool baseline, all runs logged in results/runs.jsonl); results/benchmark.json + benchmark.md are script output (numbers: see those files). Dry-run and BLOCKED paths tested. Reviewer: PASS (attempt 1). Known limit: dry-run imports the fake client from tests/.
 - [x] S6b — Error injection — agent/error_injection.py + scripts/run_error_injection.py; live run against UniProt written to results/error_injection.json and merged into results/benchmark.md (numbers: see those files). Finding: fabricated MD score VALUES on real residue labels are not detected by the current validation path (reported as passed_through, not hidden). Reviewer: PASS (attempt 1); after PASS I applied its non-blocking point (only HTTP 400/404 count as a rejected accession; validate_residues now also returns http_status on HTTP errors) with tests, and re-ran the live check.
 - [x] S7 — Non-technical access (Dify) — every endpoint has summary/description/operationId/examples (evidence example built from the real committed data; agent/debate examples are marked placeholder shapes); scripts/export_openapi.py -> docs/openapi.json (test: equals app schema); docs/dify_setup.md (not verified on a live Dify install; says the API has no built-in auth) and docs/user_guide.md; no metrics in either doc (tested). Also fixed a real bug found while testing: run() left the benchmark case active after returning, so later in-process calls (e.g. /evidence) used benchmark tools; run() now restores the previous case, with a test. Reviewer: PASS (attempt 1).
-- [ ] S8 — README v2
+- [x] S8 — README v2 + business case — scripts/generate_docs.py fills marked blocks in README.md and docs/business_case.md from results/benchmark.json (running it twice gives no diff; dry-run/BLOCKED/missing results produce no numbers; manual time is `TBD — 人工基线`); README has the v1 -> v2 section and an updated honest status table. Reviewer: PASS (attempt 1).
+
+## Final summary (run complete)
+
+All steps S1-S8 are done and reviewer-approved. No metrics are typed here; see `results/benchmark.md`, `results/benchmark.json`, `results/error_injection.json` and `docs/business_case.md` (all script-generated).
+
+What v2 adds over v1: offline tests + CI; run logging with cost; a benchmark over protein pairs with experimental complexes, with answer-leak prevention, a no-tool baseline and a live run (N=3, DeepSeek); error injection on FAT10-MAD2; inputs generalised to cases; the live PDBe query wired in; Dify access (documented OpenAPI, setup guide, user guide); README v2 and a business case. The FAT10-MAD2 contradiction (MD C-terminal vs literature/NMR UBL1 6-81) and its wording are unchanged.
+
+Known limits, stated plainly:
+- Small benchmark (few pairs, N=3): results are indicative, not statistically established. The model may have seen these classic complexes in training; the no-tool baseline is shown next to the agent for that reason.
+- Error injection: fabricated MD score VALUES on real residue labels are not detected by the current validation path (reported, not hidden). Provenance checks for the score file are not implemented.
+- The API has no built-in authentication (documented in docs/dify_setup.md).
+- The Dify guide has not been walked through on a real Dify install.
+- Manual-workflow time and cost are `TBD — 人工基线`: the human must measure them.
+- Costs use a third-party price map (config/pricing.yaml), not the official DeepSeek page.
+- Benchmark dry-run imports its fake client from tests/ (minor).
+- Non-blocking reviewer notes left open: the README hand-written-decimals test is loose; the control label in error injection reads `passed_through`.

@@ -1,0 +1,37 @@
+# interface_occupancy.cpptraj
+# -----------------------------------------------------------------------------
+# Per-residue FAT10 <-> MAD2 interface contact occupancy from the 100 ns replica.
+#
+#   FAT10 = residues   1-165   (Cys7 / Cys9 == the agent's C7 / C9)
+#   MAD2  = residues 166-370
+#
+# "Occupancy" here = fraction of frames in which a FAT10 residue has at least one
+# heavy-atom contact (<= 4.5 A) with any MAD2 heavy atom. This is the strongest
+# kind of MD-derived interface read-out: a per-residue number in [0, 1].
+#
+# Run on the GPU node where the trajectory lives:
+#     cd /data/user_dirs/ychen/mdrun
+#     cpptraj -i interface_occupancy.cpptraj
+#
+# Trajectory is several GB -- DO NOT copy it. Only the small per-residue table
+# (fat10_mad2_byres.dat) needs to leave the node.
+# -----------------------------------------------------------------------------
+
+parm ablhmr.prmtop
+trajin abl_lig.nc
+
+# Keep the complex whole across periodic boundaries before measuring contacts.
+autoimage
+
+# Heavy-atom interface contacts, tracked per residue, 4.5 A cutoff.
+nativecontacts name IF \
+    ":1-165&!@H=" ":166-370&!@H=" \
+    byresidue distance 4.5 \
+    resout        fat10_mad2_byres.dat \
+    out           fat10_mad2_total.dat \
+    mindist maxdist \
+    writecontacts fat10_mad2_pairs.dat \
+    series seriesout fat10_mad2_series.dat
+
+run
+quit

@@ -162,11 +162,12 @@ Add a "v1 → v2" section (what was added and why) and a results table generated
 script from `results/benchmark.json`. Keep the honest status table.
 Also write `docs/business_case.md`: manual workflow vs agent workflow; cost and time per
 run (filled in by a script from the result files, never typed by hand); risks and
-mitigations. The manual time is written as `TBD — 人工基线` (human baseline, to be
-measured by the human); never estimate it.
+mitigations. Manual (human) time is not measured; never estimate it. (S8 first wrote it as
+`TBD — 人工基线`; C3 replaced that placeholder with automated workload metrics and the plain
+statement that manual time was not measured.)
 **Self-check:** running the generator twice gives no diff (README table and
-business_case numbers); business_case has no hand-typed numbers and shows `TBD — 人工基线`
-for manual time. Then write a final summary in `docs/progress.md` and stop.
+business_case numbers); business_case has no hand-typed numbers and says manual time was not
+measured. Then write a final summary in `docs/progress.md` and stop.
 
 ### C1 — Merge and clean up (git)
 Merge the working branch into `main` and push (conflicts resolved in favour of the

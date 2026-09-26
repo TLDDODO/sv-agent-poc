@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "deny": [
+      "Read(//d/**)",
+      "Edit(//d/**)",
+      "Write(//d/**)",
+      "Glob(//d/**)",
+      "Grep(//d/**)",
+      "Bash(*D:*)",
+      "Bash(*d:\*)",
+      "Bash(*/d/*)",
+      "PowerShell(*D:*)"
+    ]
+  }
+}

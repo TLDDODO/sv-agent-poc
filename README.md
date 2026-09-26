@@ -96,7 +96,7 @@ are indicative, not statistically established. Regenerate with
 | Component | Status |
 | --- | --- |
 | ReAct agent loop (LLM plans, calls tools, reasons, in a loop) | ✅ real |
-| 100 ns MD contact occupancy (per-residue MAD2 contact fraction) | ✅ real evidence (own Amber run) |
+| 100 ns MD contact occupancy (per-residue MAD2 contact fraction) | ✅ real evidence (own Amber run, done on an HPC node in June 2026); the trajectory and raw outputs can no longer be accessed — only the committed scores, the analysis scripts and the raw session record remain (see *MD provenance* below) |
 | `validate_residues` vs the real UniProt O15205 sequence | ✅ real · ✅ the MD residue labels were checked against the live UniProt sequence on 2026-09-26 (`live` test passed) |
 | PDBe retrieval — `fetch_structures` queries the PDBe MCP search server live (`uvx pdbe-mcp-server`) and falls back to a verified FAT10 snapshot (6GF1, 6GF2, 2MBE, 7PYV) when `uvx` or the network is unavailable | ✅ snapshot entries are genuine FAT10 structures (none are FAT10:MAD2 complexes — none exist) · ✅ the live path is wired, unit-tested, and its `live` test passed against PDBe on 2026-09-26 (local machine; see `docs/progress.md`) |
 | FAT10 domain boundaries (UBL1 6–81, UBL2 90–163) | ✅ verified from the UniProt feature table |
@@ -201,5 +201,20 @@ FLOW.md      Architecture diagrams
 - The MD interface reflects the AF3 *starting pose*, so it is a **consistency check on
   that model, not independent validation** of the binding site.
 - Analysis is a **single MD replica (n = 1)**.
+
+### MD provenance
+
+- The MD was completed in June 2026 on an HPC node. The trajectory and the raw output files are
+  **no longer accessible** and cannot be re-analysed.
+- The repository keeps what survives: the analysis scripts (`analysis/`, including
+  `interface_occupancy.cpptraj`), the **original HPC session record**
+  (`analysis/md_raw/hpc_session_log.txt`, kept unmodified) and the result file
+  (`analysis/md_interface_scores.json`). `md_interface_scores.json` cannot be re-derived from a
+  trajectory here.
+- The identity of the simulated system was **verified by a partial sequence alignment**: the record's
+  topology residues 1–59 match UniProt O15205 (FAT10) 1–59 and residues 291–370 match Q13257 (MAD2)
+  126–205 (`live` test `tests/test_md_raw_record.py`, run on 2026-09-26; details in `docs/progress.md`).
+  The other residues of the topology are not shown in the record and are not checked.
+- The file name `interface_occupancy.cpptraj` was inherited from a template; the system is FAT10–MAD2.
 - The "AlphaFold docked the flexible C-terminal tail" explanation is a **hypothesis**,
   not proven; confirming it needs AF3's own ipTM/PAE at that interface.

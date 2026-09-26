@@ -1,0 +1,236 @@
+# HPC session record — FAT10–MAD2 MD interface analysis (run 2026-06-25)
+# Recovered verbatim from an earlier Claude Code conversation transcript.
+# HPC access (compbioasia GPU node, /data/user_dirs/ychen/mdrun) is no longer available;
+# the trajectory and raw outputs cannot be re-accessed. Content below is unmodified.
+# =====================================================================================
+
+## Part 1 — topology inspection (tail of residue list)
+
+$ cpptraj -p ablhmr.prmtop --resmask :\* | grep -viE 'WAT|Na\+|Cl-' | awk 'NR>1{print $7}' | sort -un
+1
+2
+(base) ychen@compbioasia-gpu-g5xl-33-student3:/data/user_dirs/ychen/mdrun$
+(base) ychen@compbioasia-gpu-g5xl-33-student3:/data/user_dirs/ychen/mdrun$ # B. 看蛋白末尾,确认是否有第二条链(#Mol=2)以及有没有小分子配体(出现一
+次的怪残基名)
+(base) ychen@compbioasia-gpu-g5xl-33-student3:/data/user_dirs/ychen/mdrun$ cpptraj -p ablhmr.prmtop --resmask :\* | grep -viE 'WAT|Na\+|Cl-' | tail -80
+  291 ASP    4679   4690     12   291     2
+  292 GLU    4691   4705     15   292     2
+  293 ILE    4706   4724     19   293     2
+  294 ARG    4725   4748     24   294     2
+  295 SER    4749   4759     11   295     2
+  296 VAL    4760   4775     16   296     2
+  297 ILE    4776   4794     19   297     2
+  298 ARG    4795   4818     24   298     2
+  299 GLN    4819   4835     17   299     2
+  300 ILE    4836   4854     19   300     2
+  301 THR    4855   4868     14   301     2
+  302 ALA    4869   4878     10   302     2
+  303 THR    4879   4892     14   303     2
+  304 VAL    4893   4908     16   304     2
+  305 THR    4909   4922     14   305     2
+  306 PHE    4923   4942     20   306     2
+  307 LEU    4943   4961     19   307     2
+  308 PRO    4962   4975     14   308     2
+  309 LEU    4976   4994     19   309     2
+  310 LEU    4995   5013     19   310     2
+  311 GLU    5014   5028     15   311     2
+  312 VAL    5029   5044     16   312     2
+  313 SER    5045   5055     11   313     2
+  314 CYS    5056   5066     11   314     2
+  315 SER    5067   5077     11   315     2
+  316 PHE    5078   5097     20   316     2
+  317 ASP    5098   5109     12   317     2
+  318 LEU    5110   5128     19   318     2
+  319 LEU    5129   5147     19   319     2
+  320 ILE    5148   5166     19   320     2
+  321 TYR    5167   5187     21   321     2
+  322 THR    5188   5201     14   322     2
+  323 ASP    5202   5213     12   323     2
+  324 LYS    5214   5235     22   324     2
+  325 ASP    5236   5247     12   325     2
+  326 LEU    5248   5266     19   326     2
+  327 VAL    5267   5282     16   327     2
+  328 VAL    5283   5298     16   328     2
+  329 PRO    5299   5312     14   329     2
+  330 GLU    5313   5327     15   330     2
+  331 LYS    5328   5349     22   331     2
+  332 TRP    5350   5373     24   332     2
+  333 GLU    5374   5388     15   333     2
+  334 GLU    5389   5403     15   334     2
+  335 SER    5404   5414     11   335     2
+  336 GLY    5415   5421      7   336     2
+  337 PRO    5422   5435     14   337     2
+  338 GLN    5436   5452     17   338     2
+  339 PHE    5453   5472     20   339     2
+  340 ILE    5473   5491     19   340     2
+  341 THR    5492   5505     14   341     2
+  342 ASN    5506   5519     14   342     2
+  343 SER    5520   5530     11   343     2
+  344 GLU    5531   5545     15   344     2
+  345 GLU    5546   5560     15   345     2
+  346 VAL    5561   5576     16   346     2
+  347 ARG    5577   5600     24   347     2
+  348 LEU    5601   5619     19   348     2
+  349 ARG    5620   5643     24   349     2
+  350 SER    5644   5654     11   350     2
+  351 PHE    5655   5674     20   351     2
+  352 THR    5675   5688     14   352     2
+  353 THR    5689   5702     14   353     2
+  354 THR    5703   5716     14   354     2
+  355 ILE    5717   5735     19   355     2
+  356 HIE    5736   5752     17   356     2
+  357 LYS    5753   5774     22   357     2
+  358 VAL    5775   5790     16   358     2
+  359 ASN    5791   5804     14   359     2
+  360 SER    5805   5815     11   360     2
+  361 MET    5816   5832     17   361     2
+  362 VAL    5833   5848     16   362     2
+  363 ALA    5849   5858     10   363     2
+  364 TYR    5859   5879     21   364     2
+  365 LYS    5880   5901     22   365     2
+  366 ILE    5902   5920     19   366     2
+  367 PRO    5921   5934     14   367     2
+  368 VAL    5935   5950     16   368     2
+  369 ASN    5951   5964     14   369     2
+  370 ASP    5965   5977     13   370     2
+
+## Part 2 — topology inspection (head of residue list)
+
+1. 看总残基数(蛋白部分),数量级能区分
+(base) ychen@compbioasia-gpu-g5xl-33-student3:/data/user_dirs/ychen/mdrun$ cpptraj -p ablhmr.prmtop --resmask :* | grep -v WAT | wc -l
+viE 'WAT|Na+|Cl-' | head -60533
+(base) ychen@compbioasia-gpu-g5xl-33-student3:/data/user_dirs/ychen/mdrun$
+(base) ychen@compbioasia-gpu-g5xl-33-student3:/data/user_dirs/ychen/mdrun$ # 2. 列出非水、非标准氨基酸的残基(找配体名 + 看链构成)
+(base) ychen@compbioasia-gpu-g5xl-33-student3:/data/user_dirs/ychen/mdrun$ cpptraj -p ablhmr.prmtop --resmask :* | grep -viE 'WAT|Na+|Cl-' | head -60
+#Res Name First Last Natom #Orig #Mol C I
+1 MET 1 19 19 1 1
+2 ALA 20 29 10 2 1
+3 PRO 30 43 14 3 1
+4 ASN 44 57 14 4 1
+5 ALA 58 67 10 5 1
+6 SER 68 78 11 6 1
+7 CYS 79 89 11 7 1
+8 LEU 90 108 19 8 1
+9 CYS 109 119 11 9 1
+10 VAL 120 135 16 10 1
+11 HIE 136 152 17 11 1
+12 VAL 153 168 16 12 1
+13 ARG 169 192 24 13 1
+14 SER 193 203 11 14 1
+15 GLU 204 218 15 15 1
+16 GLU 219 233 15 16 1
+17 TRP 234 257 24 17 1
+18 ASP 258 269 12 18 1
+19 LEU 270 288 19 19 1
+20 MET 289 305 17 20 1
+21 THR 306 319 14 21 1
+22 PHE 320 339 20 22 1
+23 ASP 340 351 12 23 1
+24 ALA 352 361 10 24 1
+25 ASN 362 375 14 25 1
+26 PRO 376 389 14 26 1
+27 TYR 390 410 21 27 1
+28 ASP 411 422 12 28 1
+29 SER 423 433 11 29 1
+30 VAL 434 449 16 30 1
+31 LYS 450 471 22 31 1
+32 LYS 472 493 22 32 1
+33 ILE 494 512 19 33 1
+34 LYS 513 534 22 34 1
+35 GLU 535 549 15 35 1
+36 HIE 550 566 17 36 1
+37 VAL 567 582 16 37 1
+38 ARG 583 606 24 38 1
+39 SER 607 617 11 39 1
+40 LYS 618 639 22 40 1
+41 THR 640 653 14 41 1
+42 LYS 654 675 22 42 1
+43 VAL 676 691 16 43 1
+44 PRO 692 705 14 44 1
+45 VAL 706 721 16 45 1
+46 GLN 722 738 17 46 1
+47 ASP 739 750 12 47 1
+48 GLN 751 767 17 48 1
+49 VAL 768 783 16 49 1
+50 LEU 784 802 19 50 1
+51 LEU 803 821 19 51 1
+52 LEU 822 840 19 52 1
+53 GLY 841 847 7 53 1
+54 SER 848 858 11 54 1
+55 LYS 859 880 22 55 1
+56 ILE 881 899 19 56 1
+57 LEU 900 918 19 57 1
+58 LYS 919 940 22 58 1
+59 PRO 941 954 14 59 1
+
+## Part 3 — interface_occupancy.cpptraj (as run) and run output
+
+# interface_occupancy.cpptraj
+-----------------------------------------------------------------------------
+Per-residue FAT10 <-> MAD2 interface contact occupancy from the 100 ns replica.
+FAT10 = residues 1-165 (Cys7 / Cys9 == the agent's C7 / C9)
+MAD2 = residues 166-370
+"Occupancy" here = fraction of frames in which a FAT10 residue has at least one
+heavy-atom contact (<= 4.5 A) with any MAD2 heavy atom. This is the strongest
+kind of MD-derived interface read-out: a per-residue number in [0, 1].
+Run on the GPU node where the trajectory lives:
+cd /data/user_dirs/ychen/mdrun
+cpptraj -i interface_occupancy.cpptraj
+Trajectory is several GB -- DO NOT copy it. Only the small per-residue table
+(fat10_mad2_byres.dat) needs to leave the node.
+-----------------------------------------------------------------------------
+parm ablhmr.prmtop
+trajin abl_lig.nc
+Keep the complex whole across periodic boundaries before measuring contacts.
+autoimage
+Heavy-atom interface contacts, tracked per residue, 4.5 A cutoff.
+nativecontacts name IF 
+":1-165&!@H=" ":166-370&!@H=" 
+byresidue distance 4.5 
+resout fat10_mad2_byres.dat 
+out fat10_mad2_total.dat 
+mindist maxdist 
+writecontacts fat10_mad2_pairs.dat 
+series seriesout fat10_mad2_series.dat
+run
+quitTotal data set memory usage is at least 2.472 MB
+DATAFILES (4 total):
+fat10_mad2_total.dat (Standard Data File): IF[native] IF[nonnative] IF[mindist] IF[maxdist]
+fat10_mad2_series.dat (Standard Data File): :31@CD_:370@OXT :31@CE_:370@OD2 :31@CE_:370@OXT :31@NZ_:369@O ... :165@O_:229@OH :165@OXT_:229@CZ :165@OXT_:229@OH :165@OXT_:229@CE2
+fat10_mad2_pairs.dat (Native Contacts)
+fat10_mad2_byres.dat (Contact Res Pairs)
+RUN TIMING:
+TIME: Init : 0.0002 s ( 0.00%)
+TIME: Trajectory Process : 560.1419 s ( 99.96%)
+TIME: Action Post : 0.0061 s ( 0.00%)
+TIME: Analysis : 0.0000 s ( 0.00%)
+TIME: Data File Write : 0.2008 s ( 0.04%)
+TIME: Other : 0.0006 s ( 0.00%)
+TIME: Run Total 560.3495 s
+---------- RUN END ---------------------------------------------------
+[quit]
+TIME: Total execution time: 560.5063 seconds.
+To cite CPPTRAJ use:
+Daniel R. Roe and Thomas E. Cheatham, III, "PTRAJ and CPPTRAJ: Software for
+Processing and Analysis of Molecular Dynamics Trajectory Data". J. Chem.
+Theory Comput., 2013, 9 (7), pp 3084-3095.
+(base) ychen@compbioasia-gpu-g5xl-33-student3:/data/user_dirs/ychen/mdrun$ ls -lh fat10_mad2_pairs.dat fat10_mad2_byres.dat
+-rw-rw-r-- 1 ychen compbio-shared 2.0K Jun 25 14:28 fat10_mad2_byres.dat
+-rw-rw-r-- 1 ychen compbio-shared 20K Jun 25 14:28 fat10_mad2_pairs.dat
+(base) ychen@compbioasia-gpu-g5xl-33-student3:/data/user_dirs/ychen/mdrun$ head -15 fat10_mad2_pairs.dat
+Contacts: IF
+Native contacts determined from mask ':1-165&!@H*' and mask ':166-370&!@H*'
+Contact Nframes Frac. Avg Stdev
+
+   1        :163@N_:320@O     2000        1     2.96    0.163  
+   2        :163@O_:320@N     2000        1     2.98    0.186  
+   3       :163@CA_:320@O     1997    0.999      3.8    0.182  
+   4       :163@O_:319@CA     1996    0.998     3.52     0.21  
+   5        :163@O_:319@C     1996    0.998     3.71    0.176  
+   6        :163@O_:320@O     1995    0.998      3.6    0.255  
+   7        :162@C_:320@O     1995    0.998     3.71    0.186  
+   8       :162@CA_:320@O     1988    0.994     3.58    0.258  
+   9        :163@N_:320@C     1978    0.989     4.05    0.152  
+  10       :162@O_:334@CA     1974    0.987      3.6    0.285  
+  11       :163@O_:320@CA     1968    0.984     3.87    0.213  
+  12        :162@O_:335@N     1953    0.977     3.16    0.374  

@@ -1,3 +1,11 @@
+# NOTE (added later): the file name was carried over from a template. The system actually
+# analysed is FAT10-MAD2 (FAT10 = residues 1-165, MAD2 = 166-370). Basis: the topology
+# residue table in analysis/md_raw/hpc_session_log.txt was partially aligned to UniProt (topology
+# 1-59 vs O15205 1-59; 291-370 vs Q13257 126-205; the 1-165 / 166-370 split itself is not
+# checked); see docs/progress.md. The commands
+# below are unchanged. The topology/trajectory names (ablhmr.prmtop, abl_lig.nc) are the
+# ones used on the HPC node.
+#
 # interface_occupancy.cpptraj
 # -----------------------------------------------------------------------------
 # Per-residue FAT10 <-> MAD2 interface contact occupancy from the 100 ns replica.

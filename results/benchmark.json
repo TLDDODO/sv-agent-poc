@@ -1,0 +1,1642 @@
+{
+  "status": "ok",
+  "dry_run": false,
+  "model": "deepseek-chat",
+  "runs_per_case": 3,
+  "generated_at": "2026-09-26T08:17:57Z",
+  "scoring": {
+    "recall_min": 0.5,
+    "max_span_ratio": 2.0
+  },
+  "pricing_last_checked": "2026-09-25T14:49:48Z",
+  "cases": [
+    {
+      "id": "b2cl1_bak",
+      "pair": "B2CL1-BAK",
+      "uniprot": [
+        "Q07817",
+        "Q16611"
+      ],
+      "ground_truth_pdb": "1BXL",
+      "agent": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 0.5,
+        "protein_hits": 3,
+        "protein_total": 6,
+        "stability": 1.0,
+        "median_latency_s": 57.927,
+        "mean_cost_usd": 0.003267908,
+        "runs": [
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q16611",
+                "start": 74,
+                "end": 88
+              },
+              {
+                "uniprot": "Q07817",
+                "start": 129,
+                "end": 195
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "Q07817": {
+                "hit": false,
+                "recall": 0.41379310344827586,
+                "predicted_length": 67,
+                "true_span": 112,
+                "f1": 0.25,
+                "jaccard": 0.14285714285714285
+              },
+              "Q16611": {
+                "hit": true,
+                "recall": 0.8666666666666667,
+                "predicted_length": 15,
+                "true_span": 16,
+                "f1": 0.8666666666666667,
+                "jaccard": 0.7647058823529411
+              }
+            },
+            "latency_s": 63.712,
+            "cost_usd": 0.004208595999999999,
+            "llm_calls": 6,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "search_literature",
+              "search_literature",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "convene_debate",
+              "submit_adjudication"
+            ],
+            "run": 1
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q07817",
+                "start": 129,
+                "end": 195
+              },
+              {
+                "uniprot": "Q16611",
+                "start": 74,
+                "end": 88
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "Q07817": {
+                "hit": false,
+                "recall": 0.41379310344827586,
+                "predicted_length": 67,
+                "true_span": 112,
+                "f1": 0.25,
+                "jaccard": 0.14285714285714285
+              },
+              "Q16611": {
+                "hit": true,
+                "recall": 0.8666666666666667,
+                "predicted_length": 15,
+                "true_span": 16,
+                "f1": 0.8666666666666667,
+                "jaccard": 0.7647058823529411
+              }
+            },
+            "latency_s": 55.565,
+            "cost_usd": 0.003208548,
+            "llm_calls": 5,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "search_literature",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "convene_debate",
+              "submit_adjudication"
+            ],
+            "run": 2
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q16611",
+                "start": 74,
+                "end": 88
+              },
+              {
+                "uniprot": "Q07817",
+                "start": 129,
+                "end": 195
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "Q07817": {
+                "hit": false,
+                "recall": 0.41379310344827586,
+                "predicted_length": 67,
+                "true_span": 112,
+                "f1": 0.25,
+                "jaccard": 0.14285714285714285
+              },
+              "Q16611": {
+                "hit": true,
+                "recall": 0.8666666666666667,
+                "predicted_length": 15,
+                "true_span": 16,
+                "f1": 0.8666666666666667,
+                "jaccard": 0.7647058823529411
+              }
+            },
+            "latency_s": 57.927,
+            "cost_usd": 0.00238658,
+            "llm_calls": 5,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "get_tool_prediction",
+              "search_literature",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "submit_adjudication"
+            ],
+            "run": 3
+          }
+        ]
+      },
+      "baseline": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 0.0,
+        "protein_hits": 0,
+        "protein_total": 6,
+        "stability": 1.0,
+        "median_latency_s": 0.773,
+        "mean_cost_usd": 5.88e-05,
+        "runs": [
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q07817",
+                "start": 18,
+                "end": 45
+              },
+              {
+                "uniprot": "Q16611",
+                "start": 16,
+                "end": 40
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "Q07817": {
+                "hit": false,
+                "recall": 0.0,
+                "predicted_length": 28,
+                "true_span": 112,
+                "f1": 0.0,
+                "jaccard": 0.0
+              },
+              "Q16611": {
+                "hit": false,
+                "recall": 0.0,
+                "predicted_length": 25,
+                "true_span": 16,
+                "f1": 0.0,
+                "jaccard": 0.0
+              }
+            },
+            "latency_s": 0.773,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 1
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q07817",
+                "start": 18,
+                "end": 45
+              },
+              {
+                "uniprot": "Q16611",
+                "start": 16,
+                "end": 40
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "Q07817": {
+                "hit": false,
+                "recall": 0.0,
+                "predicted_length": 28,
+                "true_span": 112,
+                "f1": 0.0,
+                "jaccard": 0.0
+              },
+              "Q16611": {
+                "hit": false,
+                "recall": 0.0,
+                "predicted_length": 25,
+                "true_span": 16,
+                "f1": 0.0,
+                "jaccard": 0.0
+              }
+            },
+            "latency_s": 0.665,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 2
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q07817",
+                "start": 16,
+                "end": 80
+              },
+              {
+                "uniprot": "Q16611",
+                "start": 16,
+                "end": 186
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "Q07817": {
+                "hit": false,
+                "recall": 0.0,
+                "predicted_length": 65,
+                "true_span": 112,
+                "f1": 0.0,
+                "jaccard": 0.0
+              },
+              "Q16611": {
+                "hit": false,
+                "recall": 1.0,
+                "predicted_length": 171,
+                "true_span": 16,
+                "f1": 0.16129032258064516,
+                "jaccard": 0.08771929824561403
+              }
+            },
+            "latency_s": 0.981,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "cdk2_ccna2",
+      "pair": "CDK2-CCNA2",
+      "uniprot": [
+        "P24941",
+        "P20248"
+      ],
+      "ground_truth_pdb": "1FIN",
+      "agent": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 0.16666666666666666,
+        "protein_hits": 1,
+        "protein_total": 6,
+        "stability": 0.6666666666666666,
+        "median_latency_s": 67.188,
+        "mean_cost_usd": 0.003140498666666667,
+        "runs": [
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P24941",
+                "start": 45,
+                "end": 170
+              },
+              {
+                "uniprot": "P20248",
+                "start": 200,
+                "end": 270
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "P24941": {
+                "hit": true,
+                "recall": 0.6153846153846154,
+                "predicted_length": 126,
+                "true_span": 243,
+                "f1": 0.3595505617977528,
+                "jaccard": 0.2191780821917808
+              },
+              "P20248": {
+                "hit": false,
+                "recall": 0.19047619047619047,
+                "predicted_length": 71,
+                "true_span": 145,
+                "f1": 0.1415929203539823,
+                "jaccard": 0.0761904761904762
+              }
+            },
+            "latency_s": 66.781,
+            "cost_usd": 0.0032897760000000003,
+            "llm_calls": 6,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "search_literature",
+              "search_literature",
+              "convene_debate",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "submit_adjudication"
+            ],
+            "run": 1
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P24941",
+                "start": 45,
+                "end": 65
+              },
+              {
+                "uniprot": "P20248",
+                "start": 70,
+                "end": 120
+              },
+              {
+                "uniprot": "P20248",
+                "start": 220,
+                "end": 295
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P24941": {
+                "hit": false,
+                "recall": 0.17307692307692307,
+                "predicted_length": 21,
+                "true_span": 243,
+                "f1": 0.24657534246575344,
+                "jaccard": 0.140625
+              },
+              "P20248": {
+                "hit": false,
+                "recall": 0.40476190476190477,
+                "predicted_length": 127,
+                "true_span": 145,
+                "f1": 0.20118343195266275,
+                "jaccard": 0.1118421052631579
+              }
+            },
+            "latency_s": 67.188,
+            "cost_usd": 0.0031746680000000003,
+            "llm_calls": 6,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "search_literature",
+              "search_literature",
+              "convene_debate",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "submit_adjudication"
+            ],
+            "run": 2
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P24941",
+                "start": 42,
+                "end": 80
+              },
+              {
+                "uniprot": "P20248",
+                "start": 200,
+                "end": 270
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P24941": {
+                "hit": false,
+                "recall": 0.3269230769230769,
+                "predicted_length": 39,
+                "true_span": 243,
+                "f1": 0.3736263736263737,
+                "jaccard": 0.22972972972972974
+              },
+              "P20248": {
+                "hit": false,
+                "recall": 0.19047619047619047,
+                "predicted_length": 71,
+                "true_span": 145,
+                "f1": 0.1415929203539823,
+                "jaccard": 0.0761904761904762
+              }
+            },
+            "latency_s": 72.199,
+            "cost_usd": 0.002957052,
+            "llm_calls": 6,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "search_literature",
+              "search_literature",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "get_tool_prediction",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "submit_adjudication"
+            ],
+            "run": 3
+          }
+        ]
+      },
+      "baseline": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 0.0,
+        "protein_hits": 0,
+        "protein_total": 6,
+        "stability": 1.0,
+        "median_latency_s": 0.642,
+        "mean_cost_usd": 5.88e-05,
+        "runs": [
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P24941",
+                "start": 129,
+                "end": 168
+              },
+              {
+                "uniprot": "P20248",
+                "start": 171,
+                "end": 210
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P24941": {
+                "hit": false,
+                "recall": 0.21153846153846154,
+                "predicted_length": 40,
+                "true_span": 243,
+                "f1": 0.23913043478260868,
+                "jaccard": 0.13580246913580246
+              },
+              "P20248": {
+                "hit": false,
+                "recall": 0.2619047619047619,
+                "predicted_length": 40,
+                "true_span": 145,
+                "f1": 0.26829268292682923,
+                "jaccard": 0.15492957746478872
+              }
+            },
+            "latency_s": 0.596,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 1
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P24941",
+                "start": 129,
+                "end": 168
+              },
+              {
+                "uniprot": "P20248",
+                "start": 171,
+                "end": 210
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P24941": {
+                "hit": false,
+                "recall": 0.21153846153846154,
+                "predicted_length": 40,
+                "true_span": 243,
+                "f1": 0.23913043478260868,
+                "jaccard": 0.13580246913580246
+              },
+              "P20248": {
+                "hit": false,
+                "recall": 0.2619047619047619,
+                "predicted_length": 40,
+                "true_span": 145,
+                "f1": 0.26829268292682923,
+                "jaccard": 0.15492957746478872
+              }
+            },
+            "latency_s": 0.642,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 2
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P24941",
+                "start": 129,
+                "end": 168
+              },
+              {
+                "uniprot": "P20248",
+                "start": 171,
+                "end": 210
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P24941": {
+                "hit": false,
+                "recall": 0.21153846153846154,
+                "predicted_length": 40,
+                "true_span": 243,
+                "f1": 0.23913043478260868,
+                "jaccard": 0.13580246913580246
+              },
+              "P20248": {
+                "hit": false,
+                "recall": 0.2619047619047619,
+                "predicted_length": 40,
+                "true_span": 145,
+                "f1": 0.26829268292682923,
+                "jaccard": 0.15492957746478872
+              }
+            },
+            "latency_s": 1.019,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "mdm2_p53",
+      "pair": "MDM2-P53",
+      "uniprot": [
+        "Q00987",
+        "P04637"
+      ],
+      "ground_truth_pdb": "1YCR",
+      "agent": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 1.0,
+        "protein_hits": 6,
+        "protein_total": 6,
+        "stability": 1.0,
+        "median_latency_s": 50.804,
+        "mean_cost_usd": 0.0027191173333333337,
+        "runs": [
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q00987",
+                "start": 26,
+                "end": 109
+              },
+              {
+                "uniprot": "P04637",
+                "start": 17,
+                "end": 29
+              }
+            ],
+            "score": 1.0,
+            "per_protein": {
+              "Q00987": {
+                "hit": true,
+                "recall": 0.9615384615384616,
+                "predicted_length": 84,
+                "true_span": 80,
+                "f1": 0.45454545454545453,
+                "jaccard": 0.29411764705882354
+              },
+              "P04637": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 13,
+                "true_span": 13,
+                "f1": 0.9600000000000001,
+                "jaccard": 0.9230769230769231
+              }
+            },
+            "latency_s": 50.804,
+            "cost_usd": 0.0039627560000000004,
+            "llm_calls": 5,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "get_tool_prediction",
+              "search_literature",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "submit_adjudication"
+            ],
+            "run": 1
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q00987",
+                "start": 25,
+                "end": 110
+              },
+              {
+                "uniprot": "P04637",
+                "start": 17,
+                "end": 29
+              }
+            ],
+            "score": 1.0,
+            "per_protein": {
+              "Q00987": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 86,
+                "true_span": 80,
+                "f1": 0.46428571428571425,
+                "jaccard": 0.3023255813953488
+              },
+              "P04637": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 13,
+                "true_span": 13,
+                "f1": 0.9600000000000001,
+                "jaccard": 0.9230769230769231
+              }
+            },
+            "latency_s": 50.948,
+            "cost_usd": 0.0022119720000000004,
+            "llm_calls": 4,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "get_tool_prediction",
+              "search_literature",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "submit_adjudication"
+            ],
+            "run": 2
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q00987",
+                "start": 26,
+                "end": 109
+              },
+              {
+                "uniprot": "P04637",
+                "start": 17,
+                "end": 29
+              }
+            ],
+            "score": 1.0,
+            "per_protein": {
+              "Q00987": {
+                "hit": true,
+                "recall": 0.9615384615384616,
+                "predicted_length": 84,
+                "true_span": 80,
+                "f1": 0.45454545454545453,
+                "jaccard": 0.29411764705882354
+              },
+              "P04637": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 13,
+                "true_span": 13,
+                "f1": 0.9600000000000001,
+                "jaccard": 0.9230769230769231
+              }
+            },
+            "latency_s": 47.938,
+            "cost_usd": 0.001982624,
+            "llm_calls": 4,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "get_tool_prediction",
+              "search_literature",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "submit_adjudication"
+            ],
+            "run": 3
+          }
+        ]
+      },
+      "baseline": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 1.0,
+        "protein_hits": 6,
+        "protein_total": 6,
+        "stability": 1.0,
+        "median_latency_s": 0.664,
+        "mean_cost_usd": 5.852e-05,
+        "runs": [
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q00987",
+                "start": 25,
+                "end": 109
+              },
+              {
+                "uniprot": "P04637",
+                "start": 17,
+                "end": 29
+              }
+            ],
+            "score": 1.0,
+            "per_protein": {
+              "Q00987": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 85,
+                "true_span": 80,
+                "f1": 0.4684684684684685,
+                "jaccard": 0.3058823529411765
+              },
+              "P04637": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 13,
+                "true_span": 13,
+                "f1": 0.9600000000000001,
+                "jaccard": 0.9230769230769231
+              }
+            },
+            "latency_s": 0.641,
+            "cost_usd": 5.852e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 1
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q00987",
+                "start": 25,
+                "end": 109
+              },
+              {
+                "uniprot": "P04637",
+                "start": 17,
+                "end": 29
+              }
+            ],
+            "score": 1.0,
+            "per_protein": {
+              "Q00987": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 85,
+                "true_span": 80,
+                "f1": 0.4684684684684685,
+                "jaccard": 0.3058823529411765
+              },
+              "P04637": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 13,
+                "true_span": 13,
+                "f1": 0.9600000000000001,
+                "jaccard": 0.9230769230769231
+              }
+            },
+            "latency_s": 0.786,
+            "cost_usd": 5.852e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 2
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "Q00987",
+                "start": 25,
+                "end": 109
+              },
+              {
+                "uniprot": "P04637",
+                "start": 17,
+                "end": 29
+              }
+            ],
+            "score": 1.0,
+            "per_protein": {
+              "Q00987": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 85,
+                "true_span": 80,
+                "f1": 0.4684684684684685,
+                "jaccard": 0.3058823529411765
+              },
+              "P04637": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 13,
+                "true_span": 13,
+                "f1": 0.9600000000000001,
+                "jaccard": 0.9230769230769231
+              }
+            },
+            "latency_s": 0.664,
+            "cost_usd": 5.852e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "pcna_cdn1a",
+      "pair": "PCNA-CDN1A",
+      "uniprot": [
+        "P12004",
+        "P38936"
+      ],
+      "ground_truth_pdb": "1AXC",
+      "agent": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 0.5,
+        "protein_hits": 3,
+        "protein_total": 6,
+        "stability": 1.0,
+        "median_latency_s": 59.111,
+        "mean_cost_usd": 0.0028940240000000002,
+        "runs": [
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P38936",
+                "start": 147,
+                "end": 160
+              },
+              {
+                "uniprot": "P12004",
+                "start": 121,
+                "end": 133
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "P12004": {
+                "hit": false,
+                "recall": 0.2894736842105263,
+                "predicted_length": 13,
+                "true_span": 229,
+                "f1": 0.4313725490196079,
+                "jaccard": 0.275
+              },
+              "P38936": {
+                "hit": true,
+                "recall": 0.7647058823529411,
+                "predicted_length": 14,
+                "true_span": 18,
+                "f1": 0.8387096774193549,
+                "jaccard": 0.7222222222222222
+              }
+            },
+            "latency_s": 59.837,
+            "cost_usd": 0.002988104,
+            "llm_calls": 6,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "search_literature",
+              "validate_residues",
+              "map_residues",
+              "convene_debate",
+              "validate_residues",
+              "validate_residues",
+              "search_literature",
+              "get_tool_prediction",
+              "submit_adjudication"
+            ],
+            "run": 1
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P38936",
+                "start": 140,
+                "end": 164
+              },
+              {
+                "uniprot": "P12004",
+                "start": 121,
+                "end": 138
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "P12004": {
+                "hit": false,
+                "recall": 0.2894736842105263,
+                "predicted_length": 18,
+                "true_span": 229,
+                "f1": 0.3928571428571429,
+                "jaccard": 0.24444444444444444
+              },
+              "P38936": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 25,
+                "true_span": 18,
+                "f1": 0.8095238095238095,
+                "jaccard": 0.68
+              }
+            },
+            "latency_s": 58.274,
+            "cost_usd": 0.0025362400000000004,
+            "llm_calls": 6,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "search_literature",
+              "validate_residues",
+              "map_residues",
+              "validate_residues",
+              "map_residues",
+              "convene_debate",
+              "submit_adjudication"
+            ],
+            "run": 2
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P38936",
+                "start": 140,
+                "end": 164
+              },
+              {
+                "uniprot": "P12004",
+                "start": 121,
+                "end": 133
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "P12004": {
+                "hit": false,
+                "recall": 0.2894736842105263,
+                "predicted_length": 13,
+                "true_span": 229,
+                "f1": 0.4313725490196079,
+                "jaccard": 0.275
+              },
+              "P38936": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 25,
+                "true_span": 18,
+                "f1": 0.8095238095238095,
+                "jaccard": 0.68
+              }
+            },
+            "latency_s": 59.111,
+            "cost_usd": 0.0031577280000000007,
+            "llm_calls": 6,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "search_literature",
+              "get_md_interface_scores",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "validate_residues",
+              "validate_residues",
+              "convene_debate",
+              "submit_adjudication"
+            ],
+            "run": 3
+          }
+        ]
+      },
+      "baseline": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 0.5,
+        "protein_hits": 3,
+        "protein_total": 6,
+        "stability": 1.0,
+        "median_latency_s": 0.714,
+        "mean_cost_usd": 5.88e-05,
+        "runs": [
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P12004",
+                "start": 121,
+                "end": 135
+              },
+              {
+                "uniprot": "P38936",
+                "start": 139,
+                "end": 164
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "P12004": {
+                "hit": false,
+                "recall": 0.2894736842105263,
+                "predicted_length": 15,
+                "true_span": 229,
+                "f1": 0.4150943396226416,
+                "jaccard": 0.2619047619047619
+              },
+              "P38936": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 26,
+                "true_span": 18,
+                "f1": 0.7906976744186047,
+                "jaccard": 0.6538461538461539
+              }
+            },
+            "latency_s": 0.714,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 1
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P12004",
+                "start": 121,
+                "end": 135
+              },
+              {
+                "uniprot": "P38936",
+                "start": 139,
+                "end": 164
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "P12004": {
+                "hit": false,
+                "recall": 0.2894736842105263,
+                "predicted_length": 15,
+                "true_span": 229,
+                "f1": 0.4150943396226416,
+                "jaccard": 0.2619047619047619
+              },
+              "P38936": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 26,
+                "true_span": 18,
+                "f1": 0.7906976744186047,
+                "jaccard": 0.6538461538461539
+              }
+            },
+            "latency_s": 0.73,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 2
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P12004",
+                "start": 121,
+                "end": 135
+              },
+              {
+                "uniprot": "P38936",
+                "start": 139,
+                "end": 164
+              }
+            ],
+            "score": 0.5,
+            "per_protein": {
+              "P12004": {
+                "hit": false,
+                "recall": 0.2894736842105263,
+                "predicted_length": 15,
+                "true_span": 229,
+                "f1": 0.4150943396226416,
+                "jaccard": 0.2619047619047619
+              },
+              "P38936": {
+                "hit": true,
+                "recall": 1.0,
+                "predicted_length": 26,
+                "true_span": 18,
+                "f1": 0.7906976744186047,
+                "jaccard": 0.6538461538461539
+              }
+            },
+            "latency_s": 0.625,
+            "cost_usd": 5.8800000000000006e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "rash_raf1",
+      "pair": "RASH-RAF1",
+      "uniprot": [
+        "P01112",
+        "P04049"
+      ],
+      "ground_truth_pdb": "4G0N",
+      "agent": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 0.0,
+        "protein_hits": 0,
+        "protein_total": 6,
+        "stability": 1.0,
+        "median_latency_s": 53.483,
+        "mean_cost_usd": 0.0024824053333333336,
+        "runs": [
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P01112",
+                "start": 32,
+                "end": 40
+              },
+              {
+                "uniprot": "P04049",
+                "start": 56,
+                "end": 131
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P01112": {
+                "hit": false,
+                "recall": 0.4375,
+                "predicted_length": 9,
+                "true_span": 36,
+                "f1": 0.56,
+                "jaccard": 0.3888888888888889
+              },
+              "P04049": {
+                "hit": false,
+                "recall": 1.0,
+                "predicted_length": 76,
+                "true_span": 34,
+                "f1": 0.3655913978494624,
+                "jaccard": 0.2236842105263158
+              }
+            },
+            "latency_s": 53.483,
+            "cost_usd": 0.0023033920000000005,
+            "llm_calls": 4,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "validate_residues",
+              "validate_residues",
+              "search_literature",
+              "get_tool_prediction",
+              "map_residues",
+              "map_residues",
+              "submit_adjudication"
+            ],
+            "run": 1
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P01112",
+                "start": 32,
+                "end": 40
+              },
+              {
+                "uniprot": "P04049",
+                "start": 56,
+                "end": 131
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P01112": {
+                "hit": false,
+                "recall": 0.4375,
+                "predicted_length": 9,
+                "true_span": 36,
+                "f1": 0.56,
+                "jaccard": 0.3888888888888889
+              },
+              "P04049": {
+                "hit": false,
+                "recall": 1.0,
+                "predicted_length": 76,
+                "true_span": 34,
+                "f1": 0.3655913978494624,
+                "jaccard": 0.2236842105263158
+              }
+            },
+            "latency_s": 62.915,
+            "cost_usd": 0.0032339160000000003,
+            "llm_calls": 6,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "get_tool_prediction",
+              "search_literature",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "convene_debate",
+              "submit_adjudication"
+            ],
+            "run": 2
+          },
+          {
+            "arm": "agent",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P01112",
+                "start": 32,
+                "end": 40
+              },
+              {
+                "uniprot": "P04049",
+                "start": 56,
+                "end": 131
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P01112": {
+                "hit": false,
+                "recall": 0.4375,
+                "predicted_length": 9,
+                "true_span": 36,
+                "f1": 0.56,
+                "jaccard": 0.3888888888888889
+              },
+              "P04049": {
+                "hit": false,
+                "recall": 1.0,
+                "predicted_length": 76,
+                "true_span": 34,
+                "f1": 0.3655913978494624,
+                "jaccard": 0.2236842105263158
+              }
+            },
+            "latency_s": 51.412,
+            "cost_usd": 0.0019099079999999999,
+            "llm_calls": 5,
+            "tools": [
+              "get_expected_interface_region",
+              "get_expected_interface_region",
+              "list_interface_tools",
+              "fetch_structures",
+              "fetch_structures",
+              "get_md_interface_scores",
+              "search_literature",
+              "search_literature",
+              "search_literature",
+              "validate_residues",
+              "validate_residues",
+              "map_residues",
+              "map_residues",
+              "submit_adjudication"
+            ],
+            "run": 3
+          }
+        ]
+      },
+      "baseline": {
+        "n_runs": 3,
+        "n_errors": 0,
+        "mean_score": 0.0,
+        "protein_hits": 0,
+        "protein_total": 6,
+        "stability": 1.0,
+        "median_latency_s": 0.67,
+        "mean_cost_usd": 5.8240000000000005e-05,
+        "runs": [
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P01112",
+                "start": 32,
+                "end": 40
+              },
+              {
+                "uniprot": "P04049",
+                "start": 56,
+                "end": 131
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P01112": {
+                "hit": false,
+                "recall": 0.4375,
+                "predicted_length": 9,
+                "true_span": 36,
+                "f1": 0.56,
+                "jaccard": 0.3888888888888889
+              },
+              "P04049": {
+                "hit": false,
+                "recall": 1.0,
+                "predicted_length": 76,
+                "true_span": 34,
+                "f1": 0.3655913978494624,
+                "jaccard": 0.2236842105263158
+              }
+            },
+            "latency_s": 0.723,
+            "cost_usd": 5.8240000000000005e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 1
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P01112",
+                "start": 32,
+                "end": 40
+              },
+              {
+                "uniprot": "P04049",
+                "start": 56,
+                "end": 131
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P01112": {
+                "hit": false,
+                "recall": 0.4375,
+                "predicted_length": 9,
+                "true_span": 36,
+                "f1": 0.56,
+                "jaccard": 0.3888888888888889
+              },
+              "P04049": {
+                "hit": false,
+                "recall": 1.0,
+                "predicted_length": 76,
+                "true_span": 34,
+                "f1": 0.3655913978494624,
+                "jaccard": 0.2236842105263158
+              }
+            },
+            "latency_s": 0.67,
+            "cost_usd": 5.8240000000000005e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 2
+          },
+          {
+            "arm": "baseline",
+            "error": null,
+            "predicted_regions": [
+              {
+                "uniprot": "P01112",
+                "start": 32,
+                "end": 40
+              },
+              {
+                "uniprot": "P04049",
+                "start": 56,
+                "end": 131
+              }
+            ],
+            "score": 0.0,
+            "per_protein": {
+              "P01112": {
+                "hit": false,
+                "recall": 0.4375,
+                "predicted_length": 9,
+                "true_span": 36,
+                "f1": 0.56,
+                "jaccard": 0.3888888888888889
+              },
+              "P04049": {
+                "hit": false,
+                "recall": 1.0,
+                "predicted_length": 76,
+                "true_span": 34,
+                "f1": 0.3655913978494624,
+                "jaccard": 0.2236842105263158
+              }
+            },
+            "latency_s": 0.634,
+            "cost_usd": 5.8240000000000005e-05,
+            "llm_calls": 1,
+            "tools": [],
+            "run": 3
+          }
+        ]
+      }
+    }
+  ],
+  "overall": {
+    "agent": {
+      "n_runs": 15,
+      "n_errors": 0,
+      "mean_score": 0.43333333333333335,
+      "protein_hits": 13,
+      "protein_total": 30,
+      "stability": 0.9333333333333332,
+      "median_latency_s": 58.274,
+      "mean_cost_usd": 0.002900790666666667
+    },
+    "baseline": {
+      "n_runs": 15,
+      "n_errors": 0,
+      "mean_score": 0.3,
+      "protein_hits": 9,
+      "protein_total": 30,
+      "stability": 1.0,
+      "median_latency_s": 0.67,
+      "mean_cost_usd": 5.8632000000000004e-05
+    }
+  }
+}

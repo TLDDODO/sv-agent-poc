@@ -12,7 +12,7 @@
   Human approved ("通过", 2026-09-26): design and scoring thresholds (recall >= 50%, predicted span <= 2x true span) accepted as proposed.
   History: S4 was BLOCKED on 2026-09-25/26 (all 5 hosts returned 403 in the cloud container); unblocked after the human moved the run to their local machine, where all 5 hosts are reachable (see the network check above).
 - [x] S5 — Generalise inputs — agent/cases.py + cases/fat10_mad2.yaml + benchmark/*.yaml (generated from evidence.json); tools act on the active case; agent/leakage.py filters co-complex structures/PMIDs and guards outputs; benchmark MD/PISA/debate report pending; FAT10 prompt/schema/tests unchanged. After the PASS I added the reviewer's non-blocking hardening (benchmark runs drop off-schema tool arguments) with a test. Reviewer: PASS (attempt 1). pytest -q: 48 passed, 2 skipped.
-- [ ] S6 — Benchmark runner
+- [x] S6 — Benchmark runner — agent/{scoring,baseline,benchmark}.py + scripts/run_benchmark.py; live run N=3 done with the configured key (agent and no-tool baseline, all runs logged in results/runs.jsonl); results/benchmark.json + benchmark.md are script output (numbers: see those files). Dry-run and BLOCKED paths tested. Reviewer: PASS (attempt 1). Known limit: dry-run imports the fake client from tests/.
 - [ ] S6b — Error injection
 - [ ] S7 — Non-technical access (Dify)
 - [ ] S8 — README v2

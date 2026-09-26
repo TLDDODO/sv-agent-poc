@@ -1,0 +1,386 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FAT10-MAD2 Interface Adjudicator",
+    "description": "Agentic pipeline that adjudicates the FAT10-MAD2 protein-protein interface. It grounds every fact in a tool call (PDBe, UniProt, a 100 ns MD run, PubMed), compares the real MD interface against the literature-expected binding region, and — when they conflict — convenes a multi-agent debate for a calibrated verdict.\n\nLabels in every answer: **real** = measured or fetched by a tool in this run, **cited** = a published result quoted from the literature (not re-derived here), **pending** = no data exists yet (never filled with placeholder numbers).\n\nThere is no experimental FAT10-MAD2 complex structure, so no answer is ground truth: when the MD result and the literature disagree the service reports the contradiction and does not declare a winner.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://host.docker.internal:8000",
+      "description": "The API as seen from a Dify running in Docker on the same machine"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Describe the service and list its endpoints",
+        "description": "Returns the service name, whether an LLM key is configured, and a one-line description of each endpoint. Safe to call any time.",
+        "operationId": "service_info",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Service Info"
+                },
+                "example": {
+                  "service": "FAT10-MAD2 Interface Adjudicator",
+                  "llm_configured": true,
+                  "endpoints": {
+                    "GET /health": "liveness + whether the LLM is configured"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Check that the service is running",
+        "description": "Liveness probe. Reports whether an LLM key is configured (`llm_configured`); never needs one. If `llm_configured` is false, `/adjudicate` and `/debate` will refuse and `/evidence` still works.",
+        "operationId": "health_check",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Check"
+                },
+                "example": {
+                  "status": "ok",
+                  "llm_configured": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evidence": {
+      "get": {
+        "tags": [
+          "evidence"
+        ],
+        "summary": "Get the real MD evidence, the literature-expected region and the conflict flag",
+        "description": "Returns (1) the per-residue contact occupancy from the real 100 ns MD run (real), (2) the binding region the literature / NMR expects (cited, not derived here), and (3) a deterministic check of whether the MD interface falls inside that region, including the `flag` that reports a contradiction. No LLM and no key needed, so this always works and is the safest first call. It reports the disagreement; it does not say which side is right.",
+        "operationId": "get_evidence",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Evidence"
+                },
+                "example": {
+                  "md_method": "MD-contacts(100ns)",
+                  "md_occupancy": {
+                    "I163": 1.0,
+                    "C162": 0.998,
+                    "G164": 0.957,
+                    "C160": 0.706,
+                    "G165": 0.656,
+                    "Y161": 0.613,
+                    "D97": 0.471,
+                    "K137": 0.43,
+                    "A159": 0.349,
+                    "R138": 0.227,
+                    "N135": 0.154,
+                    "K31": 0.115,
+                    "G136": 0.1,
+                    "R60": 0.076,
+                    "F157": 0.014
+                  },
+                  "expected_region": {
+                    "uniprot": "O15205",
+                    "expected_region": "Ubiquitin-like 1 (N-terminal domain)",
+                    "residue_range": [
+                      6,
+                      81
+                    ],
+                    "other_domains": {
+                      "Ubiquitin-like 2 (C-term)": [
+                        90,
+                        163
+                      ],
+                      "C-terminal tail": [
+                        164,
+                        165
+                      ]
+                    },
+                    "evidence_type": "CITED literature fact (not derived by this agent)",
+                    "source": "Domain ranges: UniProt O15205 feature table (verified). Binding region: Theng et al. 2014 PNAS + NMR PDB 2MBE (first FAT10 domain). Use search_literature to corroborate the binding-region claim live.",
+                    "note": "If the interface residues fall outside UBL1 (6-81), the model disagrees with the literature and must be flagged (e.g. an AF3 model that docked MAD2 onto FAT10's C-terminal region)."
+                  },
+                  "adjudication": {
+                    "core_interface": {
+                      "I163": 1.0,
+                      "C162": 0.998,
+                      "G164": 0.957,
+                      "C160": 0.706,
+                      "G165": 0.656,
+                      "Y161": 0.613
+                    },
+                    "secondary": {
+                      "D97": 0.471,
+                      "K137": 0.43,
+                      "A159": 0.349,
+                      "R138": 0.227,
+                      "N135": 0.154,
+                      "K31": 0.115,
+                      "G136": 0.1
+                    },
+                    "in_expected_region": [],
+                    "outside_expected_region": [
+                      "I163",
+                      "C162",
+                      "G164",
+                      "C160",
+                      "G165",
+                      "Y161"
+                    ],
+                    "flag": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adjudicate": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Ask the investigator agent a question about the FAT10-MAD2 interface",
+        "description": "Runs the autonomous investigator agent end to end. The agent itself decides which tools to call (literature search, PDBe structures, UniProt sequence check, the MD evidence, and the debate if the evidence conflicts). The answer has the agent's `result` (interface residues, disputed residues, confidence, flags and reasoning) and the full step-by-step `transcript`. It needs DEEPSEEK_API_KEY (otherwise HTTP 400), costs a little money per call and can take a while, so raise your client's timeout. Tools with no data report `pending`; the agent never invents numbers.",
+        "operationId": "run_adjudication",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Run Adjudication"
+                },
+                "example": {
+                  "goal": "<the goal that was used>",
+                  "result": {
+                    "consensus_interface": [
+                      "<residue labels>"
+                    ],
+                    "disputed": [
+                      "<residue labels>"
+                    ],
+                    "confidence": "<0..1>",
+                    "flags": [
+                      "<reliability flags>"
+                    ],
+                    "reasoning": "<the agent's grounded justification>"
+                  },
+                  "transcript": [
+                    {
+                      "step": "<n>",
+                      "actions": [
+                        "<tool calls and results>"
+                      ]
+                    }
+                  ],
+                  "_note": "shape only: placeholders in angle brackets, not data"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DEEPSEEK_API_KEY is not set."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/debate": {
+      "post": {
+        "tags": [
+          "agent"
+        ],
+        "summary": "Run the MD-vs-NMR debate and get a calibrated verdict",
+        "description": "Convenes three roles over the real evidence: an advocate for the MD result, an advocate for the literature/NMR result, and a judge. The judge says whether the two really contradict and how confident it is, without declaring which side is correct (no experimental complex exists). Needs DEEPSEEK_API_KEY (otherwise HTTP 400) and can take a while.",
+        "operationId": "run_debate",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Run Debate"
+                },
+                "example": {
+                  "interface_shown_by_data": [
+                    "<residue labels>"
+                  ],
+                  "contradicts_literature_expectation": "<true or false>",
+                  "true_interface_experimentally_known": "<true or false>",
+                  "confidence_in_contradiction": "<0..1>",
+                  "confidence_in_which_side_is_right": "<0..1>",
+                  "flags": [
+                    "<flags>"
+                  ],
+                  "recommendation": "<a concrete next experiment or check>",
+                  "reasoning": "<the judge's grounded reasoning>",
+                  "_note": "shape only: placeholders in angle brackets, not data"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DEEPSEEK_API_KEY is not set."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AgentRequest": {
+        "properties": {
+          "goal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Goal",
+            "description": "Plain-language investigation goal about FAT10-MAD2. Omit to use the default goal.",
+            "examples": [
+              "Where does MAD2 bind FAT10, and does the MD interface agree with the literature?"
+            ]
+          },
+          "max_steps": {
+            "type": "integer",
+            "maximum": 24.0,
+            "minimum": 1.0,
+            "title": "Max Steps",
+            "description": "Maximum number of reasoning/tool steps the agent may take.",
+            "default": 12,
+            "examples": [
+              12
+            ]
+          }
+        },
+        "type": "object",
+        "title": "AgentRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "meta",
+      "description": "Service description and health."
+    },
+    {
+      "name": "evidence",
+      "description": "Real evidence, no LLM and no key needed."
+    },
+    {
+      "name": "agent",
+      "description": "LLM-driven endpoints; need DEEPSEEK_API_KEY and take a while."
+    }
+  ]
+}

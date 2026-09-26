@@ -60,8 +60,13 @@ def load_benchmark() -> list[Case]:
 _ACTIVE: ContextVar[Case | None] = ContextVar("active_case", default=None)
 
 
-def set_active_case(case: Case | None) -> None:
-    _ACTIVE.set(case)
+def set_active_case(case: Case | None):
+    """Returns a token for reset_active_case()."""
+    return _ACTIVE.set(case)
+
+
+def reset_active_case(token) -> None:
+    _ACTIVE.reset(token)
 
 
 def active_case() -> Case:

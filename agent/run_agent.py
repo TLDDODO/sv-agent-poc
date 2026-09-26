@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from .llm_client import make_client, MODEL
-from .cases import Case, default_case, find_case, set_active_case
+from .cases import Case, default_case, find_case, reset_active_case, set_active_case
 from . import leakage
 from .tools import TOOLS, DISPATCH, tools_for
 from .skills import load_skill
@@ -38,7 +38,14 @@ PAIR_PROMPT = load_skill("pair_investigator",
 def run(user_goal: str, model: str = MODEL, max_steps: int = 16, verbose: bool = True,
         case: Case | None = None):
     case = case or default_case()
-    set_active_case(case)                       # the tools act on this protein pair
+    token = set_active_case(case)               # the tools act on this protein pair, for this run only
+    try:
+        return _loop(user_goal, model, max_steps, verbose, case)
+    finally:
+        reset_active_case(token)
+
+
+def _loop(user_goal: str, model: str, max_steps: int, verbose: bool, case: Case):
     tools = tools_for(case)
     client = make_client()
     messages = [

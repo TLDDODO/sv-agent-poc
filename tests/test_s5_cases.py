@@ -212,3 +212,11 @@ def test_benchmark_ignores_off_schema_arguments(fake_llm, tmp_path):
 
     fake_llm([ask, check])
     run_agent.run(case.goal, verbose=False, case=case)
+
+
+def test_a_run_restores_the_previous_case(fake_llm):
+    case = cases.find_case("mdm2_p53")
+    fake_llm([_submit])
+    run_agent.run(case.goal, verbose=False, case=case)
+    assert cases.active_case().id == "fat10_mad2"          # the benchmark case did not leak out
+    assert tools.get_expected_interface_region()["residue_range"] == [6, 81]

@@ -321,8 +321,15 @@ def _span(regions, acc):
     return (min(a for a, _ in xs), max(b for _, b in xs)) if xs else None
 
 
+def md_top_residues(transcript: list[dict], n: int = 6) -> list[tuple[str, float]]:
+    """Highest-occupancy residues from the MD tool output (data, not an agent conclusion)."""
+    md = next((r for _, r in reversed(_results(transcript, "get_md_interface_scores"))), None)
+    occ = (md or {}).get("occupancy") or {}
+    return sorted(occ.items(), key=lambda kv: (-kv[1], residue_sort_key(kv[0])))[:n]
+
+
 def conclusion(case: Case, result: dict | None, paraphrases: list | None = None,
-               found: list | None = None) -> dict:
+               found: list | None = None, md_top: list | None = None) -> dict:
     result = result or {}
     raws = [str(f) for f in (result.get("flags") or [])]
     paras = paraphrases if paraphrases is not None else [FLAG_FALLBACK] * len(raws)
@@ -340,15 +347,23 @@ def conclusion(case: Case, result: dict | None, paraphrases: list | None = None,
     elif "consensus_interface" in result:
         core = sorted(result.get("consensus_interface") or [], key=residue_sort_key)
         lo, hi = NTERM_UBL_RANGE
-        zh_core = ", ".join(core) or "没有"
-        en_core = ", ".join(core) or "none"
-        headline = T(f"系统给出的 FAT10 界面残基(依据分子动力学接触数据,由系统综合判断):{zh_core}。"
-                     f"注意:文献 / NMR 预期的结合区域是 FAT10 的第 {lo}–{hi} 位(引用,不是本系统推导),"
-                     f"两者是否一致见下面的“需要留意”。",
-                     f"FAT10 interface residues reported by the system (based on the molecular-dynamics contact "
-                     f"data, judged by the system): {en_core}. Note: the literature/NMR-expected binding region "
-                     f"is residues {lo}–{hi} of FAT10 (cited, not derived by this system); whether the two "
-                     f"agree is under “Points to watch” below.")
+        note_zh = (f"注意:文献 / NMR 预期的结合区域是 FAT10 的第 {lo}–{hi} 位(引用,不是本系统推导),"
+                   f"两者是否一致见下面的“需要留意”。")
+        note_en = (f"Note: the literature/NMR-expected binding region is residues {lo}–{hi} of FAT10 "
+                   f"(cited, not derived by this system); whether the two agree is under “Points to watch” below.")
+        if core:
+            names = ", ".join(core)
+            headline = T(f"系统给出的 FAT10 界面残基(依据分子动力学接触数据,由系统综合判断):{names}。" + note_zh,
+                         f"FAT10 interface residues reported by the system (based on the molecular-dynamics contact "
+                         f"data, judged by the system): {names}. " + note_en)
+        else:                                           # the agent gave no residue list: never say "none"
+            top = ", ".join(f"{r} ({v})" for r, v in md_top or [])
+            headline = T("agent 未给出残基列表。"
+                         + (f"MD 数据中接触占有率最高的残基(来自 MD 数据,非 agent 结论):{top}。" if top else "")
+                         + note_zh,
+                         "The agent did not give a residue list. "
+                         + (f"Residues with the highest contact occupancy in the MD data (from the MD data, not an "
+                            f"agent conclusion): {top}. " if top else "") + note_en)
         caveat = CAVEAT_FAT10
     else:
         headline = T("系统没有给出结构化结论。", "The system did not return a structured conclusion.")
@@ -384,7 +399,8 @@ def run_query(case: Case, max_steps: int = 12) -> dict:
     return {
         "case": {"id": case.id, "name": f"{case.name_a} – {case.name_b}",
                  "uniprot_a": case.uniprot_a, "uniprot_b": case.uniprot_b},
-        "conclusion": conclusion(case, result, paras, findings(case, transcript)),
+        "conclusion": conclusion(case, result, paras, findings(case, transcript),
+                                md_top_residues(transcript)),
         "evidence": evidence_rows(transcript),
         "usage": _merged_usage(agent_rec, para_rec),
         "steps": [{"tool": a["tool"], "args": a.get("args")} for s in transcript for a in s["actions"]],

@@ -46,6 +46,15 @@ def run(user_goal: str, model: str = MODEL, max_steps: int = 16, verbose: bool =
         reset_active_case(token)
 
 
+MAX_EMPTY_RESUBMITS = 2      # times an empty residue list is sent back before it is marked as missing
+
+
+def _md_seen(transcript: list) -> bool:
+    """True once a get_md_interface_scores result with real occupancy values is in the transcript."""
+    return any(a["tool"] == "get_md_interface_scores" and isinstance(a.get("result"), dict)
+               and a["result"].get("occupancy") for e in transcript for a in e["actions"])
+
+
 def _loop(user_goal: str, model: str, max_steps: int, verbose: bool, case: Case):
     tools = tools_for(case)
     client = make_client()
@@ -56,6 +65,7 @@ def _loop(user_goal: str, model: str, max_steps: int, verbose: bool, case: Case)
     transcript = []   # rich per-step record incl. the agent's reasoning
     result = None
     rec = RunRecorder("agent", model, user_goal, case.id)
+    empty_resubmits = 0
 
     for step in range(max_steps):
         resp = client.chat.completions.create(
@@ -91,6 +101,19 @@ def _loop(user_goal: str, model: str, max_steps: int, verbose: bool, case: Case)
             rec.tool(name)
 
             if name == "submit_adjudication":
+                # MD data was retrieved but no residues were submitted: send it back (twice at most),
+                # then keep the submission and mark it, never fill the list in ourselves.
+                if (not case.generic and not args.get("consensus_interface")
+                        and _md_seen(transcript + [entry])):
+                    if empty_resubmits < MAX_EMPTY_RESUBMITS:
+                        empty_resubmits += 1
+                        entry["actions"].append({"tool": name, "args": args, "rejected": "empty consensus_interface"})
+                        messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps({
+                            "error": "rejected: consensus_interface is empty although MD contact data was "
+                                     "retrieved. Submit again with the residues you conclude form the "
+                                     "interface (list the disputed ones in `disputed`)."})})
+                        continue
+                    args = dict(args, residues_missing=True)
                 result = args
                 entry["actions"].append({"tool": name, "args": args})
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": "ok"})

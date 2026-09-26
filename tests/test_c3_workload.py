@@ -106,7 +106,7 @@ def test_run_log_records_measured_activity(fake_llm, runlog_path, monkeypatch):
     _serve(monkeypatch)
     _run(fake_llm, [
         lambda m: ("x", [("get_md_interface_scores", {}), ("validate_residues", {"uniprot": "O15205", "residues": ["M1", "C3"]})]),
-        lambda m: ("done", [("submit_adjudication", {"consensus_interface": [], "disputed": [], "confidence": 0.1, "reasoning": "r"})])])
+        lambda m: ("done", [("submit_adjudication", {"consensus_interface": ["I163"], "disputed": [], "confidence": 0.1, "reasoning": "r"})])])
     a = _last_line(runlog_path)["activity"]
     assert a["databases"] == ["UniProt"] and a["data_api_calls"] == 1 and a["failed_calls"] == 0
     assert a["by_database"] == {"UniProt": {"calls": 1, "failed": 0, "records": 2}}     # 2 residues checked
@@ -118,7 +118,7 @@ def test_run_log_records_measured_activity(fake_llm, runlog_path, monkeypatch):
 def test_failed_requests_are_counted_as_failed(fake_llm, runlog_path):
     _run(fake_llm, [
         lambda m: ("x", [("validate_residues", {"uniprot": "O15205", "residues": ["M1"]})]),
-        lambda m: ("done", [("submit_adjudication", {"consensus_interface": [], "disputed": [], "confidence": 0.1, "reasoning": "r"})])])
+        lambda m: ("done", [("submit_adjudication", {"consensus_interface": ["I163"], "disputed": [], "confidence": 0.1, "reasoning": "r"})])])
     a = _last_line(runlog_path)["activity"]                  # the network is blocked in tests
     assert a["databases"] == [] and a["data_api_calls"] == 1 and a["failed_calls"] == 1
 
@@ -127,7 +127,7 @@ def test_pubmed_counts_esearch_and_efetch(fake_llm, runlog_path, monkeypatch):
     _serve(monkeypatch)
     _run(fake_llm, [
         lambda m: ("x", [("search_literature", {})]),
-        lambda m: ("done", [("submit_adjudication", {"consensus_interface": [], "disputed": [], "confidence": 0.1, "reasoning": "r"})])])
+        lambda m: ("done", [("submit_adjudication", {"consensus_interface": ["I163"], "disputed": [], "confidence": 0.1, "reasoning": "r"})])])
     a = _last_line(runlog_path)["activity"]
     assert a["by_database"]["PubMed"] == {"calls": 2, "failed": 0, "records": 3 + 3}
 

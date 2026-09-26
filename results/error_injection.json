@@ -1,0 +1,183 @@
+{
+  "status": "ok",
+  "generated_at": "2026-09-26T08:23:33Z",
+  "control": {
+    "id": "control_real_labels",
+    "control": true,
+    "description": "No injection: the real MD residue labels against FAT10.",
+    "uniprot": "O15205",
+    "n_labels": 15,
+    "outcome": "passed_through",
+    "evidence": {
+      "sequence_length": 165,
+      "n_mismatches": 0,
+      "mismatched": []
+    }
+  },
+  "cases": [
+    {
+      "id": "shift_plus_3",
+      "control": false,
+      "description": "Residue numbering shifted by +3 (off-by-three).",
+      "uniprot": "O15205",
+      "n_labels": 15,
+      "outcome": "caught",
+      "evidence": {
+        "sequence_length": 165,
+        "n_mismatches": 14,
+        "mismatched": [
+          "I166",
+          "C165",
+          "G167",
+          "C163",
+          "G168",
+          "Y164",
+          "D100",
+          "K140",
+          "A162",
+          "R141",
+          "N138",
+          "G139",
+          "R63",
+          "F160"
+        ]
+      }
+    },
+    {
+      "id": "shift_minus_10",
+      "control": false,
+      "description": "Residue numbering shifted by -10 (e.g. a construct offset).",
+      "uniprot": "O15205",
+      "n_labels": 15,
+      "outcome": "caught",
+      "evidence": {
+        "sequence_length": 165,
+        "n_mismatches": 15,
+        "mismatched": [
+          "I153",
+          "C152",
+          "G154",
+          "C150",
+          "G155",
+          "Y151",
+          "D87",
+          "K127",
+          "A149",
+          "R128",
+          "N125",
+          "K21",
+          "G126",
+          "R50",
+          "F147"
+        ]
+      }
+    },
+    {
+      "id": "beyond_sequence_length",
+      "control": false,
+      "description": "Real labels plus residues past the end of the sequence (positions 166, 200, 9999).",
+      "uniprot": "O15205",
+      "n_labels": 18,
+      "outcome": "caught",
+      "evidence": {
+        "sequence_length": 165,
+        "n_mismatches": 3,
+        "mismatched": [
+          "K166",
+          "L200",
+          "A9999"
+        ]
+      }
+    },
+    {
+      "id": "fabricated_md_wrong_residues",
+      "control": false,
+      "description": "Fabricated MD score file: invented residue identities at real positions.",
+      "uniprot": "O15205",
+      "n_labels": 15,
+      "outcome": "caught",
+      "evidence": {
+        "sequence_length": 165,
+        "n_mismatches": 15,
+        "mismatched": [
+          "W163",
+          "W162",
+          "W164",
+          "W160",
+          "W165",
+          "W161",
+          "W97",
+          "W137",
+          "W159",
+          "W138",
+          "W135",
+          "W31",
+          "W136",
+          "W60",
+          "W157"
+        ]
+      }
+    },
+    {
+      "id": "fabricated_md_real_labels",
+      "control": false,
+      "description": "Fabricated MD score values on real residue labels.",
+      "uniprot": "O15205",
+      "n_labels": 15,
+      "outcome": "passed_through",
+      "evidence": {
+        "sequence_length": 165,
+        "n_mismatches": 0,
+        "mismatched": []
+      }
+    },
+    {
+      "id": "wrong_uniprot_other_protein",
+      "control": false,
+      "description": "FAT10 residues checked against another real protein's accession (Q13257, MAD2).",
+      "uniprot": "Q13257",
+      "n_labels": 15,
+      "outcome": "caught",
+      "evidence": {
+        "sequence_length": 205,
+        "n_mismatches": 15,
+        "mismatched": [
+          "I163",
+          "C162",
+          "G164",
+          "C160",
+          "G165",
+          "Y161",
+          "D97",
+          "K137",
+          "A159",
+          "R138",
+          "N135",
+          "K31",
+          "G136",
+          "R60",
+          "F157"
+        ]
+      }
+    },
+    {
+      "id": "wrong_uniprot_malformed",
+      "control": false,
+      "description": "Accession that is not a UniProt accession.",
+      "uniprot": "NOTANACC",
+      "n_labels": 15,
+      "outcome": "caught",
+      "evidence": {
+        "error": "could not fetch UniProt NOTANACC: HTTPError",
+        "http_status": 400
+      }
+    }
+  ],
+  "summary": {
+    "injected": 7,
+    "caught": 6,
+    "passed_through": 1,
+    "inconclusive": 0,
+    "intercept_rate": 0.8571428571428571
+  }
+}

@@ -213,6 +213,8 @@ def render_markdown(data: dict) -> str:
     diff = None
     if o["agent"]["mean_score"] is not None and o["baseline"]["mean_score"] is not None:
         diff = o["agent"]["mean_score"] - o["baseline"]["mean_score"]
+    ei = data.get("error_injection")
+    L_ei = _render_error_injection(ei) if ei else []
     L += ["", f"Overall accuracy: agent {_f(o['agent']['mean_score'])}, baseline "
           f"{_f(o['baseline']['mean_score'])}; agent minus baseline {_f(diff, '{:+.2f}')}. "
           f"Failed runs (counted as misses): agent {o['agent']['n_errors']}, "
@@ -234,11 +236,34 @@ def render_markdown(data: dict) -> str:
           "training-data memory is its only source.",
           "- Latency and cost come from the run logs in results/runs.jsonl; costs use "
           "config/pricing.yaml (third-party price map, see its source note).", ""]
-    return "\n".join(L)
+    return "\n".join(L + L_ei)
+
+
+def _render_error_injection(ei: dict) -> list[str]:
+    L = ["## Error injection (FAT10-MAD2)", ""]
+    if ei.get("status") != "ok":
+        return L + [f"**{ei.get('status')}** — {ei.get('reason', '')}", "No intercept rate was produced.", ""]
+    s = ei["summary"]
+    L += ["Real MD residue labels were corrupted one way at a time and run through the agent's "
+          "validation path (the MD tool, then the UniProt sequence check). `passed_through` means the "
+          "error was NOT detected; `inconclusive` means the check could not run and is not counted as "
+          "caught. The uninjected control validated cleanly.", "",
+          "| injected error | outcome | evidence |", "|---|---|---|"]
+    for c in ei["cases"]:
+        ev = c["evidence"]
+        detail = ev.get("error") or f"{ev['n_mismatches']} mismatching residue(s) of {c['n_labels']}"
+        L.append(f"| {c['id']}: {c['description']} | {c['outcome']} | {detail} |")
+    L += ["", f"**Intercept rate: {s['caught']} of {s['injected']} injected errors caught "
+          f"({s['intercept_rate']:.0%}); passed through: {s['passed_through']}; "
+          f"inconclusive: {s['inconclusive']}.**", ""]
+    return L
 
 
 def write_outputs(data: dict, out_dir="results") -> None:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    ei_path = out / "error_injection.json"
+    if data.get("status") == "ok" and "error_injection" not in data and ei_path.exists():
+        data = dict(data, error_injection=json.loads(ei_path.read_text(encoding="utf-8")))
     (out / "benchmark.json").write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     (out / "benchmark.md").write_text(render_markdown(data), encoding="utf-8")

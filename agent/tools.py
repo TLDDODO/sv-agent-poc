@@ -193,8 +193,11 @@ def validate_residues(uniprot: str, residues: list) -> dict:
         with urllib.request.urlopen(url, timeout=20) as resp:
             fasta = resp.read().decode()
     except Exception as exc:
-        return {"error": f"could not fetch UniProt {uniprot}: {type(exc).__name__}",
-                "validated": [], "note": "residues are NOT grounded against a real sequence"}
+        out = {"error": f"could not fetch UniProt {uniprot}: {type(exc).__name__}",
+               "validated": [], "note": "residues are NOT grounded against a real sequence"}
+        if getattr(exc, "code", None) is not None:      # HTTPError: keep the status for callers
+            out["http_status"] = exc.code
+        return out
     seq = "".join(l.strip() for l in fasta.splitlines() if l and not l.startswith(">"))
     out = []
     for lab in residues:

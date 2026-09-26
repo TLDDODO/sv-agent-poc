@@ -45,6 +45,12 @@
   .badge.live { background:var(--live-bg); color:var(--live); }
   .badge.cited { background:var(--cited-bg); color:var(--cited); }
   .badge.pending { background:var(--pending-bg); color:var(--pending); }
+  .timeline { list-style:none; margin:0; padding:0; }
+  .timeline li { padding:8px 0; border-bottom:1px solid var(--line); }
+  .timeline li:last-child { border-bottom:0; }
+  .timeline .args { color:var(--muted); font-size:.85rem; font-family:ui-monospace,Consolas,monospace; }
+  .timeline .excerpt { margin:6px 0 0; padding-left:10px; border-left:3px solid var(--line); color:var(--muted); font-size:.9rem; }
+  .timeline .badge { margin-left:4px; }
   .legend { color:var(--muted); font-size:.9rem; margin-top:10px; }
   .usage { display:flex; flex-wrap:wrap; gap:8px 24px; }
   .usage b { display:block; font-size:1.1rem; }
@@ -89,6 +95,11 @@
     </div>
     <button class="run" id="run" type="button" data-i18n="run"></button>
     <p class="hint" id="wait" data-i18n="wait" hidden></p>
+  </section>
+
+  <section class="card" id="timeline-box" hidden>
+    <h2 data-i18n="h_timeline"></h2>
+    <ol id="timeline" class="timeline"></ol>
   </section>
 
   <div id="error" class="error" hidden></div>
@@ -143,6 +154,8 @@
       case_study: "(研究案例)",
       acc_a: "蛋白 A 的 UniProt 号", acc_b: "蛋白 B 的 UniProt 号", acc_ph: "输入 UniProt 号",
       custom_hint: "UniProt 号可以在 uniprot.org 上查到。自己输入的蛋白对没有分子动力学数据,标为“待定”。",
+      h_timeline: "它现在在做什么",
+      excerpt_note: "(模型的原话,未翻译)",
       run: "运行", wait: "正在查证据,通常需要一分钟左右,请不要关闭页面……",
       failed: "没有成功:",
       err_400: "服务器还没有配置模型密钥,无法运行查询。",
@@ -173,6 +186,8 @@
       case_study: " (case study)",
       acc_a: "UniProt accession of protein A", acc_b: "UniProt accession of protein B", acc_ph: "Enter a UniProt accession",
       custom_hint: "You can look up UniProt accessions on uniprot.org. A pair you enter has no molecular-dynamics data, so that evidence is marked “pending”.",
+      h_timeline: "What it is doing right now",
+      excerpt_note: "(the model's own words, not translated)",
       run: "Run", wait: "Gathering evidence. This usually takes about a minute; please keep the page open…",
       failed: "It did not work: ",
       err_400: "The server has no model key configured, so the query cannot run.",
@@ -269,6 +284,77 @@
     $("result").hidden = false;
   }
 
+  var tl = [];
+  function renderTimeline() {
+    var ol = $("timeline");
+    ol.innerHTML = "";
+    tl.forEach(function (ev) {
+      if (ev.type === "final" || ev.type === "cost") { return; }
+      var li = document.createElement("li");
+      li.appendChild(document.createTextNode(pick(ev.text)));
+      (ev.rows || []).forEach(function (r) {
+        var b = document.createElement("span");
+        b.className = "badge " + r.label;
+        b.textContent = t(r.label);
+        li.appendChild(b);
+      });
+      if (ev.args_summary) {
+        var a = document.createElement("div");
+        a.className = "args";
+        a.textContent = ev.tool + "(" + ev.args_summary + ")";
+        li.appendChild(a);
+      }
+      if (ev.excerpt) {
+        var q = document.createElement("p");
+        q.className = "excerpt";
+        q.textContent = ev.excerpt + " " + t("excerpt_note");
+        li.appendChild(q);
+      }
+      ol.appendChild(li);
+    });
+    $("timeline-box").hidden = tl.length === 0;
+  }
+
+  function handleEvent(ev) {
+    tl.push(ev);
+    renderTimeline();
+    if (ev.type === "final") { last = ev.result; show(ev.result); }
+    if (ev.type === "error") { lastErr = { status: 502, detail: "" }; renderError(); }
+  }
+
+  // Server-Sent Events over fetch (EventSource cannot read the error body of a 400/422).
+  function runStream(qs) {
+    return fetch("/api/run/stream?" + qs).then(function (r) {
+      if (!r.ok) {
+        return r.json().then(function (j) { lastErr = { status: r.status, detail: typeof j.detail === "string" ? j.detail : "" }; renderError(); });
+      }
+      var reader = r.body.getReader(), dec = new TextDecoder(), buf = "";
+      function pump() {
+        return reader.read().then(function (x) {
+          if (x.done) { return; }
+          buf += dec.decode(x.value, { stream: true });
+          var i;
+          while ((i = buf.indexOf("\n\n")) >= 0) {
+            var block = buf.slice(0, i); buf = buf.slice(i + 2);
+            var m = /^data: (.*)$/m.exec(block);
+            if (m) { handleEvent(JSON.parse(m[1])); }
+          }
+          return pump();
+        });
+      }
+      return pump();
+    });
+  }
+
+  function runPlain(body) {
+    return fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+      .then(function (x) {
+        if (!x.ok) { lastErr = { status: x.status, detail: typeof x.j.detail === "string" ? x.j.detail : "" }; renderError(); return; }
+        last = x.j; show(x.j);
+      });
+  }
+
   function renderError() {
     if (!lastErr) { $("error").hidden = true; return; }
     var key = { 400: "err_400", 422: "err_422", 502: "err_502" }[lastErr.status] || "err_other";
@@ -285,6 +371,7 @@
     $("lang-en").setAttribute("aria-pressed", lang === "en");
     renderPresets();
     renderError();
+    renderTimeline();
     if (last) { show(last); }        // switching language re-renders the same answer; nothing is re-run
   }
   function setLang(l) { lang = l; apply(); }
@@ -304,14 +391,12 @@
   $("run").onclick = function () {
     var body = mode === "preset" ? { case_id: $("preset").value }
                                  : { uniprot_a: $("acc-a").value, uniprot_b: $("acc-b").value };
-    lastErr = null; renderError(); $("result").hidden = true; last = null; $("wait").hidden = false; $("run").disabled = true;
-    fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
-      .then(function (x) {
-        if (!x.ok) { lastErr = { status: x.status, detail: typeof x.j.detail === "string" ? x.j.detail : "" }; renderError(); return; }
-        last = x.j; show(x.j);
-      })
-      .catch(function () { lastErr = { status: 0, detail: "" }; renderError(); })
+    lastErr = null; renderError(); $("result").hidden = true; last = null; tl = []; renderTimeline();
+    $("wait").hidden = false; $("run").disabled = true;
+    var qs = mode === "preset" ? "case_id=" + encodeURIComponent(body.case_id)
+                               : "uniprot_a=" + encodeURIComponent(body.uniprot_a) + "&uniprot_b=" + encodeURIComponent(body.uniprot_b);
+    var go = (window.ReadableStream && window.TextDecoder) ? runStream(qs) : runPlain(body);   // old browsers: no live view
+    go.catch(function () { lastErr = { status: 0, detail: "" }; renderError(); })
       .then(function () { $("wait").hidden = true; $("run").disabled = false; });
   };
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .llm_client import make_client, MODEL
 from .cases import Case, default_case, find_case, reset_active_case, set_active_case
-from . import leakage
+from . import events, leakage
 from .tools import TOOLS, DISPATCH, tools_for
 from .skills import load_skill
 from .runlog import RunRecorder
@@ -99,6 +99,7 @@ def _loop(user_goal: str, model: str, max_steps: int, verbose: bool, case: Case)
             if verbose:
                 print(f"[step {step}] CALL {name}({json.dumps(args)[:160]})")
             rec.tool(name)
+            events.emit("tool_call", tool=name, args=args)
 
             if name == "submit_adjudication":
                 # MD data was retrieved but no residues were submitted: send it back (twice at most),
@@ -108,6 +109,7 @@ def _loop(user_goal: str, model: str, max_steps: int, verbose: bool, case: Case)
                     if empty_resubmits < MAX_EMPTY_RESUBMITS:
                         empty_resubmits += 1
                         entry["actions"].append({"tool": name, "args": args, "rejected": "empty consensus_interface"})
+                        events.emit("resubmit_requested", attempt=empty_resubmits)
                         messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps({
                             "error": "rejected: consensus_interface is empty although MD contact data was "
                                      "retrieved. Submit again with the residues you conclude form the "
@@ -131,6 +133,7 @@ def _loop(user_goal: str, model: str, max_steps: int, verbose: bool, case: Case)
             if case.benchmark:
                 out = leakage.guard(out, case)  # never show a held-out complex to the agent
             entry["actions"].append({"tool": name, "args": args, "result": out})
+            events.emit("tool_result", tool=name, args=args, result=out)
             messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(out)})
 
         transcript.append(entry)

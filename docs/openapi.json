@@ -347,6 +347,85 @@
         }
       }
     },
+    "/api/run/stream": {
+      "get": {
+        "tags": [
+          "web"
+        ],
+        "summary": "Run one query and stream its progress live (Server-Sent Events)",
+        "description": "Same run as `POST /api/run`, but each step is pushed as it happens: `start`, then for every tool `tool_call` (tool name, argument summary) and `tool_result` (with evidence rows labelled live / cited / pending), debate rounds (`debate_round`, `debate_round_done`), `flag_paraphrase`, `cost`, and finally `final`, whose `result` is exactly what `POST /api/run` returns. An `error` event ends a failed run. Each event has `seq` and a plain-language `text` in zh and en. Use with EventSource / an SSE client. Same request rules as `/api/run` (a preset `case_id` or two UniProt accessions; needs DEEPSEEK_API_KEY).",
+        "operationId": "run_query_stream",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "uniprot_a",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Uniprot A"
+            }
+          },
+          {
+            "name": "uniprot_b",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Uniprot B"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A stream of events",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/event-stream": {
+                "example": "event: start\ndata: {\"seq\": 0, \"type\": \"start\", \"case\": {...}, \"text\": {\"zh\": \"...\", \"en\": \"...\"}}\n\nevent: tool_call\ndata: {\"seq\": 1, \"type\": \"tool_call\", \"tool\": \"<tool name>\", \"args_summary\": \"<...>\", ...}\n\nevent: final\ndata: {\"seq\": <n>, \"type\": \"final\", \"result\": {<same as POST /api/run>}}\n\n"
+              }
+            }
+          },
+          "400": {
+            "description": "DEEPSEEK_API_KEY is not set."
+          },
+          "422": {
+            "description": "Neither a valid case_id nor two valid UniProt accessions."
+          }
+        }
+      }
+    },
     "/api/run": {
       "post": {
         "tags": [

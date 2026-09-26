@@ -99,18 +99,25 @@ def _extract_json(text):
 
 
 def run():
+    from . import events
     client = make_client()
     facts = evidence_bundle()
     rec = RunRecorder("debate", MODEL, DEBATE_GOAL)
 
     print("Round 1: MD advocate ...")
+    events.emit("debate_round", round=1, role="md_advocate")
     arg_md = _ask(client, ADVOCATE_MD, facts, rec=rec)
+    events.emit("debate_round_done", round=1, role="md_advocate", excerpt=(arg_md or "")[:400])
     print("Round 1: NMR advocate ...")
+    events.emit("debate_round", round=1, role="nmr_advocate")
     arg_nmr = _ask(client, ADVOCATE_NMR, facts, rec=rec)
+    events.emit("debate_round_done", round=1, role="nmr_advocate", excerpt=(arg_nmr or "")[:400])
     print("Round 2: judge ...")
+    events.emit("debate_round", round=2, role="judge")
     verdict = _extract_json(_ask(
         client, JUDGE, facts,
         extra=f"\nMD ADVOCATE said:\n{arg_md}\n\nNMR ADVOCATE said:\n{arg_nmr}", rec=rec))
+    events.emit("debate_round_done", round=2, role="judge", excerpt=str(verdict.get("reasoning") or "")[:400])
     rec.finish(verdict)
 
     report = f"""# Multi-Agent Debate — FAT10–MAD2 Interface

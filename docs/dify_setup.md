@@ -51,6 +51,7 @@ python scripts/export_openapi.py --check    # 检查是否过期
 | `service_info` | 服务说明和接口列表 | 否 | 快 |
 | `list_cases` | 网页用的预设案例列表 | 否 | 快 |
 | `run_query` | 网页用的一次完整查询:通俗结论 + 带"实时 / 引用 / 待定"标签的证据 + 本次耗时和费用(参数:`case_id`,或两个 UniProt 号) | 是 | 慢 |
+| `run_query_stream` | 与 `run_query` 相同的查询,但用 Server-Sent Events 实时推送每一步(给网页用)。**不要**把它当 Dify 工具用,Dify 的自定义工具读不了事件流,请用 `run_query` 或 MCP | 是 | 慢 |
 | `run_adjudication` | 让调查 agent 自己查证并给出结论 | 是 | 慢 |
 | `run_debate` | MD 辩方 / NMR 辩方 / 法官辩论 | 是 | 慢 |
 

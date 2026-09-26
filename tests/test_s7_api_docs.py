@@ -29,13 +29,15 @@ def test_exported_openapi_matches_the_app_schema():
 def test_every_endpoint_has_summary_description_and_operation_id():
     assert {(p, m) for p, m, _ in OPS} == {("/info", "get"), ("/health", "get"), ("/evidence", "get"),
                                           ("/adjudicate", "post"), ("/debate", "post"),
-                                          ("/api/cases", "get"), ("/api/run", "post")}
+                                          ("/api/cases", "get"), ("/api/run", "post"),
+                                              ("/api/run/stream", "get")}
     ids = [op["operationId"] for _, _, op in OPS]
     assert len(set(ids)) == len(ids)
     for path, method, op in OPS:
         assert op.get("summary") and op.get("description"), (path, method)
-        assert "application/json" in op["responses"]["200"]["content"], path
-        assert "example" in op["responses"]["200"]["content"]["application/json"], path
+        media = "text/event-stream" if path == "/api/run/stream" else "application/json"   # SSE endpoint (M2)
+        assert media in op["responses"]["200"]["content"], path
+        assert "example" in op["responses"]["200"]["content"][media], path
 
 
 def test_request_fields_have_examples_and_descriptions():

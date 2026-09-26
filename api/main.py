@@ -16,9 +16,10 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from api import streaming
 from agent.tools import get_md_interface_scores, get_expected_interface_region
 from analysis.adjudicate_md import adjudicate as md_adjudicate
 from api import webview
@@ -242,6 +243,32 @@ class RunRequest(BaseModel):
          responses={200: {"content": {"application/json": {"example": webview.preset_cases()}}}})
 def list_cases() -> list:
     return webview.preset_cases()
+
+
+@app.get("/api/run/stream", tags=["web"], operation_id="run_query_stream",
+         summary="Run one query and stream its progress live (Server-Sent Events)",
+         description="Same run as `POST /api/run`, but each step is pushed as it happens: `start`, then for "
+                     "every tool `tool_call` (tool name, argument summary) and `tool_result` (with evidence rows "
+                     "labelled live / cited / pending), debate rounds (`debate_round`, `debate_round_done`), "
+                     "`flag_paraphrase`, `cost`, and finally `final`, whose `result` is exactly what "
+                     "`POST /api/run` returns. An `error` event ends a failed run. Each event has `seq` and a "
+                     "plain-language `text` in zh and en. Use with EventSource / an SSE client. Same request "
+                     "rules as `/api/run` (a preset `case_id` or two UniProt accessions; needs DEEPSEEK_API_KEY).",
+         responses={200: {"description": "A stream of events", "content": {"text/event-stream": {"example": (
+             'event: start\ndata: {"seq": 0, "type": "start", "case": {...}, "text": {"zh": "...", "en": "..."}}\n\n'
+             'event: tool_call\ndata: {"seq": 1, "type": "tool_call", "tool": "<tool name>", "args_summary": "<...>", ...}\n\n'
+             'event: final\ndata: {"seq": <n>, "type": "final", "result": {<same as POST /api/run>}}\n\n')}}},
+                    400: {"description": "DEEPSEEK_API_KEY is not set."},
+                    422: {"description": "Neither a valid case_id nor two valid UniProt accessions."}})
+def run_query_stream(case_id: str | None = None, uniprot_a: str | None = None, uniprot_b: str | None = None):
+    try:
+        case = webview.resolve_case(case_id, uniprot_a, uniprot_b)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    _require_llm()
+    return StreamingResponse((streaming.sse(ev) for ev in streaming.stream_query(case)),
+                             media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.post("/api/run", tags=["web"], operation_id="run_query",

@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import re
 
-from agent import runlog
+from agent import events, runlog
 from agent.cases import Case, custom_case, default_case, find_case, load_benchmark
 from agent.structures import NTERM_UBL_RANGE
 from analysis.adjudicate_md import INTERFACE_CUTOFF
@@ -395,7 +395,11 @@ def run_query(case: Case, max_steps: int = 12) -> dict:
     result, transcript = run(case.goal, max_steps=max_steps, verbose=False, case=case)
     agent_rec = runlog.LAST_RECORD.get() or {}          # read before the paraphrase call overwrites it
     raws = [str(f) for f in ((result or {}).get("flags") or [])]
+    if raws:
+        events.emit("flag_paraphrase", phase="start", n=len(raws))
     paras, para_rec = paraphrase_flags(raws, case.id)
+    if raws:
+        events.emit("flag_paraphrase", phase="done", n=len(raws))
     return {
         "case": {"id": case.id, "name": f"{case.name_a} – {case.name_b}",
                  "uniprot_a": case.uniprot_a, "uniprot_b": case.uniprot_b},

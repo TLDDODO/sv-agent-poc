@@ -1,0 +1,5 @@
+# Windows batch files must checkout with real CRLF on every platform (including Linux CI):
+# cmd.exe expects it, and tests/test_demo_scripts.py checks it. Without this, git's default
+# per-platform autocrlf behaviour gives CRLF on a Windows checkout but LF on a Linux one, so
+# what CI tests is not what this repo actually ships.
+*.bat text eol=crlf

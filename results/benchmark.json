@@ -1846,14 +1846,14 @@
   "workload": {
     "status": "ok",
     "source": "results/runs.jsonl",
-    "log_lines": 77,
+    "log_lines": 83,
     "log_composition": {
       "benchmark_case_lines": 60,
-      "non_benchmark_lines": 17,
+      "non_benchmark_lines": 23,
       "non_benchmark_by_kind": {
-        "agent": 6,
-        "debate": 6,
-        "flag_paraphrase": 5
+        "agent": 8,
+        "debate": 8,
+        "flag_paraphrase": 7
       }
     },
     "excluded_lines_without_activity": 30,
@@ -1897,30 +1897,30 @@
         "mean_calls_by_database": {}
       },
       "other_agent": {
-        "queries": 6,
-        "mean_tool_calls": 8.166666666666666,
-        "mean_databases": 2.6666666666666665,
+        "queries": 8,
+        "mean_tool_calls": 8.25,
+        "mean_databases": 2.75,
         "databases_used": [
           "PDBe",
           "PubMed",
           "UniProt"
         ],
-        "mean_data_api_calls": 3.1666666666666665,
+        "mean_data_api_calls": 3.375,
         "mean_failed_data_api_calls": 0.0,
-        "mean_llm_calls": 4.0,
-        "mean_records_processed": 39.0,
+        "mean_llm_calls": 4.125,
+        "mean_records_processed": 39.25,
         "median_wall_clock_s": 24.289,
-        "mean_cost_usd": 0.00184828,
-        "mean_prompt_tokens": 14883.5,
-        "mean_completion_tokens": 1454.3333333333333,
+        "mean_cost_usd": 0.0018141060000000002,
+        "mean_prompt_tokens": 15711.0,
+        "mean_completion_tokens": 1496.5,
         "mean_calls_by_database": {
           "PDBe": 1.0,
-          "PubMed": 1.1666666666666667,
+          "PubMed": 1.375,
           "UniProt": 1.0
         }
       },
       "other_debate": {
-        "queries": 6,
+        "queries": 8,
         "mean_tool_calls": 0.0,
         "mean_databases": 0.0,
         "databases_used": [],
@@ -1929,9 +1929,9 @@
         "mean_llm_calls": 3.0,
         "mean_records_processed": 0.0,
         "median_wall_clock_s": 8.504999999999999,
-        "mean_cost_usd": 0.0009750253333333335,
-        "mean_prompt_tokens": 3217.3333333333335,
-        "mean_completion_tokens": 1239.0,
+        "mean_cost_usd": 0.0009204230000000001,
+        "mean_prompt_tokens": 3200.75,
+        "mean_completion_tokens": 1219.25,
         "mean_calls_by_database": {}
       }
     },

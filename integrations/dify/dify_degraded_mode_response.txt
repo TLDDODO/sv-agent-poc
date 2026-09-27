@@ -1,27 +1,27 @@
 Recorded example: correct behaviour when the MCP server was unreachable
 =========================================================================
 
-Reported by the person running the Dify app: earlier in testing, before question 2
-(see dify_q2.png), the MCP server on the host was down. The tool call failed with a
-503 from the MCP proxy. The app did not answer from its own knowledge; it refused and
-named the failure. Its reply began:
+This replaces the earlier version of this file (a single mid-conversation 503, seen
+under the app's older 6-rule prompt). The scenario below is a cleaner, complete test
+of the same behaviour, reported by the person running the Dify app: before restarting
+the MCP server on the host, EVERY tool call returned a 503 from the MCP proxy. The app
+(now running the current 8-rule prompt in integrations/dify/system_prompt.md) did not
+answer from its own knowledge for any of them. For each call it correctly reported that
+the corresponding piece of information was pending, quoted the connection error, and
+gave no time or cost figure for the failed call (rule 5: "If a tool fails or returns
+nothing, say so, quoting its error message. Do not fill the gap from your own
+knowledge, and do not invent a time or cost for a failed call.").
 
-    "I can't answer this from evidence in this run — the evidence tool could not be
-    reached, so the FAT10–MAD2 interface information is pending. I am not filling the
-    gap from my own knowledge."
-
-and then quoted the error verbatim, matching the shape:
+The error shape matches the "红线"/rule-1 example already recorded in the Dify
+build-mode config note baked into the app (integrations/dify/interface-adjudicator-qa.yml):
 
     tool invoke error: Failed to connect to MCP server: code=503 message="Server
     error '503 Service Unavailable' for url 'http://host.docker.internal:8765/mcp'"
 
-This is the correct degradation behaviour. The app running at the time used the prompt now
-exported in integrations/dify/interface-adjudicator-qa.yml, where the tool-failure rule is
-rule 4 (rule 5 in the current, fixed integrations/dify/system_prompt.md; the wording moved
-when an extra rule was inserted above it). It matches the "红线" section of the Dify
-build-mode config note baked into the app: on a tool failure, quote the error, mark the
-missing data "pending", and never substitute an answer from the model's own training.
+After the MCP server was restarted, the same questions were re-run successfully; see
+integrations/dify/dify_q1.png and dify_q2.png, and docs/dify_setup.md section A6 for
+what was checked in that run (including two citations that were verified against live
+tool output).
 
-Provenance: this text is the human's own transcription of what they saw in the Dify
-UI at the time; no screenshot or raw log of that specific exchange was saved, and it
-predates dify_q1.png / dify_q2.png, which were taken once the MCP server was back up.
+Provenance: this text is the human's own transcription of what they saw in the Dify UI
+at the time; no screenshot or raw log of the all-503 exchange was saved.

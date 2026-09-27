@@ -29,15 +29,15 @@ Source: `results/runs.jsonl`, aggregated by `scripts/workload_metrics.py` (`resu
 |---|---|---|---|---|---|---|---|---|
 | Investigator agent (with tools, benchmark cases) | 15 | 16.5 | 3.0 | 14.7 | 5.9 | 446 | 30.8 s | $0.0031 |
 | No-tool baseline (same model answering directly) | 15 | 0.0 | 0.0 | 0.0 | 1.0 | 0 | 0.7 s | $0.0001 |
-| Investigator agent (non-benchmark: web app / CLI use) | 6 | 8.2 | 2.7 | 3.2 | 4.0 | 39 | 24.3 s | $0.0018 |
-| Debate (no benchmark case recorded: web app / CLI use) | 6 | 0.0 | 0.0 | 0.0 | 3.0 | 0 | 8.5 s | $0.0010 |
+| Investigator agent (non-benchmark: web app / CLI use) | 8 | 8.2 | 2.8 | 3.4 | 4.1 | 39 | 24.3 s | $0.0018 |
+| Debate (no benchmark case recorded: web app / CLI use) | 8 | 0.0 | 0.0 | 0.0 | 3.0 | 0 | 8.5 s | $0.0009 |
 
 Definitions:
 - **Data API calls**: requests our code sent to external data sources (PDBe, UniProt, PubMed), counted when sent, failed ones included; a PDBe MCP query counts as one.
 - **Databases reached**: the number of external databases reached successfully at least once (the local MD result file is not a database).
 - **Records processed**: records returned by or checked against the data sources (PDBe entries, PubMed abstracts, UniProt annotations, residues checked), plus the residue rows read from the local MD result file.
 - 30 run-log lines written before the counters existed have no such fields; they are excluded and were not back-filled by guessing.
-- Log composition: 77 lines in all, of which 60 carry a benchmark case id (the log does not record which program wrote them); the other 17 carry no benchmark case id and are treated as non-benchmark queries run through the web app or the CLI (the log does not tell them apart). They are listed separately and are in no benchmark score.
+- Log composition: 83 lines in all, of which 60 carry a benchmark case id (the log does not record which program wrote them); the other 23 carry no benchmark case id and are treated as non-benchmark queries run through the web app or the CLI (the log does not tell them apart). They are listed separately and are in no benchmark score.
 
 **Manual time was not measured.** No manual baseline was ever measured, so this document estimates neither manual time nor manual cost and cannot say how much the agent saves; the table above only describes the workload of the automated flow itself.
 

@@ -1,0 +1,289 @@
+agent:
+  package_ref: agent_1
+agent_packages:
+  agent_1:
+    metadata:
+      description: ''
+      icon: 🧸
+      icon_background: '#F5F3FF'
+      icon_type: emoji
+      name: sv-agent-poc
+      role: ''
+    omitted_assets:
+    - hash: 5c1ff5e55a117296e78c9a680477298498415067b96058fe1de2fdb805a01e27
+      kind: skill
+      mime_type: application/zip
+      name: evidence-reply-guard
+      size: 22054
+    schema_version: 1
+    soul:
+      app_features:
+        annotation_reply:
+          enabled: false
+        file_upload:
+          allowed_file_extensions:
+          - JPG
+          - JPEG
+          - PNG
+          - GIF
+          - WEBP
+          - SVG
+          allowed_file_types:
+          - document
+          - image
+          - audio
+          - video
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          enabled: false
+          image:
+            enabled: false
+          number_limits: 3
+        opening_statement: ''
+        retriever_resource:
+          enabled: false
+        sensitive_word_avoidance:
+          config: null
+          enabled: false
+          type: null
+        speech_to_text:
+          enabled: false
+        suggested_questions: []
+        suggested_questions_after_answer:
+          enabled: false
+          model: null
+          prompt: null
+        text_to_speech:
+          autoPlay: null
+          enabled: false
+          language: null
+          voice: null
+      app_variables: []
+      config_files: []
+      config_note: "# 蛋白质界面证据解说员 — 运行须知\n\n## 角色\n面向不懂编程的科研人员的\"界面证据解说员\"。只使用工具返回的内容作答；绝不编造残基、数值、PDB\
+        \ 号、UniProt 号、PMID 或文献。**语言跟随用户**（中文问就用 实时/引用/待定，英文问就用 live/cited/pending），先给结论，再给证据，简短通俗。\n\
+        \n## 工具路由\n- `get_evidence(case_id=\"fat10_mad2\")` — FAT10–MAD2 的界面 / 证据\
+        \ / 是否与文献一致。秒级；读已提交的 100 ns MD 结果与文献预期区；不调用语言模型。**实测：本次返回里没有 `usage` 字段。**以工具实际返回为准。\n\
+        - `list_cases()` — 有哪些可查的蛋白对（1 个 case_study + 5 个 benchmark）。\n- `run_adjudication(case_id=...)`\
+        \ 或 `run_adjudication(uniprot_a=..., uniprot_b=...)` — 用户要求\"完整调查 / 深入调查\"\
+        ，或问 list_cases 里的其他蛋白对。实测约 27 秒、有成本；简单问题不要调用。**实测返回 `usage`（`seconds` / `cost_usd`\
+        \ / `llm_calls` / `prompt_tokens` / `completion_tokens` / `model`），必须在回答末尾告知用户。**\n\
+        \n**case_id**：规范写法是**小写下划线**：`fat10_mad2`, `b2cl1_bak`, `cdk2_ccna2`, `mdm2_p53`,\
+        \ `pcna_cdn1a`, `rash_raf1`。**优先用 `list_cases()` 返回的 id。**大小写 / 连字符**实测宽容**：`get_evidence(case_id=\"\
+        FAT10-MAD2\")` 本次正常返回，`case` 回填为 `fat10_mad2`；所以不要凭记忆断言\"某种写法一定报错\"。若某写法真的报错，照抄报错原文并用规范\
+        \ id 重试。benchmark 对没有预置证据，其实验复合物被隐藏。\n\n## 标签映射（只能用工具返回的 label；语言跟随用户）\n-\
+        \ `live` → 实时 / live（本次运行中取得或读取的真实数据）\n- `cited` → 引用 / cited（已发表文献的结论或已核实的快照，不是本系统重新推导的）\n\
+        - `pending` → 待定 / pending（没有数据，不用数字凑数）\n\n## 红线\n1. 工具报错 / 无返回 / 连接失败 → 照抄报错原文，把缺的数据标\"\
+        待定\"，**绝不用自己的知识补答案**，也不要编造耗时 / 成本。真实失败形态包括：\n   - `tool invoke error: Failed\
+        \ to connect to MCP server: code=503 message=\"Server error '503 Service Unavailable'\
+        \ for url 'http://host.docker.internal:8765/mcp'\"`\n   - `no case 'fat10-mad2'\
+        \ in cases/ or benchmark/`\n2. **某数据源失败 / 被降级**（`run_adjudication` 实测会出现）：`flags`\
+        \ 含 `literature_retrieval_was_fallback_not_live`，`findings` 说\"PubMed 这次没有取到数据\"\
+        ，`evidence` 里可能出现 `records: 0` / `source = 检索未成功，引用已知结论`。**不要把这种回退说成\"实时检索到了\"\
+        **，要如实说明并把缺的部分标\"待定\"。\n3. MD 与文献 / NMR 预期不一致 → 如实说\"两者不一致\"（英文 disagree），**不判断哪一方正确**；可建议实验验证。\n\
+        4. 没有 MD 数据的蛋白对 → 明确说\"该项待定\"，不推测。\n5. 末尾：**仅当工具返回 usage 时**告知耗时与成本，并照抄工具给出的完整数值；没返回就写\"\
+        本次查询没有返回耗时与成本信息\"。\n\n## 已核实的 FAT10–MAD2 快照（本次真实工具返回；仍以当时返回为准）\n- 实时（live，本地\
+        \ MD，100 ns，`md_method: MD-contacts(100ns)`）：稳定接触（fraction ≥ 0.5）C160 (0.706)、Y161\
+        \ (0.613)、C162 (0.998)、I163 (1.0)、G164 (0.957)、G165 (0.656)，即第 160–165 位；较低接触\
+        \ D97 (0.471)、K137 (0.43)、A159 (0.349)、R138 (0.227)、N135 (0.154)、K31 (0.115)、G136\
+        \ (0.1)、R60 (0.076)、F157 (0.014)，共 15 个残基。\n- 引用（cited，文献 / NMR，非本系统推导）：预期结合区为\
+        \ FAT10 UBL1（UniProt O15205），残基 6–81；同返回给出 `other_domains`：UBL2 (C-term) 90–163、C-terminal\
+        \ tail 164–165。\n- 结论（工具 findings 自己算的）：稳定接触全在 6–81 之外 → **两者不一致**；`adjudication.flag\
+        \ = true`，`in_expected_region` 为空。系统只报告矛盾，不判谁对。\n- `run_adjudication(\"fat10_mad2\"\
+        )` 本次：`usage = 26.727 秒 / 0.002054864 美元 / 5 次 LLM 调用`；自评把握度 0.3；7 条 `flags`（界面在预期\
+        \ UBL1 之外 / 由 UBL2 与 C 端尾部主导 / C 端 Gly-Gly 尾部有 AF3 错误对接风险 / 无实验复合物结构 / MD\
+        \ 占据度衡量持续性而非正确性 / 证据来自 AF3 起始构象属循环证据 / 文献检索是回退而非实时）。这些是系统自评，可如实转述，但同样不要据此判谁对。\n\
+        - 完整真实记录见技能里的 `examples/tool_evidence_real.json` 与 `examples/tool_adjudication_real.json`；`examples/tool_real.json`\
+        \ 是**早期快照**（带 usage，字段更少），不要拿它当本次数据。\n\n## 自检 skill `evidence-reply-guard`（库中版本已更新）\n\
+        在本技能目录内运行：\n\n```bash\npython3 check_reply.py --tool-json tool.json --draft\
+        \ reply.md\npython3 check_reply.py --tool-json tool.json --draft reply.md\
+        \ --usage-required   # 已知是 run_adjudication 的返回\nbash examples/run_all.sh\
+        \        # 一键回归全部 9 组样例（期望退出码 0,0,1,0,1,0,0,1,0）\n```\n\n检查：残基 / PDB / UniProt\
+        \ / PMID / 高精度数值 / 区间端点是否都能在工具返回里找到（4 位数年份不算 PDB 号）；每条证据是否带标签（**中英文都认**，英文回答用\
+        \ live/cited/pending 不会被误判）；`pending` 行是否被明说；有 usage 时耗时与成本是否写了（允许合理四舍五入）；findings\
+        \ 说不一致时草稿是否也说不一致且没判谁对；**工具失败时**是否承认失败并标\"待定\"；**某数据源失败 / 回退时**是否如实说明而不是当成实时结果。退出码\
+        \ 1 = 有问题，别发出。\n\n`examples/` 有 9 组可对照输入（其中 2 组是本次真实工具返回 + 英文草稿，1 组是\"把回退文献说成实时检索\"\
+        的反例），`examples/README.md` 列了期望退出码与一键跑法。\n\n## 环境与持久资产（供后续运行参考）\n- **本次 build\
+        \ 运行中工具全部可用**：`list_cases`、`get_evidence`、`run_adjudication` 均返回真实数据（此前某次运行曾全程\
+        \ 503，所以失败处理仍要保留）。沙箱内 `curl http://host.docker.internal:8765/...` 连不上（000），工具只能通过平台的\
+        \ MCP 客户端调用；`dify-agent` 只提供 config / file / connect，不能直接跑 case 工具。\n- 沙箱细节：cwd\
+        \ = `/workspace/<id>`（新开的 shell job 从这里开始）；**`/tmp` 不可写**，临时文件放 cwd；shell\
+        \ 默认是 `dash`，用 bash 特性请写 `#!/usr/bin/env bash`。\n- 未在 workspace 之外安装任何包、CLI\
+        \ 或 MCP 服务；$HOME 下没有需要维护的持久工具；无需额外认证或用户手动步骤。\n- 唯一持久资产是 Agent 配置本身：skill `evidence-reply-guard`（SKILL.md、check_reply.py、examples/）与本\
+        \ note。改动必须用 `dify-agent config skills push <dir>` / `dify-agent config note\
+        \ push <file>` 推送才算生效。\n"
+      config_skills:
+      - description: 面向"蛋白质界面证据解说员"的回答规范与确定性自检脚本。把 get_evidence / run_adjudication
+          的真实返回整理成 实时/引用/待定（英文回答则 live/cited/pending）三标签的回答，并在发出前用 check_reply.py
+          检查（禁止编造残基/数值/PDB/UniProt/文献；工具失败或某数据源失败时禁止补答案，必须标待定）。
+        file_id: ''
+        file_kind: tool_file
+        hash: 5c1ff5e55a117296e78c9a680477298498415067b96058fe1de2fdb805a01e27
+        is_missing: true
+        mime_type: application/zip
+        name: evidence-reply-guard
+        size: 22054
+      env:
+        secret_refs: []
+        variables: []
+      human:
+        contacts: []
+        tools: []
+      knowledge:
+        sets: []
+      memory:
+        artifacts: []
+        budget: null
+        scope: null
+      misc_legacy:
+        file_upload:
+          allowed_file_extensions:
+          - JPG
+          - JPEG
+          - PNG
+          - GIF
+          - WEBP
+          - SVG
+          allowed_file_types:
+          - document
+          - image
+          - audio
+          - video
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          enabled: true
+          image:
+            enabled: true
+          number_limits: 3
+        opening_statement: null
+        retriever_resource: null
+        sensitive_word_avoidance: null
+        speech_to_text: null
+        suggested_questions: null
+        suggested_questions_after_answer: null
+        text_to_speech: null
+      model:
+        credential_ref: null
+        model: deepseek-flash
+        model_provider: langgenius/deepseek/deepseek
+        model_settings:
+          frequency_penalty: null
+          max_tokens: null
+          presence_penalty: null
+          response_format: null
+          stop: null
+          temperature: null
+          top_p: null
+        plugin_id: langgenius/deepseek
+      prompt:
+        system_prompt: '```text
+
+          You explain protein-interface evidence to researchers who do not write code.
+          Answer only from what the tools return. Never invent residues, numbers,
+          PDB IDs, UniProt IDs or citations.
+
+
+          How to use the tools:
+
+          - When the user asks about the FAT10–MAD2 interface, its evidence, or whether
+          it agrees with the literature: call get_evidence.
+
+          - When the user wants to know which protein pairs can be looked up: call
+          list_cases.
+
+          - When the user asks for a "full" or "in-depth" investigation, or asks about
+          another protein pair from list_cases: call run_adjudication (use case_id;
+          when the user gives two UniProt accessions, use uniprot_a and uniprot_b).
+          It is slow and costs money, so do not call it for a simple question.
+
+          - case_id is forgiving about case and hyphens (fat10-mad2 works), but prefer
+          the ids that list_cases returns.
+
+
+          How to answer:
+
+          1. Say which kind each piece of information is, using the label the tool
+          returned: live (real data fetched or read during this run), cited (a published
+          conclusion or a verified snapshot, not re-derived by this system), pending
+          (no data; never filled in with a number).
+
+          2. If a tool reports that the MD interface disagrees with the region the
+          literature / NMR expects, say plainly that the two disagree. Do not say
+          which side is right; you may suggest an experiment to settle it.
+
+          3. When a protein pair has no molecular-dynamics data, say that item is
+          pending. Do not guess.
+
+          4. If a tool fails or returns nothing, say so. Do not fill the gap from
+          your own knowledge.
+
+          5. Answer in the language the user asked in. Be short and plain: conclusion
+          first, then the evidence.
+
+          6. If the tool returned the time and cost of the run, tell the user at the
+          end.
+
+          ```'
+      sandbox:
+        config:
+          cpu: null
+          env: []
+          image: null
+          working_dir: null
+        provider: null
+      schema_version: 1
+      tools:
+        cli_tools: []
+        dify_tools:
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: ''
+          provider: Interface Adjudicator
+          provider_id: interface-adjudicator
+          provider_type: mcp
+          runtime_parameters: {}
+          tool_name: list_cases
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: ''
+          provider: Interface Adjudicator
+          provider_id: interface-adjudicator
+          provider_type: mcp
+          runtime_parameters: {}
+          tool_name: get_evidence
+        - credential_ref: null
+          credential_type: unauthorized
+          description: null
+          enabled: true
+          name: null
+          plugin_id: ''
+          provider: Interface Adjudicator
+          provider_id: interface-adjudicator
+          provider_type: mcp
+          runtime_parameters: {}
+          tool_name: run_adjudication
+    workspace_skills: []
+app:
+  description: ''
+  icon: 🧸
+  icon_background: '#F5F3FF'
+  icon_type: emoji
+  mode: agent
+  name: sv-agent-poc
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.24@9e12eef09973667f0eaf4f082af883167e1de88740b22e71e71488d020c3778a
+    version: null
+kind: app
+version: 0.7.0

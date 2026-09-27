@@ -46,9 +46,9 @@ Measured from the run log (results/runs.jsonl), not estimated. Data API calls ar
 |---|---|---|---|---|---|---|---|
 | agent (benchmark pairs): 15 | 16.5 | 3.0 | 14.7 | 5.9 | 446 | 30.8 | $0.0031 |
 | no-tool baseline: 15 | 0.0 | 0.0 | 0.0 | 1.0 | 0 | 0.7 | $0.0001 |
-| agent (non-benchmark: web app / CLI use): 4 | 8.2 | 3.0 | 3.8 | 4.0 | 40 | 24.3 | $0.0019 |
-| debate (no benchmark case recorded: web app / CLI use): 4 | 0.0 | 0.0 | 0.0 | 3.0 | 0 | 7.9 | $0.0010 |
+| agent (non-benchmark: web app / CLI use): 6 | 8.2 | 2.7 | 3.2 | 4.0 | 39 | 24.3 | $0.0018 |
+| debate (no benchmark case recorded: web app / CLI use): 6 | 0.0 | 0.0 | 0.0 | 3.0 | 0 | 8.5 | $0.0010 |
 
 Means per query. Databases reached: agent (benchmark pairs): PDBe, PubMed, UniProt; no-tool baseline: none; agent (non-benchmark: web app / CLI use): PDBe, PubMed, UniProt; debate (no benchmark case recorded: web app / CLI use): none.
 
-Log composition: 60 of 71 lines carry a benchmark case id (the log does not record which program wrote them). The other 11 (4 agent, 4 debate, 3 flag_paraphrase) carry no benchmark case id, so they are treated as queries run through the web app or the CLI; they are reported separately and are not part of any benchmark score.
+Log composition: 60 of 77 lines carry a benchmark case id (the log does not record which program wrote them). The other 17 (6 agent, 6 debate, 5 flag_paraphrase) carry no benchmark case id, so they are treated as queries run through the web app or the CLI; they are reported separately and are not part of any benchmark score.

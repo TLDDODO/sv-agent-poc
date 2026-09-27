@@ -1,0 +1,27 @@
+Recorded example: correct behaviour when the MCP server was unreachable
+=========================================================================
+
+Reported by the person running the Dify app: earlier in testing, before question 2
+(see dify_q2.png), the MCP server on the host was down. The tool call failed with a
+503 from the MCP proxy. The app did not answer from its own knowledge; it refused and
+named the failure. Its reply began:
+
+    "I can't answer this from evidence in this run — the evidence tool could not be
+    reached, so the FAT10–MAD2 interface information is pending. I am not filling the
+    gap from my own knowledge."
+
+and then quoted the error verbatim, matching the shape:
+
+    tool invoke error: Failed to connect to MCP server: code=503 message="Server
+    error '503 Service Unavailable' for url 'http://host.docker.internal:8765/mcp'"
+
+This is the correct degradation behaviour. The app running at the time used the prompt now
+exported in integrations/dify/interface-adjudicator-qa.yml, where the tool-failure rule is
+rule 4 (rule 5 in the current, fixed integrations/dify/system_prompt.md; the wording moved
+when an extra rule was inserted above it). It matches the "红线" section of the Dify
+build-mode config note baked into the app: on a tool failure, quote the error, mark the
+missing data "pending", and never substitute an answer from the model's own training.
+
+Provenance: this text is the human's own transcription of what they saw in the Dify
+UI at the time; no screenshot or raw log of that specific exchange was saved, and it
+predates dify_q1.png / dify_q2.png, which were taken once the MCP server was back up.

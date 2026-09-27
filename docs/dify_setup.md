@@ -9,7 +9,7 @@ There are two ways to connect:
 - **Way A (recommended): self-hosted Dify + the MCP server** (part A). Dify sees three tools directly through MCP: `list_cases`, `get_evidence`, `run_adjudication`.
 - **Way B: an OpenAPI custom tool** (part B, the earlier way; suitable for Dify's cloud version).
 
-> Status: steps A1–A2 (and A1b) were run on this machine and their results are written into each step. The MCP connection in the Dify UI (A5) was confirmed by the person who ran it. Steps A3, A4, A6 and A7 are browser steps done by a person; this document describes them, but the exported app file and the screenshots are **not in the repository yet**, so what the exported file contains has not been checked (see A7).
+> Status: steps A1–A2 (and A1b) were run on this machine and their results are written into each step. A3–A7 are browser steps a person did; the exported app (`integrations/dify/interface-adjudicator-qa.yml`) and two screenshots (`dify_q1.png`, `dify_q2.png`) are now in the repository and were checked (A6, A7). Question 3 of A6 was not run. Three issues found in testing were fixed in this repository's code and prompt (A6); `check_reply.py`, part of a Dify build-mode skill, could not be reached from here to extend as originally asked (A7 explains why).
 
 ---
 
@@ -107,11 +107,21 @@ Test questions:
 
 The prompt lets the app answer in the language the user asked in.
 
+**Actually tested** (screenshots `integrations/dify/dify_q1.png`, `dify_q2.png`; question 3 was not run):
+
+- **Q1 — pass.** Reported the MD-vs-UBL1-6–81 contradiction, named no winner, every evidence item labelled.
+- **Q2 — pass, with three issues found and fixed since** (all in this repository, not in the Dify app itself):
+  1. The reply said "pending — none this run" while separately saying PubMed used a fallback, without tying the two together. `findings()` (`api/webview.py`) now always states explicitly, for every FAT10–MAD2 run: (a) that AlphaFold-Multimer, HADDOCK and PISA have no real data and are pending — this is a fact about the code, not about what the agent happened to call, so it is now added even when the agent never calls `list_interface_tools`; (b) when `search_literature` used its cited fallback instead of a live search, a dedicated finding says so explicitly, separately from "no data at all". `integrations/dify/system_prompt.md` was updated (rule 2) to require the answer to cover every pending/degraded item `findings` lists.
+  2. The reply cited "Theng et al. 2014 PNAS". **Checked**: this citation is real tool output, not invented — it is the `source` field of `get_expected_interface_region` and the `fallback` field of `search_literature` (`agent/tools.py`), both committed and both were called in this run. So this instance was not a fabrication. The prompt was still tightened (rule 6): every citation must be copied from a tool field, never supplied from the model's own training even when it happens to be correct. `check_reply.py` is part of the `evidence-reply-guard` Dify build-mode skill, which this repository and this session **cannot reach or edit**: the exported DSL only references it by hash (`omitted_assets`, `is_missing: true`; see A7) and Dify's own note says changes to it need `dify-agent config skills push`, a command that runs inside Dify's own sandbox. Extending it is therefore not done here; it would need to be done from inside that environment.
+  3. Cost was printed with a long run of trailing floating-point digits (Python float addition artefacts). `api/webview.py` now rounds the `cost_usd` shown in `run_adjudication`'s `usage` (and so in the MCP tool output and the SSE `cost` event) to 4 significant figures with a new `round_sig()` helper; the value stored in `results/runs.jsonl` is unrounded, unchanged.
+- **Q3 — skipped**, not run.
+- **A degradation check, outside the three questions**: earlier, with the MCP server down, the app correctly refused to answer from memory and quoted the 503 error. Recorded verbatim in `integrations/dify/dify_degraded_mode_response.txt` as an example of the correct behaviour (no screenshot; the human's own transcription).
+
 ### A7. Export the app configuration (DSL) [You act in the browser]
 
 App page, top-right menu → **Export DSL** (**do not** tick "include secrets"). Save the downloaded `.yml` as `integrations/dify/interface-adjudicator-qa.yml`. Before committing, check that the file contains no API key.
 
-Dify's build mode may also create extra items for the app (a configuration note and skills). Whether such items are part of the exported DSL has to be read from the exported file itself; this document does not claim either way until the file is in the repository.
+**Done and checked** (`integrations/dify/interface-adjudicator-qa.yml`, re-exported after Q1/Q2 above, so its `prompt.system_prompt` is still the pre-fix English prompt — the three fixes above landed in this repository after this export, not by re-testing the app): no secrets. `env.secret_refs` is empty and every tool/model `credential_ref` is `null`; the only identifier under `dependencies` is a public marketplace plugin hash, not a key. Dify's build mode did create extra items: a `config_note` (a long Chinese operating note for the agent, covering tool routing, the label mapping, and a worked example from a real run) and a skill named `evidence-reply-guard` (the answer-checking script the human mentioned). **The skill's content is not in this export**: it is listed under `agent_packages.agent_1.omitted_assets` and `config_skills`, referenced only by name and a sha256 hash, with `is_missing: true` — the actual `SKILL.md` / `check_reply.py` / `examples/` are not included and are not reachable from this repository or this session. Re-exporting after updating the app's prompt to the fixed version, and re-taking the screenshots as originally planned, would need another pass through the Dify UI; this document does not claim that was done.
 
 ### A8. Troubleshooting
 

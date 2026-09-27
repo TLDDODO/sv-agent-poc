@@ -470,8 +470,33 @@ def test_fat10_findings_say_agree_when_the_md_residues_lie_inside_the_expected_r
         ("get_md_interface_scores", {}, {"occupancy": {"K9": 0.9, "I163": 0.8}}),
         ("get_expected_interface_region", {}, {"residue_range": [6, 81]})))
     assert "其中 1 个" in mixed[0]["plain"]["zh"] and "1 of them" in mixed[0]["plain"]["en"]
-    assert webview.findings(case, _tr(("get_md_interface_scores", {}, {"occupancy": {"K9": 0.2}}),
-                                      ("get_expected_interface_region", {}, {"residue_range": [6, 81]}))) == []
+    # No MD-vs-literature finding when nothing crosses the cutoff, but the FAT10-MAD2 case always
+    # gets the deterministic pending-tools finding, even though list_interface_tools was never called.
+    none_crossed = webview.findings(case, _tr(("get_md_interface_scores", {}, {"occupancy": {"K9": 0.2}}),
+                                              ("get_expected_interface_region", {}, {"residue_range": [6, 81]})))
+    assert len(none_crossed) == 1 and "AlphaFold-Multimer" in none_crossed[0]["plain"]["en"]
+    assert "AlphaFold-Multimer" in none_crossed[0]["basis"]
+
+
+def test_pending_tools_finding_is_not_duplicated_when_the_agent_calls_the_tool_itself():
+    case = cases.default_case()
+    f = webview.findings(case, _tr(
+        ("get_md_interface_scores", {}, {"occupancy": {"K9": 0.2}}),
+        ("get_expected_interface_region", {}, {"residue_range": [6, 81]}),
+        ("list_interface_tools", {}, {"pending_no_data_yet": ["HADDOCK", "PISA"]})))
+    assert len(f) == 1 and "HADDOCK" in f[0]["plain"]["zh"] and "AlphaFold-Multimer" not in f[0]["plain"]["zh"]
+
+
+def test_a_literature_fallback_is_reported_explicitly_as_degraded_not_hidden():
+    case = cases.default_case()
+    f = webview.findings(case, _tr(
+        ("search_literature", {}, {"retrieved_live": False, "error": "URLError",
+                                   "fallback": "Theng et al. 2014 PNAS: MAD2 binds the N-terminal domain"})))
+    hit = next(x for x in f if "fallback" in x["basis"] or "PubMed" in x["plain"]["en"])
+    assert "cited" in hit["plain"]["en"] and "live" in hit["plain"]["en"]
+    # not double-counted with the generic "unreachable" finding (that wording, or its basis)
+    assert not any(x["basis"].startswith("a PubMed tool call") for x in f)
+    assert not any("returned no data this time" in x["plain"]["en"] for x in f)
 
 
 def test_usage_adds_the_paraphrase_call_and_never_hides_an_unknown_cost():
@@ -487,3 +512,11 @@ def test_the_page_lists_computed_findings_first_and_says_the_rewording_may_be_im
     html = client.get("/").text
     assert "c.findings.map" in html and 'id="flags-hint"' in html and 'id="tech-basis"' in html
     assert "可能不完美" in html and "may be imperfect" in html
+
+
+def test_round_sig_cleans_up_floating_point_noise_without_changing_the_value_much():
+    assert webview.round_sig(0.0018636520000000001) == 0.001864
+    assert webview.round_sig(None) is None
+    assert webview.round_sig(0) == 0
+    assert webview.round_sig(1234.5678) == 1235
+    assert webview.round_sig(0.5) == 0.5

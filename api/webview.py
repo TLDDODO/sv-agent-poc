@@ -19,6 +19,7 @@ import re
 
 from agent import events, runlog
 from agent.cases import Case, custom_case, default_case, find_case, load_benchmark
+from agent.tools import list_interface_tools
 from agent.structures import NTERM_UBL_RANGE
 from analysis.adjudicate_md import INTERFACE_CUTOFF
 
@@ -212,12 +213,24 @@ def findings(case: Case, transcript: list[dict]) -> list[dict]:
         out.append({"plain": T("这一对蛋白没有分子动力学数据,相关证据标为“待定”。",
                                "There is no molecular-dynamics data for this protein pair, so that evidence is marked “pending”."),
                     "basis": "get_md_interface_scores returned pending"})
+    pending_tools_finding_added = False
     for _, r in _results(transcript, "list_interface_tools")[-1:]:
         names = r.get("pending_no_data_yet") or []
         if names:
             out.append({"plain": T(f"{'、'.join(names)} 这些预测工具还没有数据,所以无法做多工具对照。",
                                    f"No data yet from the prediction tools {', '.join(names)}, so no multi-tool comparison is possible."),
                         "basis": "list_interface_tools: " + ", ".join(names)})
+            pending_tools_finding_added = True
+    # Always listed for FAT10-MAD2, even when the agent never called list_interface_tools: these
+    # tools have no real data source wired in anywhere in this codebase, so it is true every run.
+    if not case.generic and not pending_tools_finding_added:
+        pending_tools = list_interface_tools()["pending_no_data_yet"]
+        if pending_tools:
+            names = ", ".join(pending_tools)
+            out.append({"plain": T(f"{names} 这些预测工具目前没有真实数据,标为“待定”,不参与多工具对照。",
+                                   f"{names} have no real data at present; they are marked “pending” and left out of "
+                                   f"any multi-tool comparison."),
+                        "basis": "list_interface_tools: pending_no_data_yet = " + names})
     for args, r in _results(transcript, "validate_residues"):
         bad = r.get("n_mismatches", 0)
         if "error" not in r and bad:
@@ -226,8 +239,12 @@ def findings(case: Case, transcript: list[dict]) -> list[dict]:
                                    f"{bad} residue(s) on {acc} do not match the real sequence; check them before relying on them."),
                         "basis": f"validate_residues {acc}: {bad} mismatches of {len(r.get('validated', []))}"})
     unreachable = []
+    degraded_literature = False
     for name, db in SOURCE_OF.items():
         for _, r in _results(transcript, name):
+            if name == "search_literature" and not r.get("retrieved_live") and "fallback" in r:
+                degraded_literature = True    # explicit finding below, not "unreachable" (it has a cited answer)
+                continue
             failed = ("error" in r or r.get("status") == "unavailable" or r.get("source") in ("unavailable", "withheld")
                       or (name == "search_literature" and not r.get("retrieved_live") and "fallback" not in r))
             if failed and db not in unreachable:
@@ -236,6 +253,11 @@ def findings(case: Case, transcript: list[dict]) -> list[dict]:
         out.append({"plain": T(f"{db} 这次没有取到数据,依赖它的结论证据不完整。",
                                f"{db} returned no data this time, so the evidence behind conclusions that depend on it is incomplete."),
                     "basis": f"a {db} tool call returned an error, was unavailable, or returned nothing"})
+    if degraded_literature:
+        out.append({"plain": T("PubMed 这次没有返回实时检索结果:用的是引用的已知结论,不是实时检索到的。",
+                               "PubMed did not return a live search result this run: a cited, previously known "
+                               "conclusion was used instead of a live search."),
+                    "basis": "search_literature: retrieved_live is false and a fallback/cited result was used"})
     return out
 
 
@@ -378,12 +400,22 @@ def conclusion(case: Case, result: dict | None, paraphrases: list | None = None,
 
 
 # --- one query ------------------------------------------------------------------------------
+def round_sig(x, sig: int = 4):
+    """Round to `sig` significant figures (never fabricates a value, just displays it cleanly:
+    0.0018636520000000001 -> 0.001864). None and 0 pass through unchanged."""
+    if x is None or x == 0:
+        return x
+    import math
+    d = sig - int(math.floor(math.log10(abs(x)))) - 1
+    return round(x, d)
+
+
 def _merged_usage(agent_rec: dict, extra: dict | None) -> dict:
     """Time / cost / tokens of the whole query: the agent run plus the flag-paraphrase call."""
     def add(key):
         vals = [agent_rec.get(key), (extra or {}).get(key) if extra else 0]
         return None if any(v is None for v in vals) else vals[0] + vals[1]
-    return {"seconds": add("wall_clock_s"), "cost_usd": add("cost_usd"), "llm_calls": add("llm_calls"),
+    return {"seconds": add("wall_clock_s"), "cost_usd": round_sig(add("cost_usd")), "llm_calls": add("llm_calls"),
             "prompt_tokens": add("prompt_tokens"), "completion_tokens": add("completion_tokens"),
             "paraphrase_llm_calls": (extra or {}).get("llm_calls", 0), "model": agent_rec.get("model"),
             "activity": agent_rec.get("activity"), "pricing_last_checked": agent_rec.get("pricing_last_checked")}

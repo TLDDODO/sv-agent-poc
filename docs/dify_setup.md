@@ -82,7 +82,7 @@ Dify 自己的对话需要一个语言模型(和 MCP 服务器里的 DeepSeek ke
 2. 安装 **DeepSeek**(插件市场;需要能访问外网),填入你的 DeepSeek API Key,保存。
 3. 系统模型设置里把默认推理模型选为 `deepseek-chat`。
 
-### A5. 【需要你操作 · 待验证】接入 MCP 服务器
+### A5. 【需要你操作】接入 MCP 服务器(已由使用者在 Dify 界面确认连接成功)
 
 1. 顶部 **工具 → MCP → 添加 MCP 服务(HTTP)**。
 2. 服务端点填 `http://host.docker.internal:8765/mcp`,名称填"界面裁决器",图标随意。

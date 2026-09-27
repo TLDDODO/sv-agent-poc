@@ -71,9 +71,9 @@ def test_numbers_come_only_from_the_json(tmp_path):
 
 
 def test_business_case_states_manual_time_is_unmeasured():
-    # C3 replaced the `TBD — 人工基线` row with automated metrics; manual time is still not estimated
+    # C3 replaced the `TBD — manual baseline` row with automated metrics; manual time is still not estimated
     biz = _read(ROOT / "docs" / "business_case.md")
-    assert "TBD" not in biz and "人工耗时未测量" in biz and "不估计人工耗时" in biz
+    assert "TBD" not in biz and "Manual time was not measured" in biz and "estimates neither manual time nor manual cost" in biz
 
 
 @pytest.mark.parametrize("state", ["dry_run", "blocked", "missing"])

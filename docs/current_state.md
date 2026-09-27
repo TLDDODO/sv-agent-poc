@@ -1,144 +1,139 @@
-# 现状盘点(v1,S1)
+# Current-state inventory (v1, S1)
 
-> 只读盘点,未改任何代码。盘点基于 commit `4069eaa`。
+> Read-only inventory; no code was changed. Based on commit `4069eaa`.
 
-## 1. 用途
+## 1. Purpose
 
-一个 LLM agent(DeepSeek,ReAct 循环):用真实证据(PDBe 结构、UniProt 序列、100 ns MD
-接触占有率、PubMed)判定 FAT10–MAD2 的蛋白界面;证据与文献冲突时召开三方辩论
-(MD 辩方 / NMR 辩方 / 法官),报告矛盾但不宣判谁对。
+An LLM agent (DeepSeek, ReAct loop) that adjudicates the FAT10–MAD2 protein interface from real evidence (PDBe structures, UniProt sequence, 100 ns MD contact occupancy, PubMed). When the evidence and the literature conflict it convenes a three-way debate (MD advocate / NMR advocate / judge) and reports the contradiction without declaring which side is right.
 
-## 2. 文件 / 模块清单
+## 2. File / module list
 
 **agent/**
-- `agent/__init__.py` — 包说明(agent 由 LLM 决定调用哪些工具)。
-- `agent/llm_client.py` — `make_client()`:指向 DeepSeek 的 OpenAI 兼容客户端;`MODEL` 取自环境变量。
-- `agent/run_agent.py` — ReAct 主循环 `run()`;`render()` 生成 markdown 报告;CLI 写 `outputs/`。
-- `agent/tools.py` — 全部工具实现 + `DISPATCH` 映射 + `TOOLS`(function-calling schema)。
-- `agent/structures.py` — PDBe:已核实快照 `offline_structures()`、live MCP 客户端 `mcp_structures()`、`canonical_map()`。
-- `agent/literature.py` — PubMed E-utilities 检索;`retrieve_binding_region()` 用 LLM 从摘要抽取结合区。
-- `agent/debate.py` — 三方辩论:`evidence_bundle()` 组装真实事实,两位辩方 + 法官,写 `outputs/`。
-- `agent/compare.py` — 弱/强模型对比:同一份证据交给两个模型裁决,比较分歧。
-- `agent/skills.py` — 从 `skills/` 加载角色提示词(`===PROMPT===` 之后的文本)。
+- `agent/__init__.py` — package note (the LLM decides which tools to call).
+- `agent/llm_client.py` — `make_client()`: an OpenAI-compatible client pointing at DeepSeek; `MODEL` comes from an environment variable.
+- `agent/run_agent.py` — the ReAct main loop `run()`; `render()` builds a markdown report; the CLI writes to `outputs/`.
+- `agent/tools.py` — all tool implementations + the `DISPATCH` map + `TOOLS` (function-calling schema).
+- `agent/structures.py` — PDBe: the verified snapshot `offline_structures()`, the live MCP client `mcp_structures()`, `canonical_map()`.
+- `agent/literature.py` — PubMed E-utilities search; `retrieve_binding_region()` uses the LLM to extract the binding region from abstracts.
+- `agent/debate.py` — three-way debate: `evidence_bundle()` assembles the real facts; two advocates + a judge; writes to `outputs/`.
+- `agent/compare.py` — weak-vs-strong model comparison: the same evidence goes to two models and the disagreement is compared.
+- `agent/skills.py` — loads role prompts from `skills/` (the text after `===PROMPT===`).
 
-**skills/**(运行时加载的角色提示词)
-- `skills/README.md` — skills 目录说明。
-- `skills/investigator.md` — 主 agent 提示词。
-- `skills/md_advocate.md` — MD 辩方提示词。
-- `skills/nmr_advocate.md` — NMR/文献辩方提示词。
-- `skills/judge.md` — 法官提示词(强制 JSON、区分"是否矛盾"与"谁对")。
+**skills/** (role prompts loaded at run time)
+- `skills/README.md` — description of the skills directory.
+- `skills/investigator.md` — main agent prompt.
+- `skills/md_advocate.md` — MD advocate prompt.
+- `skills/nmr_advocate.md` — NMR / literature advocate prompt.
+- `skills/judge.md` — judge prompt (forces JSON, separates "is there a contradiction" from "who is right").
 
 **analysis/**
-- `analysis/md_to_scores.py` — 在 HPC 上把 Amber prmtop + cpptraj nativecontacts 输出转成逐残基占有率 JSON。
-- `analysis/md_interface_scores.json` — 上一步的产物:FAT10 各残基与 MAD2 的接触占有率(100 ns)。
-- `analysis/adjudicate_md.py` — 确定性冲突检查(无 LLM、无网络):MD 核心界面是否落在 UBL1 6–81。
-- `analysis/build_report.py` — 纯 Python 生成 HTML 报告(有 key 时含文献与辩论)。
-- `analysis/render_structure.py` — PyMOL + Pillow 渲染带标注的结构图。
+- `analysis/md_to_scores.py` — on the HPC, turns an Amber prmtop + cpptraj nativecontacts output into a per-residue occupancy JSON.
+- `analysis/md_interface_scores.json` — the product of the previous step: contact occupancy of each FAT10 residue with MAD2 (100 ns).
+- `analysis/adjudicate_md.py` — deterministic conflict check (no LLM, no network): does the MD core interface fall inside UBL1 6–81?
+- `analysis/build_report.py` — pure-Python HTML report (includes literature and the debate when a key is available).
+- `analysis/render_structure.py` — PyMOL + Pillow rendering of the annotated structure figure.
 
 **api/**
-- `api/__init__.py` — 包说明。
-- `api/main.py` — FastAPI:`/`、`/health`、`/evidence`(无需 key)、`/adjudicate`、`/debate`(需 key)。
+- `api/__init__.py` — package note.
+- `api/main.py` — FastAPI: `/`, `/health`, `/evidence` (no key needed), `/adjudicate`, `/debate` (key needed).
 
-**数据 / 图 / 其他**
-- `complex_protein.pdb` — MD 轨迹第 1 帧(去水去离子)。
-- `interface.png`、`interface_labeled.png` — 渲染的结构图(后者带标注)。
-- `outputs/md_vs_nmr_adjudication.md` — `analysis/adjudicate_md.py` 的样例输出(唯一提交的运行产物)。
-- `outputs/.gitkeep` — 保留运行时输出目录。
-- `notebooks/fat10_mad2_pipeline.ipynb` — 五阶段流程的可执行演示。
-- `FLOW.md` — 架构流程图(mermaid)。
-- `README.md` — 项目说明 + 诚实状态表。
-- `CLAUDE.md` — 本次 Agent 2.0 自动运行规则。
-- `.claude/agents/reviewer.md` — 独立审查子 agent。
-- `Dockerfile`、`docker-compose.yml`、`.dockerignore` — 容器化。
-- `requirements.txt` — 运行依赖。
-- `.gitignore` — 忽略规则。
+**Data / figures / other**
+- `complex_protein.pdb` — frame 1 of the MD trajectory (water and ions removed).
+- `interface.png`, `interface_labeled.png` — rendered structure figures (the latter annotated).
+- `outputs/md_vs_nmr_adjudication.md` — sample output of `analysis/adjudicate_md.py` (the only committed run product).
+- `outputs/.gitkeep` — keeps the run-time output directory.
+- `notebooks/fat10_mad2_pipeline.ipynb` — executable demo of the five-stage pipeline.
+- `FLOW.md` — architecture diagrams (mermaid).
+- `README.md` — project description + an honest status table.
+- `CLAUDE.md` — the rules for this Agent 2.0 autonomous run.
+- `.claude/agents/reviewer.md` — the independent reviewer sub-agent.
+- `Dockerfile`, `docker-compose.yml`, `.dockerignore` — containerisation.
+- `requirements.txt` — run-time dependencies.
+- `.gitignore` — ignore rules.
 
-## 3. 完整运行时的典型工具调用顺序
+## 3. Typical tool-call order in a full run
 
-仓库里**没有提交过任何一次完整运行的轨迹**,所以下面不是实测顺序,而是
-`skills/investigator.md` 提示词建议的顺序(实际顺序由 LLM 每次自行决定):
+The repository contains **no recorded trace of a complete run**, so the order below is not measured. It is the order that the `skills/investigator.md` prompt suggests (the real order is decided by the LLM each time):
 
-1. `search_literature` — 查 PubMed,读摘要,了解 MAD2 预期结合 FAT10 哪个区域
-2. `get_expected_interface_region` — 取文献/NMR 预期区域(UBL1 6–81)
-3. `fetch_structures` — 确认体系(PDBe 结构)
-4. `validate_residues` — 用真实 UniProt 序列核对残基标签
-5. `map_residues` — 映射到 UniProt 编号并判断是否在结构域内
-6. `get_md_interface_scores` — 取真实 MD 接触占有率
-7. `convene_debate` — 若 MD 界面落在预期区域之外(冲突),召开辩论(内部 3 次 LLM 调用)
-8. `submit_adjudication` — 提交最终裁决,结束循环
+1. `search_literature` — query PubMed and read the abstracts to learn where MAD2 is expected to bind FAT10
+2. `get_expected_interface_region` — get the literature / NMR expected region (UBL1 6–81)
+3. `fetch_structures` — confirm the system (PDBe structures)
+4. `validate_residues` — check the residue labels against the real UniProt sequence
+5. `map_residues` — map to UniProt numbering and decide whether they lie inside the domain
+6. `get_md_interface_scores` — get the real MD contact occupancy
+7. `convene_debate` — if the MD interface falls outside the expected region (a conflict), convene the debate (3 LLM calls inside)
+8. `submit_adjudication` — submit the final verdict and end the loop
 
-另有 `list_interface_tools` / `get_tool_prediction` 在 schema 中可用,但提示词未提及;它们对
-AFM/HADDOCK/PISA 返回 `pending`。
+`list_interface_tools` / `get_tool_prediction` are also available in the schema but the prompt does not mention them; for AFM / HADDOCK / PISA they return `pending`.
 
-## 4. 数据来源分类
+## 4. Data sources by kind
 
-**Live(每次运行实时联网)**
-- `search_literature` → NCBI E-utilities(esearch + efetch);失败时返回引用的回退结论并标 `retrieved_live: False`。
-- `validate_residues` → `rest.uniprot.org` 的 FASTA。
-- 所有 LLM 调用 → DeepSeek API(`run_agent`、`debate`、`compare`、`literature.retrieve_binding_region`)。
-- `mcp_structures()` → PDBe MCP 服务器(经 `uvx`)——代码存在,但当前**没有任何入口调用它**。
+**Live (network access on every run)**
+- `search_literature` → NCBI E-utilities (esearch + efetch); on failure it returns a cited fallback conclusion marked `retrieved_live: False`.
+- `validate_residues` → the FASTA from `rest.uniprot.org`.
+- All LLM calls → the DeepSeek API (`run_agent`, `debate`, `compare`, `literature.retrieve_binding_region`).
+- `mcp_structures()` → the PDBe MCP server (through `uvx`) — the code exists but **no entry point calls it at present**.
 
-**Snapshot(提交在代码里的已核实快照)**
-- `fetch_structures` → `offline_structures()`:6GF1、6GF2、2MBE、7PYV(均为 FAT10 结构,无 FAT10:MAD2 复合物)。该函数**忽略传入的 `uniprot` 参数**,总是返回这 4 条。
+**Snapshot (verified snapshots committed in the code)**
+- `fetch_structures` → `offline_structures()`: 6GF1, 6GF2, 2MBE, 7PYV (all FAT10 structures; there is no FAT10:MAD2 complex). The function **ignores the `uniprot` argument** and always returns these 4 entries.
 
-**本地文件**
-- `analysis/md_interface_scores.json` — 真实 MD 占有率(原始 prmtop / 轨迹不在仓库中)。
-- `complex_protein.pdb`、`interface.png`、`interface_labeled.png` — MD 结构与渲染图。
-- `skills/` 下的提示词文件。
+**Local files**
+- `analysis/md_interface_scores.json` — real MD occupancy (the original prmtop / trajectory are not in the repository).
+- `complex_protein.pdb`, `interface.png`, `interface_labeled.png` — the MD structure and the renderings.
+- The prompt files under `skills/`.
 
-**硬编码的引用事实(cited,非本系统推导)**
-- `get_expected_interface_region`:UBL1 6–81,来源 Theng et al. 2014 PNAS + NMR 2MBE + UniProt 结构域表。
-- `agent/literature.py` 中的 `FALLBACK` 结论。
-- FAT10 结构域表 `DOMAINS` 在 `analysis/adjudicate_md.py`、`agent/debate.py`、`analysis/build_report.py`、`notebooks/fat10_mad2_pipeline.ipynb` 四处各写了一份。
+**Hard-coded cited facts (cited, not derived by this system)**
+- `get_expected_interface_region`: UBL1 6–81, from Theng et al. 2014 PNAS + NMR 2MBE + the UniProt domain table.
+- The `FALLBACK` conclusion in `agent/literature.py`.
+- The FAT10 domain table `DOMAINS` is written out once each in `analysis/adjudicate_md.py`, `agent/debate.py`, `analysis/build_report.py` and `notebooks/fat10_mad2_pipeline.ipynb` (four copies).
 
-**Pending(无数据,绝不编造)**
-- AlphaFold-Multimer、HADDOCK、PISA 的逐残基评分(`get_tool_prediction` 返回 `status: pending`)。
+**Pending (no data, never invented)**
+- Per-residue scores from AlphaFold-Multimer, HADDOCK and PISA (`get_tool_prediction` returns `status: pending`).
 
-**与 README 状态表的对照 — 不一致之处**
-1. README 写 PDBe 检索是 "live MCP client or verified snapshot";实际 agent、API、CLI **只走快照**,`mcp_structures()` 没有调用入口(原来的 `--source mcp` 入口随旧模块在 `7c3627b` 中删除)。
-2. README 写 FAT10 结构域边界 "UBL1 6–81 ✅ verified";但 `map_residues` 默认 `domain_hi=80`、`agent/structures.py` 的 `NTERM_UBL_RANGE = (1, 80)`、`agent/compare.py` 的 `gather_evidence(domain=(1, 80))` 仍在用旧的、未经核实的 1–80。
-3. pending 工具名不一致:`agent/tools.py` 用 `PISA`,`agent/compare.py` 的 `_CAVEATS` 用 `PISA-contacts`(对 pending 状态无实际影响)。
+**Comparison with the README status table — disagreements**
+1. The README says PDBe retrieval is a "live MCP client or verified snapshot"; in reality the agent, the API and the CLI **use only the snapshot**, and `mcp_structures()` has no entry point (the old `--source mcp` entry point was deleted with the old module in `7c3627b`).
+2. The README says the FAT10 domain boundaries are "UBL1 6–81 ✅ verified", but `map_residues` still defaults to `domain_hi=80`, `NTERM_UBL_RANGE = (1, 80)` in `agent/structures.py`, and `gather_evidence(domain=(1, 80))` in `agent/compare.py` — the old, unverified 1–80.
+3. The pending tool name is inconsistent: `agent/tools.py` uses `PISA`, `_CAVEATS` in `agent/compare.py` uses `PISA-contacts` (no practical effect on the pending status).
 
-> 以上 3 处已在 S1b 处理(见 `docs/progress.md`);本节保留为 S1 时的原始盘点。
+> These 3 items were handled in S1b (see `docs/progress.md`); this section is kept as the original S1 inventory.
 
-其余条目(ReAct 循环、MD 数据、`validate_residues`、引用的预期区域、辩论、弱强对比、pending 三件套)与 README 一致。
+The remaining items (the ReAct loop, the MD data, `validate_residues`, the cited expected region, the debate, the weak-vs-strong comparison, the three pending tools) agree with the README.
 
-## 5. 本地运行
+## 5. Running locally
 
-必须在**仓库根目录**运行(数据路径都是相对路径)。
+Run from the **repository root** (the data paths are relative).
 
 ```bash
-pip install -r requirements.txt            # 本云端镜像需加 --ignore-installed
-export DEEPSEEK_API_KEY=...                # 必需(LLM 部分)
-export DEEPSEEK_BASE_URL=https://api.deepseek.com   # 可选,默认值
-export DEEPSEEK_MODEL=deepseek-chat        # 可选,默认值
-export INTERFACE_SCORES=analysis/md_interface_scores.json   # 可选,默认值
+pip install -r requirements.txt            # this cloud image needs --ignore-installed
+export DEEPSEEK_API_KEY=...                # required (LLM parts)
+export DEEPSEEK_BASE_URL=https://api.deepseek.com   # optional, default value
+export DEEPSEEK_MODEL=deepseek-chat        # optional, default value
+export INTERFACE_SCORES=analysis/md_interface_scores.json   # optional, default value
 
-python -m agent.run_agent                  # 自主 agent → outputs/
-python -m agent.debate                     # 三方辩论 → outputs/
-python -m agent.compare                    # 弱/强模型对比 → outputs/
-python analysis/adjudicate_md.py           # 确定性冲突检查(无需 key / 网络)
-python -m analysis.build_report            # HTML 报告
-uvicorn api.main:app --reload              # API,文档在 /docs
-docker compose up --build                  # 容器方式运行 API
+python -m agent.run_agent                  # autonomous agent → outputs/
+python -m agent.debate                     # three-way debate → outputs/
+python -m agent.compare                    # weak/strong model comparison → outputs/
+python analysis/adjudicate_md.py           # deterministic conflict check (no key / network needed)
+python -m analysis.build_report            # HTML report
+uvicorn api.main:app --reload              # API, docs at /docs
+docker compose up --build                  # run the API in a container
 ```
 
-图重绘另需 `pymol-open-source` + `pillow`(`analysis/render_structure.py`);`analysis/md_to_scores.py`
-需在有 MD 文件的 HPC 节点上运行。
+Re-rendering the figure also needs `pymol-open-source` + `pillow` (`analysis/render_structure.py`); `analysis/md_to_scores.py` has to run on an HPC node that has the MD files.
 
-## 6. 没有测试覆盖的部分
+## 6. What has no test coverage
 
-仓库目前**没有任何测试**(没有 tests 目录,也没有 CI)。以下全部未覆盖:
-- `agent/run_agent.py` 的循环(工具分发、`submit_adjudication` 终止、达到 `max_steps` 的情形)
-- `agent/tools.py` 全部工具(含网络失败时的回退分支)
-- `agent/structures.py` 的快照、MCP 解析 `_parse()`、`canonical_map()`
-- `agent/literature.py`、`agent/debate.py`、`agent/compare.py`(含 JSON 解析)
-- `agent/skills.py` 的加载与回退
-- `api/main.py` 全部端点
-- `analysis/` 下全部脚本、`notebooks/fat10_mad2_pipeline.ipynb`
+The repository currently has **no tests at all** (no tests directory and no CI). All of the following is uncovered:
+- the loop in `agent/run_agent.py` (tool dispatch, termination on `submit_adjudication`, the case of reaching `max_steps`)
+- every tool in `agent/tools.py` (including the fallback branches when the network fails)
+- the snapshot, the MCP parser `_parse()` and `canonical_map()` in `agent/structures.py`
+- `agent/literature.py`, `agent/debate.py`, `agent/compare.py` (including JSON parsing)
+- loading and fallback in `agent/skills.py`
+- every endpoint of `api/main.py`
+- every script under `analysis/`, and `notebooks/fat10_mad2_pipeline.ipynb`
 
-## 7. 最脆弱的 3 个点
+## 7. The 3 most fragile points
 
-1. **`fetch_structures` 写死 FAT10**:忽略 `uniprot` 参数,永远返回 FAT10 快照,live MCP 未接入。换任何其他蛋白对都会给出错误结构;而且快照里的 7PYV 是 FAT10–UBA6 实验复合物——若 benchmark 选这一对,它就是现成的答案泄漏源。
-2. **FAT10 常量与相对路径散落各处**:结构域表复制了四份,域范围 1–80 与 6–81 并存,MD 路径和 `outputs/` 都是相对路径。不在仓库根目录运行就找不到数据;将来改一处容易漏改另外三处。
-3. **LLM 输出解析脆弱且静默**:`debate`、`compare`、`literature` 用贪婪正则 `\{.*\}` 抽 JSON,失败时返回 `{"error": ...}` 而不报错;`search_literature` 任何异常都静默回退到引用结论;辩论嵌套在 agent 循环里,3 次 LLM 调用没有超时/重试控制。
+1. **`fetch_structures` hard-codes FAT10**: it ignores the `uniprot` argument, always returns the FAT10 snapshot, and the live MCP is not wired in. Any other protein pair would get wrong structures; and 7PYV in the snapshot is an experimental FAT10–UBA6 complex — if the benchmark chose that pair it would be a ready-made source of answer leakage.
+2. **FAT10 constants and relative paths are scattered**: the domain table is copied four times, the domain ranges 1–80 and 6–81 coexist, and both the MD path and `outputs/` are relative paths. Outside the repository root the data cannot be found; changing one place later makes it easy to miss the other three.
+3. **LLM output parsing is fragile and silent**: `debate`, `compare` and `literature` extract JSON with the greedy regex `\{.*\}` and return `{"error": ...}` instead of raising on failure; `search_literature` silently falls back to the cited conclusion on any exception; the debate is nested inside the agent loop, and its 3 LLM calls have no timeout / retry control.

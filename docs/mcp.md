@@ -1,49 +1,49 @@
-# MCP 服务器 / MCP server
+# MCP server
 
-把 Interface Adjudicator 发布成 [MCP](https://modelcontextprotocol.io) 服务器,让 Claude Desktop、Dify 等客户端直接调用。
-Publishes the agent as an MCP server (official MCP Python SDK, `mcp>=2`). It calls the same functions as the web
-client and the FastAPI; no logic is copied.
+Publishes the Interface Adjudicator as an [MCP](https://modelcontextprotocol.io) server so that clients such as Claude Desktop and Dify can call it directly. It uses the official MCP Python SDK (`mcp>=2`) and calls the same functions as the web client and the FastAPI; no logic is copied.
 
-## 工具 / Tools
+## Tools
 
-| tool | 作用 / what it does | 需要模型密钥? / needs `DEEPSEEK_API_KEY`? |
+| tool | what it does | needs `DEEPSEEK_API_KEY`? |
 |---|---|---|
-| `list_cases` | 预设案例(FAT10–MAD2 和基准蛋白对;不返回任何答案)/ preset cases, no answers | no |
-| `get_evidence` | FAT10–MAD2 的真实证据:MD 接触占有率、文献预期区域、一致性检查;每条证据标 `live` / `cited` / `pending` / real evidence, labelled | no |
-| `run_adjudication` | 运行调查 agent(预设案例或两个 UniProt 号)。返回 `conclusion`(中英文)、带标签的 `evidence`、`usage`(耗时与成本)/ runs the agent; returns conclusion, labelled evidence, time and cost | **yes** |
+| `list_cases` | Preset cases (FAT10–MAD2 and the benchmark protein pairs). No answers are returned. | no |
+| `get_evidence` | Real evidence for FAT10–MAD2: MD contact occupancy, the literature-expected region and the consistency check. Every evidence row is labelled `live`, `cited` or `pending`. | no |
+| `run_adjudication` | Runs the investigator agent on a preset case or on two UniProt accessions. Returns `conclusion` (in Chinese and English), `evidence` rows with labels, and `usage` (time and cost). | **yes** |
 
-其他蛋白对没有独立的 `get_evidence`(证据只在 agent 运行内、在过滤掉答案结构之后取得),会返回 `status: pending`。
-FAT10–MAD2 的结论不变:MD 界面(C 端区域)与文献/NMR(UBL1 6–81)矛盾,系统只报告矛盾,不判断哪一方正确。
+`case_id` is forgiving: case, hyphens, underscores and spaces are ignored, so `fat10-mad2`, `FAT10 MAD2` and `fat10_mad2` all select the same case. An id that matches nothing returns an error that lists the valid ids.
 
-## 启动 / Start
+Other protein pairs have no stand-alone `get_evidence` (their evidence is gathered only inside an agent run, after the experimental complex has been filtered out), so it returns `status: pending`.
 
-先在仓库根目录安装依赖:`pip install -r requirements.txt`。
+The FAT10–MAD2 conclusion is unchanged: the MD interface (C-terminal region) contradicts the literature/NMR expectation (UBL1, residues 6–81). The system reports the contradiction and does not say which side is right.
 
-**stdio(Claude Desktop 用 / for Claude Desktop):**
+## Start
+
+First install the dependencies in the repository root: `pip install -r requirements.txt`.
+
+**stdio (for Claude Desktop):**
 
 ```powershell
 python -m mcp_server
 ```
 
-**streamable HTTP(Dify 用 / for Dify),默认只监听本机 / localhost only by default:**
+**Streamable HTTP (for Dify); localhost only by default:**
 
 ```powershell
 python -m mcp_server --transport http            # http://127.0.0.1:8765/mcp
 python -m mcp_server --transport http --port 9000
 ```
 
-Docker 容器里的 Dify 用 `host.docker.internal` 访问本机;服务器会校验 `Host` 头,需要显式放行(见 `docs/dify_setup.md`):
+A Dify container reaches the host as `host.docker.internal`. The server checks the `Host` header, so that name has to be allowed explicitly (see `docs/dify_setup.md`):
 
 ```powershell
 python -m mcp_server --transport http --allow-host host.docker.internal:8765
 ```
 
-`--host 0.0.0.0` 会让局域网可访问;服务没有内置认证,除非你清楚后果,不要这样做。
-The server has no built-in authentication; keep it on localhost.
+`--host 0.0.0.0` makes the server reachable from the local network. The server has no built-in authentication, so keep it on localhost unless you understand the consequences.
 
-## Windows 上的 Claude Desktop 配置 / Claude Desktop config on Windows
+## Claude Desktop config on Windows
 
-编辑 `%APPDATA%\Claude\claude_desktop_config.json`(不存在就新建),按你的路径修改后保存并重启 Claude Desktop:
+Edit `%APPDATA%\Claude\claude_desktop_config.json` (create it if it does not exist), adjust the paths, save, and restart Claude Desktop:
 
 ```json
 {
@@ -60,12 +60,13 @@ The server has no built-in authentication; keep it on localhost.
 }
 ```
 
-- `command` 用 `python` 的完整路径(`where python` 可查),需已安装本仓库的依赖。
-- 没有 `DEEPSEEK_API_KEY` 时 `list_cases` 和 `get_evidence` 仍可用,`run_adjudication` 会返回清楚的错误。
-- 密钥只放在这个本机配置里,不要提交到仓库。
+- Use the full path of `python` for `command` (`where python` shows it). The repository's dependencies must be installed for that interpreter.
+- Without `DEEPSEEK_API_KEY`, `list_cases` and `get_evidence` still work and `run_adjudication` returns a clear error.
+- Keep the key only in this local file; never commit it.
 
-## 验证过什么 / What was verified
+## What was verified
 
-- 离线测试(`tests/test_m1_mcp.py`):进程内 MCP 客户端 + 假 LLM,列出三个工具并成功调用;错误(无密钥、错误案例)以工具错误返回;默认只监听 `127.0.0.1`;运行过程中的 `print` 不会写到 stdout(否则会破坏 stdio 协议)。
-- 手动检查(本机,输出没有保存,不是可复查的记录):用 MCP 客户端分别连接了 stdio(`python -m mcp_server`)和 HTTP(`http://127.0.0.1:8765/mcp`),都列出了三个工具。
-- **没有验证**:在 Claude Desktop 里的实际使用(本环境没有该应用),上面的 JSON 配置示例(反斜杠已按 JSON 转义成 `\`)按其文档格式书写,未在 Claude Desktop 中实测;Dify 侧见 `docs/dify_setup.md`。
+- Offline tests (`tests/test_m1_mcp.py`): an in-process MCP client with a fake LLM lists the three tools and calls them successfully; errors (no key, unknown case) come back as tool errors; the HTTP server listens on `127.0.0.1` by default; anything a run prints never reaches stdout (it would corrupt the stdio protocol); case ids are normalised.
+- Manual check (this machine; the output was not saved, so it is not a reproducible record): an MCP client connected over stdio (`python -m mcp_server`) and over HTTP (`http://127.0.0.1:8765/mcp`) and listed the three tools.
+- Dify (self-hosted, Docker) connected to the HTTP endpoint; see `docs/dify_setup.md`.
+- **Not verified**: actual use from Claude Desktop (not available here). The JSON example above follows its documented format (backslashes are escaped as `\\` for JSON) but was not tried in Claude Desktop.

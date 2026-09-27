@@ -97,3 +97,30 @@ def test_progress_prints_of_a_run_never_reach_stdout(monkeypatch, capsys):
     assert not res.is_error and res.structured_content == {"ok": True}
     out = capsys.readouterr()
     assert "Round 1" not in out.out and "Round 1" in out.err
+
+
+def test_case_ids_are_normalised_for_hyphens_case_and_spaces():
+    for typed in ("fat10-mad2", "FAT10-MAD2", "Fat10_Mad2", " fat10 mad2 ", "fat10–mad2"):
+        assert server.normalize_case_id(typed) == "fat10_mad2", typed
+    assert server.normalize_case_id("MDM2-P53") == "mdm2_p53"
+    assert server.normalize_case_id("nope") == "nope"            # unknown ids are left for the normal error
+    assert server.normalize_case_id(None) is None
+
+
+def test_get_evidence_accepts_the_hyphenated_id_a_model_used():
+    res = _run(lambda c: c.call_tool("get_evidence", {"case_id": "fat10-mad2"}))
+    assert not res.is_error and res.structured_content["status"] == "ok"
+    assert res.structured_content["case"] == "fat10_mad2"
+
+
+def test_run_adjudication_accepts_a_mixed_case_hyphenated_id(fake_llm, monkeypatch):
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key-not-real")
+    seen = {}
+    monkeypatch.setattr(server.webview, "run_query", lambda case: seen.setdefault("id", case.id) and {"ok": True})
+    res = _run(lambda c: c.call_tool("run_adjudication", {"case_id": "FAT10-MAD2"}))
+    assert not res.is_error and seen["id"] == "fat10_mad2"
+
+
+def test_an_unknown_id_is_still_an_error():
+    res = _run(lambda c: c.call_tool("get_evidence", {"case_id": "nope-nope"}))
+    assert res.is_error and "fat10_mad2" in res.content[0].text      # the error lists the valid ids

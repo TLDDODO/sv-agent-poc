@@ -149,10 +149,10 @@ uvicorn api.main:app --host 127.0.0.1 --port 8000
 # then open http://localhost:8000/      (with Docker: docker compose up --build, same address)
 ```
 
-Pick a preset case or type two UniProt accessions and press "运行". The page shows a
-plain-language conclusion, an evidence table where every row is labelled **实时** (live),
-**引用** (cited) or **待定** (pending), and the time and cost of that query. The page is
-bilingual: 中文 by default, with an English switch at the top right (the answer is returned in both
+Pick a preset case or type two UniProt accessions and press "Run". The page shows a
+plain-language conclusion, an evidence table where every row is labelled **Live**,
+**Cited** or **Pending**, and the time and cost of that query. The page is
+bilingual: English by default, with a Chinese switch at the top right (the answer is returned in both
 languages, so switching does not re-run the query). Each "points to watch" item is one plain sentence: the
 first ones are computed by code from the tool outputs (for FAT10–MAD2, the MD contact residues are compared with the
 literature-expected 6–81 region), the rest are a model rewording of the agent's own flags (one extra model call;

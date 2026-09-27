@@ -83,12 +83,12 @@ def test_dify_doc_covers_every_tool_and_the_files_it_names_exist():
         assert op["operationId"] in DOCS["dify_setup.md"]
     for rel in ("docs/openapi.json", "scripts/export_openapi.py", "docker-compose.yml"):
         assert rel in DOCS["dify_setup.md"] and (ROOT / rel).exists()
-    assert "没有任何身份验证" in DOCS["dify_setup.md"]          # the safety limit is stated plainly
+    assert "no authentication of its own" in DOCS["dify_setup.md"]          # the safety limit is stated plainly
 
 
 def test_user_guide_explains_labels_and_gives_three_questions():
     g = DOCS["user_guide.md"]
-    for term in ("真实", "引用", "待定", "矛盾", "不判定谁对"):
+    for term in ("Live", "Cited", "Pending", "contradiction", "does not decide who is right"):
         assert term in g
     assert len(re.findall(r"^\d\. \*\*\"", g, re.M)) == 3
 
@@ -103,6 +103,6 @@ def test_docs_contain_no_metrics():
         assert not re.search(r"\d\s*%", text), name                  # no percentages
         assert not re.search(r"\d+\.\d+", re.sub(r"\d+\.\d+\.\d+\.\d+", "", text)), name  # no decimals / scores (IPs aside)
         assert not re.search(r"\$\s*\d", text), name                 # no costs
-        assert not re.search(r"\d+\s*(秒|分钟|s\b)", text), name     # no timings
+        assert not re.search(r"\d+\s*(seconds?|minutes?|s\b)", text), name     # no timings
         for v in forbidden:
             assert v not in text, (name, v)

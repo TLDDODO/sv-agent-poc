@@ -1,217 +1,221 @@
-# 在 Dify 里接入界面裁决器
+# Connecting the Interface Adjudicator to Dify
 
-目标:让不写代码的同事在 Dify 的聊天界面里问"MAD2 结合 FAT10 的哪里?证据是否冲突?",答案由本仓库提供。
+Goal: let colleagues who do not write code ask, in Dify's chat interface, "Where does MAD2 bind FAT10? Does the evidence conflict?" — with the answer provided by this repository.
 
-Dify 只是一个"前台":真实数据、判断逻辑和"实时 / 引用 / 待定"标签都由本仓库给出,Dify 里的语言模型只负责把工具返回的内容转述成人话。
+Dify is only a "front desk": the real data, the judging logic and the live / cited / pending labels all come from this repository; the language model inside Dify only restates what the tools return in plain words.
 
-有两种接入方式:
+There are two ways to connect:
 
-- **方式 A(推荐):自托管 Dify + MCP 服务器**(第 A 部分)。Dify 通过 MCP 直接看到三个工具:`list_cases`、`get_evidence`、`run_adjudication`。
-- **方式 B:OpenAPI 自定义工具**(第 B 部分,较早的写法,适合 Dify 云端版本)。
+- **Way A (recommended): self-hosted Dify + the MCP server** (part A). Dify sees three tools directly through MCP: `list_cases`, `get_evidence`, `run_adjudication`.
+- **Way B: an OpenAPI custom tool** (part B, the earlier way; suitable for Dify's cloud version).
 
-> 状态说明:第 A 部分的 1–3 步是在本机实际跑过的,结果写在各步里。第 4 步起需要在 Dify 网页里操作,**在人工确认并补上截图 / 导出文件之前,那几步是待验证的**,文中以“待验证”标出。
+> Status: steps A1–A2 (and A1b) were run on this machine and their results are written into each step. The MCP connection in the Dify UI (A5) was confirmed by the person who ran it. Steps A3, A4, A6 and A7 are browser steps done by a person; this document describes them, but the exported app file and the screenshots are **not in the repository yet**, so what the exported file contains has not been checked (see A7).
 
 ---
 
-## A. 自托管 Dify + MCP(方式 A)
+## A. Self-hosted Dify + MCP (way A)
 
-### A1. 部署 Dify(官方 Docker 自托管方式)
+### A1. Deploy Dify (Dify's official Docker self-hosting method)
 
-Dify 放在**仓库之外**的独立目录 `C:\Users\<你>\dify`,本仓库不含 Dify 代码。需要已安装并启动 Docker Desktop(Dify 官方要求 Docker 至少分到 4 GB 内存)。
+Put Dify in a separate directory **outside this repository**, `C:\Users\<you>\dify`; this repository contains no Dify code. Docker Desktop must be installed and running (Dify's own README asks for at least 4 GiB of RAM for Docker).
 
 ```powershell
-cd C:\Users\<你>
-git clone --depth 1 --branch <版本号> https://github.com/langgenius/dify.git dify
+cd C:\Users\<you>
+git clone --depth 1 --branch <version> https://github.com/langgenius/dify.git dify
 cd dify\docker
 copy .env.example .env
 docker compose up -d
 ```
 
-- 版本:`<版本号>` 换成 Dify 最新的发布标签(`git ls-remote --tags --refs https://github.com/langgenius/dify.git` 可查)。本次实际部署用的版本记录在 `docs/progress.md`。
-- 首次会拉取十几个镜像,需要几分钟到十几分钟。
-- 实际跑的结果:`docker compose up -d` 退出码 0;`nginx / api / worker / web / plugin_daemon / db_postgres / redis / weaviate / sandbox / ssrf_proxy` 等容器全部 Up;`http://localhost/install` 返回 HTTP 200。
-- 默认占用本机 80 / 443 端口;被占用时改 `.env` 里的 `EXPOSE_NGINX_PORT` / `EXPOSE_NGINX_SSL_PORT`。
-- 停止:`docker compose down`(数据保存在 `dify\docker\volumes\`);升级或迁移请看 Dify 官方文档。
+- Version: replace `<version>` with Dify's latest release tag (`git ls-remote --tags --refs https://github.com/langgenius/dify.git` lists them). The version that was actually deployed here is recorded in `docs/progress.md`.
+- The first start pulls a dozen images and takes a few minutes to a quarter of an hour.
+- What actually happened: `docker compose up -d` exited 0; the `nginx / api / worker / web / plugin_daemon / db_postgres / redis / weaviate / sandbox / ssrf_proxy` containers were all Up; `http://localhost/install` returned HTTP 200.
+- It uses ports 80 / 443 on the machine by default; if they are taken, change `EXPOSE_NGINX_PORT` / `EXPOSE_NGINX_SSL_PORT` in `.env`.
+- To stop: `docker compose down` (the data stays in `dify\docker\volumes\`). For upgrades or migration see Dify's official documentation.
+- After Docker Desktop restarts (for example after a reboot) the Dify containers come back by themselves; the plugin daemon may restart a few times until Postgres is ready.
 
-### A1b. 让 Dify 的 SSRF 代理放行 `host.docker.internal`(必须做)
+### A1b. Let Dify's SSRF proxy allow `host.docker.internal` (required)
 
-Dify 的所有出站请求(包括 MCP 工具)都经过 `ssrf_proxy`(squid)。它默认拒绝一切私网 / 本机地址,所以不做这一步,在 Dify 里添加 MCP 服务会报:`403 Forbidden for url 'http://host.docker.internal:8765/mcp'`(代理日志里是 `TCP_DENIED/403`;请求根本没有到达本仓库的服务器)。
+Every outbound request from Dify, MCP tools included, goes through `ssrf_proxy` (squid). By default it refuses every private / local address, so without this step adding the MCP server in Dify fails with `403 Forbidden for url 'http://host.docker.internal:8765/mcp'` (in the proxy log it is `TCP_DENIED/403`; the request never reaches this repository's server).
 
-用 Dify 官方提供的开关,只放行这一个域名,其余私网仍然拒绝。编辑 `dify\docker\.env`,加上(或填写)这一行:
+Use the switch Dify provides for this; it allows only this one domain and every other private address stays refused. Edit `dify\docker\.env` and add (or fill in) this line:
 
 ```
 SSRF_PROXY_ALLOW_PRIVATE_DOMAINS=host.docker.internal
 ```
 
-然后只重建代理容器:
+Then recreate only the proxy container:
 
 ```powershell
-cd C:\Users\<你>\dify\docker
+cd C:\Users\<you>\dify\docker
 docker compose up -d ssrf_proxy
 ```
 
-**已实测**:改完后,在 `docker-api-1` 容器里经代理(`http://ssrf_proxy:3128`)向 `http://host.docker.internal:8765/mcp` 发 MCP `initialize`,得到 HTTP 200(代理日志 `TCP_MISS/200`);改之前同样的请求是 `TCP_DENIED/403`。容器里生成的 `/etc/squid/dify_allow_private.conf` 含 `acl dify_allowed_private_domains dstdomain host.docker.internal`。
+**Tested**: after this change, an MCP `initialize` request sent from inside the `docker-api-1` container, through the proxy (`http://ssrf_proxy:3128`), to `http://host.docker.internal:8765/mcp` returned HTTP 200 (proxy log `TCP_MISS/200`); before the change the same request was `TCP_DENIED/403`. The `/etc/squid/dify_allow_private.conf` generated inside the container contains `acl dify_allowed_private_domains dstdomain host.docker.internal`.
 
-### A2. 启动本仓库的 MCP 服务器(HTTP)
+### A2. Start this repository's MCP server (HTTP)
 
-在仓库根目录、已安装依赖(`pip install -r requirements.txt`)的环境里:
+From the repository root, in an environment where the dependencies are installed (`pip install -r requirements.txt`):
 
 ```powershell
-$env:DEEPSEEK_API_KEY = "<你的 key>"      # 没有 key 时 list_cases / get_evidence 仍可用,run_adjudication 会报错
+$env:DEEPSEEK_API_KEY = "<your key>"      # without a key list_cases / get_evidence still work and run_adjudication returns an error
 python -m mcp_server --transport http --port 8765 --allow-host host.docker.internal:8765
 ```
 
-- 只监听本机 `127.0.0.1:8765`,地址是 `http://127.0.0.1:8765/mcp`。
-- `--allow-host host.docker.internal:8765` 让服务器接受来自 Dify 容器的 `Host` 头(服务器默认会拒绝陌生的 Host,这是防 DNS 重绑定的保护)。
-- 没有内置认证,所以**不要**用 `--host 0.0.0.0` 暴露到局域网。
-- 密钥只放在这个终端的环境变量里,不要写进 Dify。
+- It listens on the local machine only, `127.0.0.1:8765`; the address is `http://127.0.0.1:8765/mcp`.
+- `--allow-host host.docker.internal:8765` makes the server accept the `Host` header sent by a Dify container (by default the server rejects unfamiliar Host values, a protection against DNS rebinding).
+- The server has no authentication of its own, so **do not** expose it to the local network with `--host 0.0.0.0`.
+- Keep the key only in this terminal's environment; never put it into Dify.
 
-**已实测**:在 Dify 的 `api` 容器里向 `http://host.docker.internal:8765/mcp` 发 MCP `initialize` 请求,得到 HTTP 200 和服务器能力(即容器能通过 `host.docker.internal` 访问本机上只监听 127.0.0.1 的服务)。
+**Tested**: from inside Dify's `api` container, an MCP `initialize` request to `http://host.docker.internal:8765/mcp` returned HTTP 200 with the server capabilities (so a container can reach, through `host.docker.internal`, a service on the host that listens only on 127.0.0.1).
 
-### A3. 【需要你在网页上操作】创建管理员账号
+### A3. [You act in the browser] Create the administrator account
 
-1. 浏览器打开 `http://localhost/install`。
-2. 填邮箱、用户名、密码,点"设置"。**这个账号和密码只保存在你本机的 Dify 里,不要发给任何人,也不要发给我。**
-3. 用刚建的账号登录 `http://localhost`。
+1. Open `http://localhost/install` in a browser.
+2. Enter an email, a username and a password, and press "Setup". **This account and password stay only in your own Dify; do not send them to anyone.**
+3. Log in at `http://localhost` with the new account.
 
-### A4. 【需要你操作 · 待验证】配置模型
+### A4. [You act in the browser] Configure a model
 
-Dify 自己的对话需要一个语言模型(和 MCP 服务器里的 DeepSeek key 是两回事)。
+Dify's own chat needs a language model (this is separate from the DeepSeek key of the MCP server).
 
-1. 右上角头像 → **设置 → 模型供应商**。
-2. 安装 **DeepSeek**(插件市场;需要能访问外网),填入你的 DeepSeek API Key,保存。
-3. 系统模型设置里把默认推理模型选为 `deepseek-chat`。
+1. Top-right avatar → **Settings → Model Provider**.
+2. Install **DeepSeek** (from the plugin marketplace; needs internet access) and enter your DeepSeek API key.
+3. In the system model settings, choose `deepseek-chat` as the default reasoning model.
 
-### A5. 【需要你操作】接入 MCP 服务器(已由使用者在 Dify 界面确认连接成功)
+### A5. [You act in the browser] Connect the MCP server (connection confirmed by the person who did it)
 
-1. 顶部 **工具 → MCP → 添加 MCP 服务(HTTP)**。
-2. 服务端点填 `http://host.docker.internal:8765/mcp`,名称填"界面裁决器",图标随意。
-3. 保存并授权;应能看到三个工具:`list_cases`、`get_evidence`、`run_adjudication`。
-4. 若连接失败,先看第 A7 节。
+1. Top menu **Tools → MCP → Add MCP Server (HTTP)**.
+2. Server URL: `http://host.docker.internal:8765/mcp`; name: "Interface Adjudicator"; any icon.
+3. Save and authorise; you should see three tools: `list_cases`, `get_evidence`, `run_adjudication`.
+4. If the connection fails, see A8.
 
-### A6. 【需要你操作 · 待验证】搭问答应用
+### A6. [You act in the browser] Build the Q&A app
 
-1. **工作室 → 创建空白应用 → Agent**,名称"蛋白质界面问答"。
-2. 提示词:粘贴 [`integrations/dify/system_prompt.md`](../integrations/dify/system_prompt.md) 里“系统提示词”一节的全部内容。
-3. 工具:添加刚接入的 MCP 服务里的三个工具。
-4. 模型:`deepseek-chat`。
-5. 开场白建议:"你好,我可以帮你查 FAT10 和 MAD2 结合界面的证据。可以直接问,比如:证据是否冲突?"
-6. 在右侧预览里测试(见下面的三个问题),回答里每条信息应带"实时 / 引用 / 待定"之一,并且不出现工具没给过的数字或文献。
+1. **Studio → Create from blank → Agent**, named "Protein interface Q&A".
+2. Prompt: paste everything under "System prompt" in [`integrations/dify/system_prompt.md`](../integrations/dify/system_prompt.md).
+3. Tools: add the three tools of the MCP server you just connected.
+4. Model: `deepseek-chat`.
+5. Opening message: see the same file.
+6. Test in the preview pane with the three questions below. Every piece of information in an answer should carry one of "live / cited / pending", and no number or citation the tools did not return should appear.
 
-测试问题:
+Test questions:
 
-- "FAT10 和 MAD2 是在哪里结合的?MD 结果和文献一致吗?"(应调用 `get_evidence`,如实说 MD 的 C 端区域与文献 / NMR 的 UBL1 6–81 不一致,并且不判断哪一方正确)
-- "帮我做一次完整调查。"(会调用 `run_adjudication`,较慢、要花一点 DeepSeek 额度)
-- "MDM2 和 p53 呢?"(应调用 `list_cases` / `run_adjudication`,并说明这对蛋白没有分子动力学数据,该项为待定)
+- "Where do FAT10 and MAD2 bind each other? Do the MD results agree with the literature?" (should call `get_evidence`, report that the MD's C-terminal region and the literature / NMR UBL1 6–81 disagree, and not say which side is right)
+- "Please run a full investigation." (calls `run_adjudication`; slower, and costs a little DeepSeek credit)
+- "What about MDM2 and p53?" (should call `list_cases` / `run_adjudication` and say that this pair has no molecular-dynamics data, so that item is pending)
 
-### A7. 导出应用配置(DSL)【需要你操作 · 待验证】
+The prompt lets the app answer in the language the user asked in.
 
-应用页面右上角菜单 → **导出 DSL**(**不要**勾选"包含密钥"),把下载的 `.yml` 保存为 `integrations/dify/interface-adjudicator-qa.yml`。提交前检查文件里没有 API Key。
+### A7. Export the app configuration (DSL) [You act in the browser]
 
-### A8. 常见问题
+App page, top-right menu → **Export DSL** (**do not** tick "include secrets"). Save the downloaded `.yml` as `integrations/dify/interface-adjudicator-qa.yml`. Before committing, check that the file contains no API key.
 
-- **MCP 连接失败**:
-  1. 先确认 MCP 服务器在运行(`http://127.0.0.1:8765/mcp` 用浏览器打开会返回 HTTP 400 `Missing session ID` 的 JSON 错误,说明服务在监听;本机实测)。
-  2. 启动命令必须带 `--allow-host host.docker.internal:8765`,否则服务器会返回 HTTP 421 `Invalid Host header`(本机用伪造的 Host 头实测过)。
-  3. 报 403 而不是 421:见第 A1b 节(Dify 的 `ssrf_proxy` 拦截了请求,不是本仓库的服务器拒绝的)。
-- **`run_adjudication` 超时**:这是一次完整的调查,要几十秒;把 Dify 里工具调用的超时时间调大。
-- **回答里出现了工具没给过的数字或文献**:提示词没有约束好,重设为 `integrations/dify/system_prompt.md` 的内容,并把它当缺陷记录下来。
+Dify's build mode may also create extra items for the app (a configuration note and skills). Whether such items are part of the exported DSL has to be read from the exported file itself; this document does not claim either way until the file is in the repository.
+
+### A8. Troubleshooting
+
+- **MCP connection fails**:
+  1. First make sure the MCP server is running (opening `http://127.0.0.1:8765/mcp` in a browser returns an HTTP 400 JSON error `Missing session ID`, which shows the service is listening; checked on this machine).
+  2. The start command must include `--allow-host host.docker.internal:8765`; otherwise the server returns HTTP 421 `Invalid Host header` (checked here with a forged Host header).
+  3. A 403 rather than a 421: see A1b (Dify's `ssrf_proxy` blocked the request; it was not refused by this repository's server).
+- **`run_adjudication` times out**: it is a full investigation and takes tens of seconds; raise the tool-call timeout in Dify.
+- **The tool was called with `case_id` "fat10-mad2" and failed** (reported by the person who ran Dify; no log was saved): the MCP server now normalises case ids, ignoring case, hyphens, underscores and spaces (`fat10-mad2`, `FAT10 MAD2` and `fat10_mad2` are the same case), and an unknown id returns an error that lists the valid ids.
+- **An answer contains a number or citation the tools never gave**: the prompt is not constraining the model well; reset it to the content of `integrations/dify/system_prompt.md` and record it as a defect.
 
 ---
 
-## B. OpenAPI 自定义工具(方式 B)
+## B. OpenAPI custom tool (way B)
 
-目标:让不写代码的同事在 Dify 的聊天界面里问"MAD2 结合 FAT10 的哪里?证据是否冲突?",答案由本仓库的 FastAPI 服务提供。
+Goal: let colleagues who do not write code ask, in Dify's chat interface, "Where does MAD2 bind FAT10? Does the evidence conflict?", with the answer provided by this repository's FastAPI service.
 
-> 说明:本文按 Dify 的通用界面写成,尚未在某个具体版本上逐步实测;菜单名称可能随版本略有不同。
+> Note: this part is written for Dify's general interface and was not walked through step by step on a specific version; menu names may differ slightly between versions.
 
-Dify 只是一个"前台":真实数据、判断逻辑和"真实 / 引用 / 待定"标签都由 API 给出,Dify 里的语言模型只负责把 API 返回的内容转述成人话。
+### B1. First get the API running on your machine
 
-### B1. 先在本机把 API 跑起来
-
-任选一种:
+Either way:
 
 ```bash
-# A. Docker(推荐)
-docker compose up --build            # 读取环境变量 DEEPSEEK_API_KEY(可以为空)
+# A. Docker (recommended)
+docker compose up --build            # reads the environment variable DEEPSEEK_API_KEY (may be empty)
 
-# B. 本地 Python
+# B. Local Python
 pip install -r requirements.txt
 uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
 
-检查:浏览器打开 `http://localhost:8000/health`,应看到 `"status": "ok"`。`llm_configured` 为 `false` 时,`/evidence` 仍可用,`/adjudicate` 和 `/debate` 会拒绝(需要在环境变量里设置 `DEEPSEEK_API_KEY`)。
+Check: open `http://localhost:8000/health` in a browser; you should see `"status": "ok"`. When `llm_configured` is `false`, `/evidence` still works, while `/adjudicate` and `/debate` refuse (set `DEEPSEEK_API_KEY` in the environment).
 
-不想搭 Dify 时,直接用浏览器打开 `http://localhost:8000/` 就是一个可用的网页界面(见 README)。
+If you do not want to set up Dify, simply opening `http://localhost:8000/` in a browser gives a usable web interface (see the README).
 
-### B2. 导入 OpenAPI 文件
+### B2. Import the OpenAPI file
 
-接口说明文件在 `docs/openapi.json`,由脚本从代码生成(改了接口后重新生成):
+The interface description is in `docs/openapi.json`, generated from the code by a script (regenerate it after changing the API):
 
 ```bash
-python scripts/export_openapi.py            # 生成 docs/openapi.json
-python scripts/export_openapi.py --check    # 检查是否过期
+python scripts/export_openapi.py            # writes docs/openapi.json
+python scripts/export_openapi.py --check    # checks whether it is out of date
 ```
 
-在 Dify 中:**工具 → 自定义 → 创建自定义工具 → 选择"导入 OpenAPI"**,粘贴 `docs/openapi.json` 的全部内容(或上传文件)。
+In Dify: **Tools → Custom → Create custom tool → choose "Import OpenAPI"**, and paste the whole content of `docs/openapi.json` (or upload the file).
 
-**服务器地址要改成 Dify 真正能访问到的地址**(文件里默认写的是 `http://host.docker.internal:8000`):
+**Change the server address to one Dify can really reach** (the file says `http://host.docker.internal:8000` by default):
 
-| Dify 在哪里运行 | 服务器地址填 |
+| Where Dify runs | Server address to use |
 |---|---|
-| 同一台电脑的 Docker | `http://host.docker.internal:8000`(Linux 需要在 Dify 的 compose 里给相关服务加 `extra_hosts: ["host.docker.internal:host-gateway"]`) |
-| API 与 Dify 在同一个 Docker 网络 | `http://adjudicator:8000`(`docker-compose.yml` 里的服务名) |
-| Dify 云端版本 | 云端访问不到你的 localhost,需要按第 B4 节做受保护的公网入口 |
+| Docker on the same computer | `http://host.docker.internal:8000` (on Linux, add `extra_hosts: ["host.docker.internal:host-gateway"]` to the relevant services in Dify's compose file; on a self-hosted Dify also do step A1b) |
+| The API and Dify in the same Docker network | `http://adjudicator:8000` (the service name in `docker-compose.yml`) |
+| Dify's cloud version | the cloud cannot reach your localhost; build a protected public entry as in section B4 |
 
-导入后会出现这些工具(名字来自接口的 operationId):
+After the import these tools appear (the names come from the operationId of the API):
 
-| 工具名 | 作用 | 需要 key | 耗时 |
+| tool | what it does | needs a key | time |
 |---|---|---|---|
-| `get_evidence` | 真实 MD 证据 + 文献预期区域 + 冲突标记 | 否 | 快 |
-| `health_check` | 服务是否在线、是否配置了 LLM key | 否 | 快 |
-| `service_info` | 服务说明和接口列表 | 否 | 快 |
-| `list_cases` | 网页用的预设案例列表 | 否 | 快 |
-| `run_query` | 网页用的一次完整查询:通俗结论 + 带"实时 / 引用 / 待定"标签的证据 + 本次耗时和费用(参数:`case_id`,或两个 UniProt 号) | 是 | 慢 |
-| `run_query_stream` | 与 `run_query` 相同的查询,但用 Server-Sent Events 实时推送每一步(给网页用)。**不要**把它当 Dify 工具用,Dify 的自定义工具读不了事件流,请用 `run_query` 或 MCP | 是 | 慢 |
-| `run_adjudication` | 让调查 agent 自己查证并给出结论 | 是 | 慢 |
-| `run_debate` | MD 辩方 / NMR 辩方 / 法官辩论 | 是 | 慢 |
+| `get_evidence` | real MD evidence + literature-expected region + conflict flag | no | fast |
+| `health_check` | whether the service is online and whether an LLM key is configured | no | fast |
+| `service_info` | service description and list of endpoints | no | fast |
+| `list_cases` | the preset cases for the web page | no | fast |
+| `run_query` | one complete query for the web page: plain-language conclusion + evidence labelled live / cited / pending + time and cost of this query (parameters: `case_id`, or two UniProt accessions) | yes | slow |
+| `run_query_stream` | the same query as `run_query`, but pushes every step live as Server-Sent Events (for the web page). **Do not** use it as a Dify tool: Dify's custom tools cannot read an event stream; use `run_query` or MCP | yes | slow |
+| `run_adjudication` | let the investigator agent look things up itself and give a conclusion | yes | slow |
+| `run_debate` | MD advocate / NMR advocate / judge debate | yes | slow |
 
-在工具页面点"测试",先测 `health_check` 和 `get_evidence`。
+On the tool page press "Test"; try `health_check` and `get_evidence` first.
 
-### B3. 搭一个最简单的聊天流(Chatflow)
+### B3. Build the simplest chat flow (Chatflow)
 
-在 Dify 新建 **Chatflow**,节点依次为:
+In Dify create a **Chatflow** with these nodes in order:
 
-1. **开始**:使用默认的用户输入。
-2. **工具节点**:选 `get_evidence`(没有参数)。
-3. **LLM 节点**:把工具节点的输出作为上下文,系统提示词填:
+1. **Start**: use the default user input.
+2. **Tool node**: choose `get_evidence` (no parameters).
+3. **LLM node**: use the output of the tool node as context; for the system prompt enter:
 
-   > 你是蛋白质界面证据的解说员。只能使用工具返回的内容回答,不许编造残基、数值、PDB 号或文献。请区分三类信息并明确标注:**真实**(工具在本次运行中测得或取得)、**引用**(已发表文献的结论,不是本系统重新推导的)、**待定**(还没有数据)。如果工具返回了矛盾标记,如实说明"MD 结果与文献预期不一致",不要判定哪一方正确,并建议用户做实验验证。回答用用户的语言。
+   > You explain protein-interface evidence. Answer only with what the tools returned; never invent residues, numbers, PDB IDs or citations. Tell three kinds of information apart and label them clearly: **live** (measured or retrieved by the tool during this run), **cited** (a conclusion from the published literature, not re-derived by this system), **pending** (no data yet). If the tool returned a contradiction flag, say plainly that "the MD result disagrees with the literature expectation", do not decide which side is right, and suggest validating with an experiment. Answer in the language the user asked in.
 
-4. **直接回复**:输出 LLM 节点的回答。
+4. **Direct reply**: output the answer of the LLM node.
 
-想让用户能"深入调查"时,再加一个**条件分支**:用户消息包含"深入调查"或"完整调查"时,走 `run_adjudication`(把用户的问题填进它的 `goal` 参数);其余情况走上面的 `get_evidence`。注意:
+To let users "dig deeper", add a **conditional branch**: when the user message contains "in-depth investigation" or "full investigation", go through `run_adjudication` (put the user's question into its `goal` parameter); otherwise take the `get_evidence` path above. Note:
 
-- 这两个慢工具要在 Dify 里**调高工具/HTTP 超时时间**,默认的超时通常比一次完整调查短。
-- 它们会消耗 DeepSeek 额度,不要放在会被频繁触发的自动流程里。
-- 目前 API 只针对 FAT10-MAD2 这一对蛋白;别的蛋白对不会因为问题里换了名字就切换。
+- For these two slow tools, **raise the tool / HTTP timeout in Dify**; the default is usually shorter than one full investigation.
+- They use DeepSeek credit; do not put them in an automatic flow that is triggered often.
+- The API currently covers only the FAT10–MAD2 pair; another protein pair is not selected just because the question uses other names.
 
-### B4. 安全地暴露本地 API
+### B4. Exposing a local API safely
 
-**这个 API 自己没有任何身份验证。** 谁能访问到它,谁就能调用 `/adjudicate` 和 `/debate`,消耗你的 DeepSeek 额度。因此:
+**This API has no authentication of its own.** Anyone who can reach it can call `/adjudicate` and `/debate` and use up your DeepSeek credit. Therefore:
 
-1. **默认只在本机可见。** 用 Docker 时把 `docker-compose.yml` 里的端口写成 `"127.0.0.1:8000:8000"`(现在写的 `"8000:8000"` 会对整个局域网开放);用 uvicorn 时用 `--host 127.0.0.1`。
-2. **Dify 和 API 在同一台机器时,不需要公网入口**,用第 B2 节表格里的内部地址即可。
-3. **必须让云端 Dify 访问时**,不要直接开放端口。在 API 前面放一层带密钥的反向代理(Caddy / nginx),或用带访问控制的隧道(Cloudflare Tunnel + Access、Tailscale),并且:
-   - 要求请求头带密钥(在 Dify 自定义工具的"鉴权方式"里选 API Key,把密钥填在那里),代理校验后才转发;
-   - 如果只是想让别人看证据,代理里**只放行 `GET /evidence` 和 `GET /health`**,不要放行 `/adjudicate`、`/debate`;
-   - 定期更换密钥,并在代理里做访问日志和限流。
-4. **`DEEPSEEK_API_KEY` 只放在运行 API 的机器的环境变量里**,不要写进 Dify 的工作流、提示词、仓库或截图。
-5. 不要把 `results/` 里的运行日志发到公开地方,里面有完整的提问内容。
+1. **Keep it visible on the local machine only, by default.** With Docker write the port in `docker-compose.yml` as `"127.0.0.1:8000:8000"` (the current `"8000:8000"` opens it to the whole local network); with uvicorn use `--host 127.0.0.1`.
+2. **When Dify and the API run on the same machine, no public entry is needed**; use the internal addresses in the table of section B2.
+3. **When a cloud Dify must reach it**, do not open the port directly. Put a reverse proxy with a key (Caddy / nginx) in front of the API, or a tunnel with access control (Cloudflare Tunnel + Access, Tailscale), and:
+   - require a key in the request header (in Dify's custom tool "authorization method" choose API Key and enter the key there), which the proxy checks before forwarding;
+   - if people only need to see the evidence, **let only `GET /evidence` and `GET /health` through** the proxy, and not `/adjudicate` or `/debate`;
+   - rotate the key regularly and keep access logs and rate limits in the proxy.
+4. **Keep `DEEPSEEK_API_KEY` only in the environment of the machine that runs the API**; do not write it into Dify workflows, prompts, the repository or screenshots.
+5. Do not post the run log in `results/` anywhere public; it contains the full text of the questions asked.
 
-### B5. 常见问题
+### B5. Frequently asked questions
 
-- **工具调用报连接失败**:服务器地址不对(见第 B2 节表格),或 API 没在运行。先在 Dify 所在环境里访问 `/health`。
-- **`run_adjudication` 返回 400**:运行 API 的环境没有设置 `DEEPSEEK_API_KEY`。
-- **回答里出现了工具没给过的数字或文献**:LLM 节点的提示词没有约束好,按第 B3 节的系统提示词重设,并把它当作缺陷记录下来。
-- **改了接口之后 Dify 里的工具没变**:重新运行 `python scripts/export_openapi.py`,在 Dify 里重新导入。
+- **A tool call reports a connection failure**: the server address is wrong (see the table in section B2) or the API is not running. First open `/health` from the environment Dify runs in.
+- **`run_adjudication` returns 400**: `DEEPSEEK_API_KEY` is not set in the environment that runs the API.
+- **An answer contains numbers or citations that no tool gave**: the prompt of the LLM node is not constraining the model; reset it with the system prompt in section B3 and record it as a defect.
+- **The tools in Dify did not change after the API changed**: run `python scripts/export_openapi.py` again and re-import in Dify.

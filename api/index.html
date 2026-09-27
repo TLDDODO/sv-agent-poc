@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -69,8 +69,8 @@
       <p class="sub" data-i18n="subtitle"></p>
     </div>
     <div class="lang" role="group" aria-label="Language / 语言">
-      <button type="button" id="lang-zh" aria-pressed="true">中文</button>
-      <button type="button" id="lang-en" aria-pressed="false">English</button>
+      <button type="button" id="lang-zh" aria-pressed="false">中文</button>
+      <button type="button" id="lang-en" aria-pressed="true">English</button>
     </div>
   </header>
 
@@ -210,7 +210,7 @@
     }
   };
   var $ = function (id) { return document.getElementById(id); };
-  var lang = "zh", mode = "preset", last = null, cases = [], lastErr = null;
+  var lang = "en", mode = "preset", last = null, cases = [], lastErr = null;
   var t = function (k) { return I18N[lang][k]; };
   var pick = function (o) { return o && typeof o === "object" ? o[lang] : o; };
 

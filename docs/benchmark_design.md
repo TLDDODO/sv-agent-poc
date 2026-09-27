@@ -1,135 +1,132 @@
-# 基准设计(S4,仅设计文档)
+# Benchmark design (S4, design document only)
 
-> 状态:**等待人工审批(GATE)**。本文件只是设计,未改任何代码。
-> 文中每个 UniProt / PDB / PMID、界面残基与计数,都来自 2026-09-26 由人工本地电脑(Windows)上运行的真实 API 调用。
-> 调用由已提交的脚本 `docs/benchmark_evidence/build_evidence.py` 执行,原始派生结果已提交为 `docs/benchmark_evidence/evidence.json`(含残基名核对、被丢弃残基、共复合物条目与 PMID、文献检索);本文的数字均抄自该文件,可重跑核对。调用清单见附录 A。
+> Status: **approved by the human (GATE passed, 2026-09-26)**. This file is a design; it changed no code.
+> Every UniProt / PDB / PMID, interface residue and count in this document comes from real API calls run on 2026-09-26 on the human's local computer (Windows).
+> The calls were made by the committed script `docs/benchmark_evidence/build_evidence.py`; its raw derived results are committed as `docs/benchmark_evidence/evidence.json` (including the residue-name check, dropped residues, co-complex entries with their PMIDs, and the literature searches). The numbers here are copied from that file and can be re-run and checked. The list of calls is in Appendix A.
 
-## 1. 目的
+## 1. Purpose
 
-v1 只在一个案例上评估(n=1)。v2 要在 5 个"实验上已解出复合物"的蛋白对上报告准确率:
-agent 只看到**不含答案**的证据,预测界面在哪个区域,再与 PDBe 报告的该复合物界面比对。
+v1 was evaluated on one case only (n=1). v2 has to report accuracy on 5 protein pairs whose complexes have been solved experimentally: the agent sees only evidence that **does not contain the answer**, predicts which region the interface is in, and the prediction is compared with the interface that PDBe reports for that complex.
 
-## 2. 五个蛋白对
+## 2. The five protein pairs
 
-界面 = PDBe 托管的 PISA 服务(附录 A-3)对该条目报告的**面积最大的、连接这两条链的界面**中,
-埋藏表面积(bsa)> 0 的残基。残基编号已用 PDBe SIFTS 映射(附录 A-2)换算成 **UniProt 编号**,
-并逐残基核对了三字母残基名与 UniProt 序列(附录 A-4)。
+Interface = the residues with buried surface area (bsa) > 0 in the **largest interface connecting the two chains**, as reported for that entry by the PISA service hosted at PDBe (Appendix A-3). Residue numbers were converted to **UniProt numbering** with the PDBe SIFTS mapping (Appendix A-2), and each residue's three-letter name was checked against the UniProt sequence (Appendix A-4).
 
-| # | 蛋白 A | 蛋白 B | 真值 PDB | 方法 / 分辨率 | PISA 界面(id / 面积 Å²) | 链 A / 链 B |
+| # | Protein A | Protein B | Ground-truth PDB | Method / resolution | PISA interface (id / area Å²) | Chain A / chain B |
 |---|---|---|---|---|---|---|
-| 1 | CDK2 `P24941` | Cyclin-A2 `P20248` | `1FIN` | X 射线 / 2.3 Å | 1 / 1697.5 | A / B |
-| 2 | HRas `P01112` | RAF1 `P04049` | `4G0N` | X 射线 / 2.45 Å | 2 / 614.0 | A / B |
-| 3 | MDM2 `Q00987` | p53 `P04637` | `1YCR` | X 射线 / 2.6 Å | 1 / 722.4 | A / B |
-| 4 | Bcl-xL (BCL2L1) `Q07817` | BAK `Q16611` | `1BXL` | 溶液 NMR | 1 / 865.7 | A / B |
-| 5 | PCNA `P12004` | p21 (CDKN1A) `P38936` | `1AXC` | X 射线 / 2.6 Å | 1 / 1087.5 | C / D |
+| 1 | CDK2 `P24941` | Cyclin-A2 `P20248` | `1FIN` | X-ray / 2.3 Å | 1 / 1697.5 | A / B |
+| 2 | HRas `P01112` | RAF1 `P04049` | `4G0N` | X-ray / 2.45 Å | 2 / 614.0 | A / B |
+| 3 | MDM2 `Q00987` | p53 `P04637` | `1YCR` | X-ray / 2.6 Å | 1 / 722.4 | A / B |
+| 4 | Bcl-xL (BCL2L1) `Q07817` | BAK `Q16611` | `1BXL` | solution NMR | 1 / 865.7 | A / B |
+| 5 | PCNA `P12004` | p21 (CDKN1A) `P38936` | `1AXC` | X-ray / 2.6 Å | 1 / 1087.5 | C / D |
 
-### 真值界面(UniProt 编号)
+### Ground-truth interfaces (UniProt numbering)
 
-**1. CDK2–Cyclin A2(1FIN)**
-- CDK2(52 个残基,范围 37–279):37–46, 49, 50, 52–54, 56, 57, 69, 71–73, 76, 116, 119–122, 124, 126, 150–159, 162, 179–183, 271, 272, 274, 276–279
-- Cyclin-A2(42 个残基,范围 173–317):173–178, 181, 182, 185, 186, 189, 228, 230, 263, 266–272, 274, 275, 288, 289, 292, 293, 295, 296, 299, 300, 303–309, 312, 313, 316, 317
-- UniProt 注释:CDK2 `Protein kinase` 4–286(覆盖 52/52);没有任何 UniProt Domain/Region/Motif 特征与 Cyclin-A2 的界面残基重叠(`evidence.json` 中该蛋白 `features` 为空;它的非 Disordered 特征列表 `all_features_non_disordered` 也为空,另有 2 个 Disordered 特征)。
+**1. CDK2–Cyclin A2 (1FIN)**
+- CDK2 (52 residues, range 37–279): 37–46, 49, 50, 52–54, 56, 57, 69, 71–73, 76, 116, 119–122, 124, 126, 150–159, 162, 179–183, 271, 272, 274, 276–279
+- Cyclin-A2 (42 residues, range 173–317): 173–178, 181, 182, 185, 186, 189, 228, 230, 263, 266–272, 274, 275, 288, 289, 292, 293, 295, 296, 299, 300, 303–309, 312, 313, 316, 317
+- UniProt annotation: CDK2 `Protein kinase` 4–286 (covers 52/52); no UniProt Domain/Region/Motif feature overlaps the interface residues of Cyclin-A2 (in `evidence.json` the `features` of that protein are empty; its list of non-Disordered features `all_features_non_disordered` is also empty, and there are 2 Disordered features).
 
-**2. HRas–RAF1(4G0N)**
-- HRas(16 个,范围 21–56):21, 24, 25, 27, 29, 31, 33, 34, 36–41, 54, 56
-- RAF1(17 个,范围 57–90):57, 59, 64–71, 73, 84, 85, 87–90
-- UniProt 注释:RAF1 `RBD` 56–131(覆盖 17/17);HRas `Effector region` 32–40(覆盖 7/16)。
+**2. HRas–RAF1 (4G0N)**
+- HRas (16 residues, range 21–56): 21, 24, 25, 27, 29, 31, 33, 34, 36–41, 54, 56
+- RAF1 (17 residues, range 57–90): 57, 59, 64–71, 73, 84, 85, 87–90
+- UniProt annotation: RAF1 `RBD` 56–131 (covers 17/17); HRas `Effector region` 32–40 (covers 7/16).
 
-**3. MDM2–p53(1YCR)**
-- MDM2(26 个,范围 25–104):25, 26, 49–51, 54, 55, 57, 58, 61, 62, 67, 70–73, 75, 86, 91, 93, 94, 96, 99, 100, 103, 104
-- p53(12 个,范围 17–29):17–20, 22–29
-- UniProt 注释:MDM2 `SWIB/MDM2` 26–109(覆盖 25/26);p53 `TADI` 17–25(覆盖 8/12)、`Transcription activation (acidic)` 1–44(覆盖 12/12)。
+**3. MDM2–p53 (1YCR)**
+- MDM2 (26 residues, range 25–104): 25, 26, 49–51, 54, 55, 57, 58, 61, 62, 67, 70–73, 75, 86, 91, 93, 94, 96, 99, 100, 103, 104
+- p53 (12 residues, range 17–29): 17–20, 22–29
+- UniProt annotation: MDM2 `SWIB/MDM2` 26–109 (covers 25/26); p53 `TADI` 17–25 (covers 8/12), `Transcription activation (acidic)` 1–44 (covers 12/12).
 
-**4. Bcl-xL–BAK(1BXL)**
-- Bcl-xL(29 个,范围 93–204):93, 96, 97, 100, 101, 104, 105, 107, 108, 111, 112, 125, 126, 129, 130, 132, 136–139, 141, 142, 146, 194, 195, 199, 200, 203, 204
-- BAK(15 个,范围 72–87):72–82, 84–87
-- UniProt 注释:BAK `BH3` 74–88(覆盖 13/15);Bcl-xL 无单一主导结构域(BH3 4、BH1 10、BH2 2,合计不到全部 29 个)。
-- 1 个残基被丢弃:链 A 210 位 PDB 残基名 LEU,而 UniProt 该位是 F(名字对不上,不能当真值)。
+**4. Bcl-xL–BAK (1BXL)**
+- Bcl-xL (29 residues, range 93–204): 93, 96, 97, 100, 101, 104, 105, 107, 108, 111, 112, 125, 126, 129, 130, 132, 136–139, 141, 142, 146, 194, 195, 199, 200, 203, 204
+- BAK (15 residues, range 72–87): 72–82, 84–87
+- UniProt annotation: BAK `BH3` 74–88 (covers 13/15); Bcl-xL has no single dominant domain (BH3 4, BH1 10, BH2 2, together fewer than all 29).
+- 1 residue was dropped: chain A position 210 is named LEU in the PDB, but UniProt has F at that position (the names disagree, so it cannot be used as ground truth).
 
-**5. PCNA–p21(1AXC)**
-- PCNA(38 个,范围 27–255):27, 29, 40, 43–47, 67–69, 96, 97, 118–129, 131, 133, 208, 211, 232–234, 250–255
-- p21(17 个,范围 143–160):143–148, 150–160
-- UniProt 注释:p21 `PIP-box K+4 motif` 140–164(覆盖 17/17);PCNA 无 Domain 注释(只有 Region `Interaction with NUDT15` 7–100,覆盖 13/38)。
+**5. PCNA–p21 (1AXC)**
+- PCNA (38 residues, range 27–255): 27, 29, 40, 43–47, 67–69, 96, 97, 118–129, 131, 133, 208, 211, 232–234, 250–255
+- p21 (17 residues, range 143–160): 143–148, 150–160
+- UniProt annotation: p21 `PIP-box K+4 motif` 140–164 (covers 17/17); PCNA has no Domain annotation (only the Region `Interaction with NUDT15` 7–100, covering 13/38).
 
-### 选择这五对的理由(如实说明)
+### Why these five pairs (stated honestly)
 
-- 每对都有真实的实验复合物,且 UniProt 特征表或文献给 agent 留有可用线索。
-- 难度有梯度:#2、#3、#5 的一侧有直接的 UniProt 结构域/基序注释(较容易);#1 的 Cyclin-A2 一侧**没有**结构域注释,必须靠文献/结构推断(较难)。
-- 类型不同:结构域–结构域(#1)、结构域–结构域(#2)、结构域–短肽(#3、#4、#5)。
-- **注意**:n=5,单案例即占 20%,准确率的置信区间会很宽;结果只能当趋势看,不能宣称统计显著。
-- 用 UniProt 特征表会让部分案例偏容易,这是刻意的("agent 可用的结构域注释"),但报告里要如实说明。
+- Each pair has a real experimental complex, and the UniProt feature table or the literature leaves the agent usable clues.
+- The difficulty is graded: for #2, #3 and #5 one side has a direct UniProt domain/motif annotation (easier); for #1 the Cyclin-A2 side has **no** domain annotation, so it has to be inferred from literature/structure (harder).
+- The types differ: domain–domain (#1), domain–domain (#2), domain–short peptide (#3, #4, #5).
+- **Note**: with n=5 a single case is 20%, so the confidence interval of the accuracy will be wide; the result can only be read as a trend and must not be claimed statistically significant.
+- Using the UniProt feature table makes some cases easier. This is deliberate ("domain annotations the agent can use"), but the report has to say so.
 
-## 3. agent 会看到什么(并标注来源类型)
+## 3. What the agent will see (with the kind of source)
 
-| 证据 | 基准案例中的行为 |
+| Evidence | Behaviour in a benchmark case |
 |---|---|
-| UniProt 序列 + 特征表(Domain/Region/Motif) | live。**不**提供 UniProt 的 Subunit 等注释文本和交叉引用(可能直接点出复合物)。已核对(`evidence.json` 各蛋白的 `ground_truth_pdb_id_in_uniprot`):特征表和注释(comments)中都没有出现真值 PDB ID;但**交叉引用(uniProtKBCrossReferences)里有**,因此必须不给 agent 看交叉引用(附录 A-5)。 |
-| PDBe 结构列表(`fetch_structures`) | live,但**过滤掉所有同时含这两个蛋白的条目**(见 §5),只剩单个蛋白或与其他伙伴的结构。 |
-| PubMed 文献(`search_literature`) | live,但**过滤掉所有含这两个蛋白的 PDB 条目的发表文献**(见 §5)。 |
-| MD 接触占有率 | `pending`(这些对没有跑 MD)。 |
-| AlphaFold-Multimer / HADDOCK / PISA 预测 | `pending`。其中 **PISA 必须保持 pending**:PISA 正是真值来源,一旦开放就等于泄露答案。 |
-| 辩论(MD 辩方 vs NMR 辩方) | 无 MD 证据、无 NMR 冲突可辩;基准里不召开辩论,只评估 agent 的界面判断。 |
+| UniProt sequence + feature table (Domain/Region/Motif) | live. The UniProt Subunit and other annotation text and the cross-references are **not** provided (they can name the complex directly). Checked (`ground_truth_pdb_id_in_uniprot` for each protein in `evidence.json`): the ground-truth PDB ID appears neither in the feature table nor in the comments; but it **does** appear in the cross-references (uniProtKBCrossReferences), so the cross-references must not be shown to the agent (Appendix A-5). |
+| PDBe structure list (`fetch_structures`) | live, but **with every entry that contains both proteins filtered out** (see §5), leaving only structures of a single protein or with other partners. |
+| PubMed literature (`search_literature`) | live, but **with the publications of every PDB entry that contains both proteins filtered out** (see §5). |
+| MD contact occupancy | `pending` (no MD was run for these pairs). |
+| AlphaFold-Multimer / HADDOCK / PISA predictions | `pending`. **PISA must stay pending**: PISA is the source of the ground truth, so opening it would leak the answer. |
+| Debate (MD advocate vs NMR advocate) | there is no MD evidence and no NMR conflict to argue about; no debate is convened in the benchmark, only the agent's interface judgement is assessed. |
 
-与 FAT10–MAD2 相比 agent 缺少:MD 轨迹证据、本地评分文件、手工核实的 NMR/文献结论(FAT10 的 UBL1 6–81 是人工核实的先验)。因此基准考察的是"仅凭序列注释 + 结构 + 文献能否定位界面",**不是**矛盾检测能力。FAT10–MAD2 案例仍单独保留,其"MD 界面在 C 端 vs 文献/NMR UBL1 6–81"的矛盾结论及措辞不变。
+Compared with FAT10–MAD2 the agent lacks: MD trajectory evidence, a local score file, and a hand-verified NMR/literature conclusion (FAT10's UBL1 6–81 is a manually verified prior). So the benchmark tests "can the interface be located from sequence annotations + structures + literature alone", **not** the ability to detect contradictions. The FAT10–MAD2 case is kept separately, and its conclusion — "the MD interface is in the C-terminal region vs the literature/NMR UBL1 6–81" — and its wording are unchanged.
 
-## 4. 评分规则
+## 4. Scoring rule
 
-对每个蛋白对的每一侧(蛋白 A、蛋白 B),agent 提交预测界面区域 R(残基区间或残基集合,UniProt 编号)。T 为该侧真值界面残基集合(§2)。
+For each side of each protein pair (protein A, protein B) the agent submits a predicted interface region R (a residue interval or a set of residues, UniProt numbering). T is the ground-truth interface residue set of that side (§2).
 
-1. **区域命中(主指标,0/1)**:同时满足
-   - 召回 ≥ 50%:`|R ∩ T| / |T| ≥ 0.5`;
-   - 不靠"整条链"取巧:R 覆盖的长度 ≤ 2 × T 的跨度(T 的最大值 − 最小值 + 1)。
-2. **残基重叠(辅助指标)**:R 与 T 的 F1 与 Jaccard(仅当 agent 给出残基集合时计算)。
-3. **案例得分** = 两侧区域命中的平均值(0、0.5 或 1)。
-4. **总体准确率** = 所有案例、所有运行的案例得分平均。
-5. **稳定性**:同一案例多次运行,区域命中结果一致的比例(供 S6 报告)。
+1. **Region hit (primary metric, 0/1)**: both of the following hold
+   - recall ≥ 50%: `|R ∩ T| / |T| ≥ 0.5`;
+   - no cheating with "the whole chain": the length covered by R ≤ 2 × the span of T (max of T − min of T + 1).
+2. **Residue overlap (secondary metric)**: F1 and Jaccard of R against T (only computed when the agent gives a residue set).
+3. **Case score** = the mean of the region hits of the two sides (0, 0.5 or 1).
+4. **Overall accuracy** = the mean of the case scores over all cases and all runs.
+5. **Stability**: for the same case over several runs, the fraction of runs whose region-hit result agrees (for the S6 report).
 
-阈值(50%、2 倍跨度)是设计选择,不是从数据里拟合的,请审批时确认或修改。评分代码在 S6 实现,报告里的数字只从 `results/benchmark.json` 复制。
+The thresholds (50%, 2× span) are design choices, not fitted to data; please confirm or change them when approving. The scoring code is implemented in S6, and the numbers in the report are copied only from `results/benchmark.json`.
 
-## 5. 防答案泄露
+## 5. Preventing answer leakage
 
-1. **结构过滤(按"含两个蛋白"整体过滤,不是只挡真值 ID)**:对每个基准对,过滤掉 PDBe 中所有同时映射到这两个 UniProt 的条目。这一点是必要的:见下表,同一对蛋白往往有多个复合物条目,只挡真值 ID 会从其他条目泄露。
+1. **Structure filter (filter by "contains both proteins" as a whole, not just block the ground-truth ID)**: for each benchmark pair, filter out every PDBe entry that maps to both UniProt accessions. This is necessary: see the table below; one protein pair often has several complex entries, and blocking only the ground-truth ID would leak through the others.
 
-   | 对 | 同时含两个蛋白的 PDBe 条目数 |
+   | Pair | Number of PDBe entries containing both proteins |
    |---|---|
    | CDK2–Cyclin A2 | 111 |
-   | HRas–RAF1 | 6(`3KUD` `4G0N` `4G3X` `6NTC` `6NTD` `7JHP`) |
-   | MDM2–p53 | 2(`1YCR` `4HFZ`) |
-   | Bcl-xL–BAK | 3(`1BXL` `2LP8` `5FMK`) |
-   | PCNA–p21 | 6(`1AXC` `4RJF` `5E0U` `6CBI` `7KQ0` `7KQ1`) |
+   | HRas–RAF1 | 6 (`3KUD` `4G0N` `4G3X` `6NTC` `6NTD` `7JHP`) |
+   | MDM2–p53 | 2 (`1YCR` `4HFZ`) |
+   | Bcl-xL–BAK | 3 (`1BXL` `2LP8` `5FMK`) |
+   | PCNA–p21 | 6 (`1AXC` `4RJF` `5E0U` `6CBI` `7KQ0` `7KQ1`) |
 
-   过滤集合在**运行时**从 PDBe 实时构建(每个蛋白各查一次,取交集),不写死在代码里,以免遗漏。
-2. **文献过滤**:取这些条目在 PDBe 登记的发表文献 PMID(共 57 / 4 / 2 / 3 / 5 个,顺序同上表),从 `search_literature` 结果中剔除。**已用真实检索证明必要**:对 HRas–RAF1 查询 "HRAS RAF1 interaction binding domain",前 5 条中就有 PMID `34356620`(一篇 Ras–Raf 界面晶体结构论文,是 `7JHP` 的发表文献,不是 `4G0N` 的),不过滤会泄露(附录 A-6)。
-3. **PISA 保持 pending**(见 §3)。
-4. **UniProt 视图受限**:只给序列和特征表(§3);不给注释文本和交叉引用(交叉引用含真值 PDB ID,见 A-5)。
-5. **测试**(S5 实现):断言基准对的真值 PDB ID 及所有同类条目 ID 不出现在任何工具输出中。
-6. **残余风险(如实说明)**:
-   - 摘要里可能仍以文字描述结合区域。文献过滤只能挡住"复合物结构论文",挡不住综述等其他文献。这本来就是 agent 可以合法使用的证据类型,但会让部分案例偏容易。
-   - 单个蛋白的其他结构里若含模拟对方的多肽,无法自动识别。
-   - UniProt 特征表本身来自历史文献,可能间接反映该界面。
+   The filter set is built **at run time** from PDBe (one query per protein, then the intersection) and is not hard-coded, so nothing is missed.
+2. **Literature filter**: take the PMIDs of the publications registered at PDBe for those entries (57 / 4 / 2 / 3 / 5 of them, in the order of the table above) and remove them from the `search_literature` results. **Shown to be necessary by a real search**: for HRas–RAF1 the query "HRAS RAF1 interaction binding domain" returns, among its first 5 hits, PMID `34356620` (a crystal-structure paper on the Ras–Raf interface; it is the publication of `7JHP`, not of `4G0N`), which would leak if not filtered (Appendix A-6).
+3. **PISA stays pending** (see §3).
+4. **A restricted UniProt view**: only the sequence and the feature table are given (§3); the annotation text and the cross-references are not (the cross-references contain the ground-truth PDB ID, see A-5).
+5. **Test** (implemented in S5): assert that the ground-truth PDB ID of a benchmark pair and the IDs of all such entries never appear in any tool output.
+6. **Residual risks (stated honestly)**:
+   - An abstract may still describe the binding region in words. The literature filter only blocks "complex-structure papers", not reviews and other literature. This is a kind of evidence the agent may legitimately use, but it makes some cases easier.
+   - If another structure of a single protein contains a peptide mimicking the partner, it cannot be recognised automatically.
+   - The UniProt feature table itself comes from historical literature and may reflect the interface indirectly.
 
-## 6. 与现有工具的衔接(供 S5 参考,本步不改代码)
+## 6. Connection to the existing tools (for S5; this step changes no code)
 
-- `get_md_interface_scores` / `get_tool_prediction` 对基准对返回 `pending`,不返回占位数字。
-- `get_expected_interface_region` 现在写死 FAT10;基准案例需改成从 UniProt 特征表读取(S5)。
-- `map_residues` / `validate_residues` 已接受任意 UniProt,可复用。
+- `get_md_interface_scores` / `get_tool_prediction` return `pending` for benchmark pairs and never a placeholder number.
+- `get_expected_interface_region` is currently hard-coded to FAT10; for benchmark cases it has to read the UniProt feature table instead (S5).
+- `map_residues` / `validate_residues` already accept any UniProt accession and can be reused.
 
-## 附录 A:本设计用到的真实 API 调用(2026-09-26,本机)
+## Appendix A: real API calls used in this design (2026-09-26, this machine)
 
-A-1 至 A-6 的调用均成功返回(HTTP 200);A-7 是探测失败的端点。所有值均由这些调用得到,无凭记忆填写的 ID。
+The calls A-1 to A-6 all returned successfully (HTTP 200); A-7 lists endpoints that were probed and failed. Every value was obtained from these calls; no ID was filled in from memory.
 
-- **A-1 UniProt 特征表与序列**:对 `P24941 P20248 P01112 P04049 Q00987 P04637 Q07817 Q16611 P12004 P38936` 各调用
-  `https://rest.uniprot.org/uniprotkb/<ACC>.json`(蛋白名、长度、Domain/Region/Motif 特征)与
-  `https://rest.uniprot.org/uniprotkb/<ACC>.fasta`(残基名核对)。
-- **A-2 SIFTS 映射**:`https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/<pdb>`,`<pdb>` = `1fin 4g0n 1ycr 1bxl 1axc`。
-  1YCR 的 MDM2 链 A 在 SIFTS 里作者编号为空,因此假定作者编号 = UniProt 编号,并用 A-4 的残基名核对验证(26/26 一致)。
-- **A-3 PISA 界面**:`https://www.ebi.ac.uk/pdbe/pisa/cgi-bin/interfaces.pisa?<pdb>`,同上 5 个条目。取连接两条映射链的面积最大的界面;界面残基 = bsa > 0。
-- **A-4 残基名核对**(逐残基结果与被丢弃残基见 `evidence.json` 的 `bsa_residues_checked`、`dropped_name_mismatch`、`sifts_author_numbers_missing_assumed_equal_unp`):把 A-3 的三字母残基名与 A-1 的 UniProt 序列逐位比对。各案例界面残基总数与不一致数:
-  1FIN 52+42 全部一致;4G0N 16+17 全部一致;1YCR 26+12 全部一致;1BXL 30+15 中 1 个不一致(链 A 210 位,已丢弃);1AXC 38+17 全部一致。
-- **A-5 UniProt 泄露核对**:对 A-1 中 10 个蛋白的 JSON,分别检查 features、comments、uniProtKBCrossReferences 是否含对应真值 PDB ID。结果在 `evidence.json`:10 个蛋白的 features 与 comments 均不含;10 个蛋白的交叉引用均含(所以交叉引用不能给 agent)。
-- **A-6 共复合物条目与文献**:
-  - `https://www.ebi.ac.uk/pdbe/search/pdb/select?q=uniprot_accession:<ACC>&fl=pdb_id&rows=20000&wt=json`,对 10 个 UniProt 各一次,按蛋白对取交集得到 §5 的条目数与 ID。
-  - `https://www.ebi.ac.uk/pdbe/api/pdb/entry/summary/<pdb>`、`.../publications/<pdb>`、`.../experiment/<pdb>`(标题、方法、分辨率、发表 PMID),真值 5 个条目;`publications/<pdb>` 另对所有共复合物条目调用,得到 §5 的 PMID 数。
-  - `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=5&term=<query>`,5 条查询("CDK2 cyclin A binding interface"、"HRAS RAF1 interaction binding domain"、"MDM2 p53 interaction binding domain"、"BCL2L1 BAK1 interaction binding region"、"PCNA CDKN1A p21 interaction binding region"),与共复合物发表 PMID 求交:仅 HRAS–RAF1 命中 `34356620`。
-  - `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=34356620`(标题、期刊、年份记录在 `evidence.json` 的 `leaked_pmid_summaries`:Crystal Structure Reveals the Full Ras-Raf Interface and Advances Mechanistic Understanding of Raf Activation,Biomolecules,2021)。
-- **A-7 探测失败的端点**:`evidence.json` 的 `endpoint_probes` 记录了三个探测的 URL 及其 404 结果(`/pdbe/api/pisa/interfaces/1fin`、`/pdbe/api/pdb/entry/interfaces/1fin`、`data.rcsb.org/rest/v1/core/interface/1FIN/1`),均未使用。
+- **A-1 UniProt feature table and sequence**: for each of `P24941 P20248 P01112 P04049 Q00987 P04637 Q07817 Q16611 P12004 P38936`, calls to
+  `https://rest.uniprot.org/uniprotkb/<ACC>.json` (protein name, length, Domain/Region/Motif features) and
+  `https://rest.uniprot.org/uniprotkb/<ACC>.fasta` (residue-name check).
+- **A-2 SIFTS mapping**: `https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/<pdb>`, with `<pdb>` = `1fin 4g0n 1ycr 1bxl 1axc`.
+  The author numbering of MDM2 chain A in 1YCR is empty in SIFTS, so the author numbering is assumed to equal the UniProt numbering, and this was verified with the residue-name check of A-4 (26/26 agree).
+- **A-3 PISA interfaces**: `https://www.ebi.ac.uk/pdbe/pisa/cgi-bin/interfaces.pisa?<pdb>`, for the same 5 entries. The largest interface connecting the two mapped chains is taken; interface residues = bsa > 0.
+- **A-4 Residue-name check** (per-residue results and dropped residues are in `bsa_residues_checked`, `dropped_name_mismatch` and `sifts_author_numbers_missing_assumed_equal_unp` of `evidence.json`): the three-letter residue names from A-3 were compared position by position with the UniProt sequences from A-1. Total interface residues per case and number of mismatches:
+  1FIN 52+42 all agree; 4G0N 16+17 all agree; 1YCR 26+12 all agree; 1BXL 30+15 with 1 mismatch (chain A position 210, dropped); 1AXC 38+17 all agree.
+- **A-5 UniProt leak check**: for the JSON of each of the 10 proteins in A-1, whether features, comments and uniProtKBCrossReferences contain the corresponding ground-truth PDB ID. Result in `evidence.json`: none of the 10 proteins has it in features or comments; all 10 have it in the cross-references (so the cross-references cannot be shown to the agent).
+- **A-6 Co-complex entries and literature**:
+  - `https://www.ebi.ac.uk/pdbe/search/pdb/select?q=uniprot_accession:<ACC>&fl=pdb_id&rows=20000&wt=json`, once for each of the 10 UniProt accessions; the intersection per protein pair gives the entry counts and IDs of §5.
+  - `https://www.ebi.ac.uk/pdbe/api/pdb/entry/summary/<pdb>`, `.../publications/<pdb>`, `.../experiment/<pdb>` (title, method, resolution, publication PMID) for the 5 ground-truth entries; `publications/<pdb>` was also called for all co-complex entries, which gives the PMID counts of §5.
+  - `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=5&term=<query>`, for 5 queries ("CDK2 cyclin A binding interface", "HRAS RAF1 interaction binding domain", "MDM2 p53 interaction binding domain", "BCL2L1 BAK1 interaction binding region", "PCNA CDKN1A p21 interaction binding region"), intersected with the co-complex publication PMIDs: only HRAS–RAF1 hits `34356620`.
+  - `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=34356620` (title, journal and year are recorded in `leaked_pmid_summaries` of `evidence.json`: Crystal Structure Reveals the Full Ras-Raf Interface and Advances Mechanistic Understanding of Raf Activation, Biomolecules, 2021).
+- **A-7 Endpoints that were probed and failed**: `endpoint_probes` in `evidence.json` records the URLs of three probes and their 404 results (`/pdbe/api/pisa/interfaces/1fin`, `/pdbe/api/pdb/entry/interfaces/1fin`, `data.rcsb.org/rest/v1/core/interface/1FIN/1`); none of them was used.

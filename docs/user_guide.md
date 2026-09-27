@@ -1,52 +1,52 @@
-# 用户指南:界面裁决器(给不写代码的科研人员)
+# User guide: the Interface Adjudicator (for scientists who do not write code)
 
-## 它做什么
+## What it does
 
-你问一个关于 **FAT10 与 MAD2 蛋白结合位置**的问题,系统会去查证据、比对,然后给出带出处的回答:
+You ask a question about **where FAT10 and MAD2 bind each other**. The system gathers evidence, compares it, and answers with the source of every statement:
 
-- 读取**真实的分子动力学(MD)模拟**里每个残基与 MAD2 接触的比例;
-- 取得文献 / NMR 所预期的结合区域(FAT10 的第一个泛素样结构域);
-- 自动检查两者是否一致;不一致时,让"MD 辩方"和"文献辩方"各陈述理由,由"法官"给出谨慎的结论;
-- 需要时,去 PDBe(结构库)、UniProt(序列库)、PubMed(文献库)现查,并核对残基编号是否真的对应序列。
+- it reads the **real molecular dynamics (MD) simulation**: for each FAT10 residue, the fraction of frames in which it contacts MAD2;
+- it retrieves the binding region that the literature / NMR expects (FAT10's first ubiquitin-like domain);
+- it checks automatically whether the two agree; when they do not, an "MD advocate" and a "literature advocate" each argue their case and a "judge" gives a cautious verdict;
+- when needed it queries PDBe (structures), UniProt (sequences) and PubMed (literature) live, and checks that residue numbers really match the sequence.
 
-## 它不做什么
+## What it does not do
 
-- **不判定谁对。** FAT10-MAD2 目前没有实验解出的复合物结构,MD 和文献都是"模型 / 已发表结论",不是标准答案。两者冲突时,系统报告"存在矛盾",并建议做什么实验来验证,不会说"MD 错了"或"文献错了"。
-- **不编造数据。** 没有的数据会标"待定",不会用占位数字凑数。
-- **不做新的模拟或实验**,也不做实验测量。对别的蛋白对,网页只能给出基于注释、文献和结构库的预测(没有分子动力学数据,标“待定”),深入调查和辩论仍然只针对 FAT10-MAD2。
-- **不替代实验验证。** 它是帮你整理证据、发现矛盾的助手。
+- **It does not decide who is right.** There is no experimentally solved FAT10–MAD2 complex, so both the MD and the literature are "a model" or "a published conclusion", not ground truth. When they conflict the system reports "there is a contradiction" and suggests an experiment that could settle it. It never says "the MD is wrong" or "the literature is wrong".
+- **It does not invent data.** Missing data is labelled "pending"; placeholder numbers are never used.
+- **It runs no new simulations or experiments.** For other protein pairs the page can only give a prediction based on annotations, literature and structure databases (there is no MD data for them, so that item is "pending"); the in-depth investigation and the debate exist only for FAT10–MAD2.
+- **It does not replace experimental validation.** It helps you collect evidence and spot contradictions.
 
-## 网页界面
+## The web page
 
-服务启动后,用浏览器打开服务地址(本机默认 `http://localhost:8000/`)就能用:选一个示例,或输入两个蛋白的 UniProt 号,点"运行"。页面会给出通俗的结论、逐条证据(每条都标"实时 / 引用 / 待定")以及这次查询用了多少时间和费用。输入自己的蛋白对时,系统没有分子动力学数据,相关项会标"待定"。
+Once the service is running, open its address in a browser (`http://localhost:8000/` on your own machine): pick an example or enter two UniProt accessions and press "Run". While the query runs, a live timeline under the button shows step by step what the system is doing (which database it is asking, which evidence came back and how it is labelled, the debate rounds). Afterwards the page shows a plain-language conclusion, the evidence item by item (each labelled "Live / Cited / Pending") and how much time and money the query used. For a protein pair you type yourself there is no MD data, so those items are "pending".
 
-页面右上角可以切换中文 / English(默认中文),切换不会重新查询。"需要留意"里每一条都是一句通俗的话;前几条由程序根据工具的输出直接算出(例如 FAT10–MAD2 的分子动力学接触残基是否落在文献预期的区域内);其余是模型对系统原始标记的通俗改写,数字和残基名会被程序核对,但改写仍可能不完美。系统给出的原始标记和详细说明收在可展开的"技术细节"里,需要核对时再展开看。界面残基按序号排列。
+The page is in English by default; the switch at the top right changes it to Chinese without re-running the query. Every "points to watch" item is one plain sentence. The first ones are computed by the program directly from the tools' outputs (for example, whether the MD contact residues of FAT10–MAD2 fall inside the literature-expected region); the rest are a model's plain rewording of the system's raw flags. The program checks the numbers and residue names in a rewording, but a rewording can still be imperfect. The raw flags and the detailed explanation are in a collapsible "Technical details" section for when you need to check. Interface residues are listed in sequence order.
 
-## 怎么读回答
+## How to read an answer
 
-**三种标签**(每条信息都属于其中一种):
+**Three labels** (every piece of information carries exactly one):
 
-| 标签 | 含义 | 怎么用 |
+| label | meaning | how to use it |
 |---|---|---|
-| **真实(real)** | 本次运行中由工具测得或取得,如 MD 接触比例、UniProt 序列、PDBe 结构列表 | 可以直接引用,并注明来源 |
-| **引用(cited)** | 已发表文献的结论,系统只是转述,并没有重新推导 | 引用时写原文出处,而不是"本系统发现" |
-| **待定(pending)** | 还没有数据(例如某些预测工具的结果尚未提供) | 视为"没有证据",不要当作"结果是零" |
+| **Live** | measured or retrieved by a tool during this run, e.g. MD contact fractions, the UniProt sequence, the PDBe structure list | can be quoted directly, with its source |
+| **Cited** | a conclusion from the published literature that the system only repeats; it did not re-derive it | cite the original paper, not "this system found" |
+| **Pending** | no data yet (for example the result of a prediction tool that is not connected) | treat it as "no evidence", not as "the result is zero" |
 
-**结论怎么读**:
+**Reading the conclusion:**
 
-- **"存在矛盾(contradiction)"** = 两类证据指向不同的区域。这是一个**事实陈述**,不是"哪一方错了"。
-- **置信度**分两种:对"是否矛盾"的把握,以及对"哪一方正确"的把握。后者通常很低,因为没有实验结构。
-- **标记(flags)** 是需要人再确认的地方,比如残基编号与序列对不上。出现这类标记时,请先核对数据来源,再使用结论。
-- **建议(recommendation)** 是下一步该做的实验或复核,不是对真相的宣判。
+- **"Contradiction"** means two kinds of evidence point to different regions. It is a **statement of fact**, not a claim that one side is wrong.
+- **Confidence** comes in two kinds: how sure the system is that there is a contradiction, and how sure it is which side is right. The latter is usually low because there is no experimental structure.
+- **Flags** mark places where a person should look again, for example a residue number that does not match the sequence. When a flag appears, check the data source before using the conclusion.
+- **The recommendation** is the next experiment or check to do; it is not a ruling on the truth.
 
-## 三个可以直接问的问题
+## Three questions you can ask directly
 
-1. **"MAD2 结合 FAT10 的哪个区域?现有证据一致吗?"** ——得到 MD 接触证据、文献预期区域,以及是否矛盾的标记。
-2. **"MD 里接触最稳定的 FAT10 残基是哪些?它们在哪个结构域?"** ——得到残基列表(来自真实 MD 数据)和它们所在的结构域。
-3. **"请深入调查 FAT10-MAD2 的界面,并告诉我下一步该做什么实验。"** ——启动完整调查(会多花一些时间和额度),包括查文献、核对序列、在证据冲突时召开辩论,并给出建议的验证实验。
+1. **"Which region of FAT10 does MAD2 bind? Is the evidence consistent?"** You get the MD contact evidence, the literature-expected region and whether they contradict each other.
+2. **"Which FAT10 residues have the most stable contact in the MD, and which domain are they in?"** You get the residue list (from the real MD data) and the domains they belong to.
+3. **"Please investigate the FAT10–MAD2 interface in depth and tell me which experiment to do next."** This starts the full investigation (it takes longer and costs a little more): literature search, sequence checks, a debate when the evidence conflicts, and a suggested validation experiment.
 
-## 使用时的小提醒
+## Practical reminders
 
-- 看到"待定"或"无法核对"时,不要自己补数字;把它当作"缺证据"。
-- 重要结论请回到原始数据(MD 接触数据文件、文献原文)核对后再写进论文或报告。
-- 深入调查和辩论要调用外部语言模型,可能较慢并产生费用;日常查看证据用第一个和第二个问题即可。
+- When you see "pending" or "could not be checked", do not fill in a number yourself; treat it as "evidence missing".
+- Before writing an important conclusion into a paper or report, go back to the raw data (the MD contact data file, the original papers) and check it.
+- The in-depth investigation and the debate call an external language model, so they can be slow and cost money; for everyday evidence checks, questions 1 and 2 are enough.

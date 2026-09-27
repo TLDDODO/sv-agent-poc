@@ -252,14 +252,14 @@ def _sandbox(tmp_path, mutate=None):
 def test_business_case_replaces_tbd_with_automated_metrics_and_says_manual_time_is_unmeasured():
     biz = gd._read(ROOT / "docs" / "business_case.md")
     assert "TBD" not in biz
-    assert "人工耗时未测量" in biz and "不估计人工耗时" in biz
+    assert "Manual time was not measured" in biz and "estimates neither manual time nor manual cost" in biz
     block = re.search(r"GENERATED:BUSINESS:START -->\r?\n(.*?)\r?\n<!-- GENERATED:BUSINESS:END", biz, re.S).group(1)
-    assert "| 数据接口调用 |" in block or "数据接口调用" in block
+    assert "data API calls" in block
     w = json.loads((ROOT / "results" / "workload.json").read_text(encoding="utf-8"))["groups"]["benchmark_agent"]
     assert f"{w['mean_data_api_calls']:.1f}" in block and f"{w['mean_records_processed']:.0f}" in block
     # no human-time number anywhere: the only mentions of manual effort say it is unmeasured
     for line in biz.splitlines():
-        if "人工" in line and re.search(r"\d+\s*(分钟|小时|天|min|h\b)", line):
+        if "manual" in line.lower() and re.search(r"\d+\s*(minutes?|hours?|days?|min|h\b)", line):
             pytest.fail(f"a manual-time figure appears: {line}")
 
 
@@ -280,7 +280,7 @@ def test_business_case_without_workload_says_so_and_invents_nothing(tmp_path):
         d.pop("workload", None)
     _sandbox(tmp_path, mutate)
     text = gd.render_all(tmp_path)["docs/business_case.md"]
-    assert "还没有工作量指标" in text and "TBD" not in text
+    assert "No workload metrics yet" in text and "TBD" not in text
 
 
 # --- web client shows the same counters ---------------------------------------------------------------------

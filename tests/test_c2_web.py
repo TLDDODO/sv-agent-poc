@@ -293,10 +293,10 @@ def test_the_whole_response_is_bilingual_and_the_english_has_no_chinese(fake_llm
     assert isinstance(d["conclusion"]["details"], str)
 
 
-def test_the_page_switches_language_and_defaults_to_chinese():
+def test_the_page_switches_language_and_defaults_to_english():
     html = client.get("/").text
-    assert '<html lang="zh">' in html and 'id="lang-zh" aria-pressed="true"' in html
-    assert 'id="lang-en" aria-pressed="false"' in html and 'var lang = "zh"' in html
+    assert '<html lang="en">' in html and 'id="lang-en" aria-pressed="true"' in html
+    assert 'id="lang-zh" aria-pressed="false"' in html and 'var lang = "en"' in html
 
 
 def test_every_ui_string_has_an_english_version():

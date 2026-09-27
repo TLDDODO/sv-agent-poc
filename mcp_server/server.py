@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import os
+import re
 import sys
 from typing import Any
 
@@ -34,11 +35,28 @@ INSTRUCTIONS = (
     "or run_adjudication (calls the language model; costs a little and takes a while).")
 
 
+def _slug(text: str) -> str:
+    """Compare ids ignoring case and separators: "FAT10-MAD2", "fat10 mad2", "fat10–mad2" -> "fat10_mad2"."""
+    return re.sub(r"[^0-9a-z]+", "_", str(text).lower()).strip("_")
+
+
+def normalize_case_id(case_id):
+    """Map what a model or a person typed onto a real preset id. Anything that matches no preset is
+    returned unchanged, so the normal "unknown case" error (which lists the valid ids) still applies."""
+    if not case_id:
+        return case_id
+    for c in webview.preset_cases():
+        if _slug(c["id"]) == _slug(case_id):
+            return c["id"]
+    return case_id
+
+
 def _resolve(case_id, uniprot_a, uniprot_b):
     try:
-        return webview.resolve_case(case_id, uniprot_a, uniprot_b)
+        return webview.resolve_case(normalize_case_id(case_id), uniprot_a, uniprot_b)
     except ValueError as exc:                    # bad case id / accession: an error the caller can read
-        raise ToolError(str(exc)) from None
+        ids = ", ".join(c["id"] for c in webview.preset_cases())
+        raise ToolError(f"{exc}. Valid case ids: {ids} (or give uniprot_a and uniprot_b).") from None
 
 
 def _run_quietly(case):

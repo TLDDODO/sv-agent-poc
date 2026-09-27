@@ -8,7 +8,7 @@
       "Glob(//d/**)",
       "Grep(//d/**)",
       "Bash(*D:*)",
-      "Bash(*d:\*)",
+      "Bash(*d:\\*)",
       "Bash(*/d/*)",
       "PowerShell(*D:*)"
     ]

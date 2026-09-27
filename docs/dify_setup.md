@@ -33,6 +33,25 @@ docker compose up -d
 - 默认占用本机 80 / 443 端口;被占用时改 `.env` 里的 `EXPOSE_NGINX_PORT` / `EXPOSE_NGINX_SSL_PORT`。
 - 停止:`docker compose down`(数据保存在 `dify\docker\volumes\`);升级或迁移请看 Dify 官方文档。
 
+### A1b. 让 Dify 的 SSRF 代理放行 `host.docker.internal`(必须做)
+
+Dify 的所有出站请求(包括 MCP 工具)都经过 `ssrf_proxy`(squid)。它默认拒绝一切私网 / 本机地址,所以不做这一步,在 Dify 里添加 MCP 服务会报:`403 Forbidden for url 'http://host.docker.internal:8765/mcp'`(代理日志里是 `TCP_DENIED/403`;请求根本没有到达本仓库的服务器)。
+
+用 Dify 官方提供的开关,只放行这一个域名,其余私网仍然拒绝。编辑 `dify\docker\.env`,加上(或填写)这一行:
+
+```
+SSRF_PROXY_ALLOW_PRIVATE_DOMAINS=host.docker.internal
+```
+
+然后只重建代理容器:
+
+```powershell
+cd C:\Users\<你>\dify\docker
+docker compose up -d ssrf_proxy
+```
+
+**已实测**:改完后,在 `docker-api-1` 容器里经代理(`http://ssrf_proxy:3128`)向 `http://host.docker.internal:8765/mcp` 发 MCP `initialize`,得到 HTTP 200(代理日志 `TCP_MISS/200`);改之前同样的请求是 `TCP_DENIED/403`。容器里生成的 `/etc/squid/dify_allow_private.conf` 含 `acl dify_allowed_private_domains dstdomain host.docker.internal`。
+
 ### A2. 启动本仓库的 MCP 服务器(HTTP)
 
 在仓库根目录、已安装依赖(`pip install -r requirements.txt`)的环境里:
@@ -94,7 +113,7 @@ Dify 自己的对话需要一个语言模型(和 MCP 服务器里的 DeepSeek ke
 - **MCP 连接失败**:
   1. 先确认 MCP 服务器在运行(`http://127.0.0.1:8765/mcp` 用浏览器打开会返回 HTTP 400 `Missing session ID` 的 JSON 错误,说明服务在监听;本机实测)。
   2. 启动命令必须带 `--allow-host host.docker.internal:8765`,否则服务器会返回 HTTP 421 `Invalid Host header`(本机用伪造的 Host 头实测过)。
-  3. Dify 的 `ssrf_proxy` 容器会拦截对内网地址的请求;如果 Dify 通过它访问 MCP 端点被拒,需要在 `dify\docker\ssrf_proxy\` 的 squid 配置里放行 `host.docker.internal`,然后 `docker compose restart ssrf_proxy`。(这一点尚未在本机遇到或验证,遇到时请把现象记下来。)
+  3. 报 403 而不是 421:见第 A1b 节(Dify 的 `ssrf_proxy` 拦截了请求,不是本仓库的服务器拒绝的)。
 - **`run_adjudication` 超时**:这是一次完整的调查,要几十秒;把 Dify 里工具调用的超时时间调大。
 - **回答里出现了工具没给过的数字或文献**:提示词没有约束好,重设为 `integrations/dify/system_prompt.md` 的内容,并把它当缺陷记录下来。
 

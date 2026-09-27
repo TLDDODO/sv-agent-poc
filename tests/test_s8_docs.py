@@ -41,11 +41,12 @@ def test_committed_files_are_up_to_date():
 def test_generating_twice_gives_no_diff(tmp_path):
     _sandbox(tmp_path)
     _write_all(tmp_path)
-    first = {r: _read(tmp_path / r) for r in gd.BLOCKS}
+    rels = sorted({rel for rel, _, _ in gd.BLOCKS})
+    first = {r: _read(tmp_path / r) for r in rels}
     _write_all(tmp_path)
-    assert {r: _read(tmp_path / r) for r in gd.BLOCKS} == first
+    assert {r: _read(tmp_path / r) for r in rels} == first
     # the sandbox result equals the committed files (which were produced the same way)
-    assert first == {r: _read(ROOT / r) for r in gd.BLOCKS}
+    assert first == {r: _read(ROOT / r) for r in rels}
 
 
 def test_line_endings_are_preserved(tmp_path):
@@ -88,7 +89,7 @@ def test_no_numbers_from_dry_run_blocked_or_missing_results(tmp_path, state):
     if state == "missing":
         (tmp_path / "results" / "benchmark.json").unlink()
     _write_all(tmp_path)
-    for rel, name in (("README.md", "BENCHMARK"), ("docs/business_case.md", "BUSINESS")):
+    for rel, name in (("README.md", "BENCHMARK"), ("README.md", "KEYRESULTS"), ("docs/business_case.md", "BUSINESS")):
         block = re.search(rf"GENERATED:{name}:START -->\r?\n(.*?)\r?\n<!-- GENERATED:{name}:END",
                           _read(tmp_path / rel), re.S).group(1)
         assert not re.search(r"\d\.\d|\$\d|%", block), (rel, block)
@@ -110,7 +111,7 @@ def test_hand_written_text_has_no_metrics():
 
 
 def test_each_generated_marker_appears_exactly_once():
-    for rel, (name, _) in gd.BLOCKS.items():
+    for rel, name, _ in gd.BLOCKS:
         text = _read(ROOT / rel)
         assert text.count(f"GENERATED:{name}:START") == 1 and text.count(f"GENERATED:{name}:END") == 1
 

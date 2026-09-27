@@ -1,7 +1,62 @@
 # Interface Adjudicator
 
+[![tests](https://github.com/TLDDODO/sv-agent-poc/actions/workflows/tests.yml/badge.svg)](https://github.com/TLDDODO/sv-agent-poc/actions/workflows/tests.yml)
+
 *An autonomous LLM agent that adjudicates protein–protein interfaces from real evidence.*
 **Case study: FAT10–MAD2.**
+
+## What it is
+
+The Interface Adjudicator is an autonomous LLM agent for structural- and computational-biology
+teams who need a fast, evidence-grounded first read on where two proteins bind, before
+committing to an experiment. It never invents a residue, score or citation: every claim is
+labelled **live** (fetched during that run), **cited** (a published result, not re-derived) or
+**pending** (no data — never a placeholder number), and when its own evidence disagrees with the
+literature it reports the contradiction and refuses to pick a winner. It is not just a demo —
+it ships with a benchmark against a no-tool baseline, an error-injection test suite, and a
+workload/cost report generated straight from logged runs (see "Key results" below), and it is
+reachable from a plain web page, an MCP client such as Claude Desktop, or Dify.
+
+## Screenshots
+
+<img src="docs/img/web_client.png" alt="The web client after a completed FAT10-MAD2 run: the step-by-step timeline, the conclusion with points to watch, and the evidence table with live/cited/pending labels." width="640">
+
+*The web client (`docker compose up -d`, then `http://127.0.0.1:8000/`) after a real FAT10–MAD2
+run: the completed step-by-step timeline, the conclusion, and the evidence table.*
+
+<img src="integrations/dify/dify_q2.png" alt="The same agent answering through Dify: a full investigation of FAT10-MAD2, reporting the MD-vs-literature contradiction without picking a side." width="640">
+
+*The same agent answering through [Dify](docs/dify_setup.md) — a chat interface for people who
+don't want to use the web page or an MCP client directly.*
+
+## Key results
+
+<!-- GENERATED:KEYRESULTS:START -->
+| Metric | Value |
+|---|---|
+| Benchmark accuracy — agent (with tools) | 0.53 |
+| Benchmark accuracy — no-tool baseline | 0.30 |
+| Injected errors caught | 6 / 7 (86%) |
+| Time per query (median) | 30.8 s |
+| Cost per query (mean) | $0.0031 |
+
+5 protein pairs, 3 run(s) each, model `deepseek-chat`. Full numbers, scoring rule and the training-data caveat for the baseline: [`results/benchmark.md`](results/benchmark.md), [`docs/benchmark_design.md`](docs/benchmark_design.md).
+<!-- GENERATED:KEYRESULTS:END -->
+
+## Quick start
+
+```powershell
+git clone https://github.com/TLDDODO/sv-agent-poc.git
+cd sv-agent-poc
+copy .env.example .env   # optional: add DEEPSEEK_API_KEY
+scripts\start_demo.bat   # or: docker compose up -d --build
+```
+
+- Web client: **http://127.0.0.1:8000/** — pick a preset or type a protein pair, press Run.
+- Dify (if deployed separately, see `docs/dify_setup.md`): **http://localhost**
+
+No terminal window needs to stay open; both containers `restart: unless-stopped`. Details for
+every other way to run this (local Python, CLI, Claude Desktop via MCP) are further down.
 
 ![FAT10–MAD2 interface: the persistent MD contacts (red) sit on FAT10's C-terminal region — outside the NMR-expected UBL1 binding site (blue). MAD2 in grey.](interface_labeled.png)
 

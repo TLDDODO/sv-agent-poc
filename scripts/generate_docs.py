@@ -121,10 +121,37 @@ def business_block(data: dict) -> str:
     return "\n".join(L)
 
 
-BLOCKS = {
-    "README.md": ("BENCHMARK", readme_block),
-    "docs/business_case.md": ("BUSINESS", business_block),
-}
+# --- README "Key results" block (short version, for the top of the file) --------------
+def key_results_block(data: dict) -> str:
+    if not _live(data):
+        why = "dry run" if data.get("dry_run") else data.get("status")
+        return f"_No live results yet ({why}). Run `python scripts/run_benchmark.py`._"
+    o = data["overall"]
+    ei = data.get("error_injection") or {}
+    w = data.get("workload") or {}
+    g = (w.get("groups") or {}).get("benchmark_agent") if w.get("status") == "ok" else None
+    L = ["| Metric | Value |", "|---|---|",
+         f"| Benchmark accuracy — agent (with tools) | {_f(o['agent']['mean_score'])} |",
+         f"| Benchmark accuracy — no-tool baseline | {_f(o['baseline']['mean_score'])} |"]
+    if ei.get("status") == "ok":
+        s = ei["summary"]
+        L.append(f"| Injected errors caught | {s['caught']} / {s['injected']} ({s['intercept_rate']:.0%}) |")
+    if g:
+        L.append(f"| Time per query (median) | {_f(g['median_wall_clock_s'], '{:.1f}')} s |")
+        L.append(f"| Cost per query (mean) | {_cost(g['mean_cost_usd'])} |")
+    L.append("")
+    L.append(f"{len(data['cases'])} protein pairs, {data['runs_per_case']} run(s) each, model `{data['model']}`. Full numbers, "
+             "scoring rule and the training-data caveat for the baseline: "
+             "[`results/benchmark.md`](results/benchmark.md), [`docs/benchmark_design.md`](docs/benchmark_design.md).")
+    return "\n".join(L)
+
+
+# (path, marker name, render fn); a path may appear more than once (README.md has two blocks).
+BLOCKS = [
+    ("README.md", "KEYRESULTS", key_results_block),
+    ("README.md", "BENCHMARK", readme_block),
+    ("docs/business_case.md", "BUSINESS", business_block),
+]
 
 
 def _read(path: Path) -> str:
@@ -142,9 +169,11 @@ def _replace(text: str, name: str, body: str) -> str:
 
 def render_all(root: Path = ROOT) -> dict[str, str]:
     data = _load(root)
-    out = {}
-    for rel, (name, fn) in BLOCKS.items():
-        out[rel] = _replace(_read(root / rel), name, fn(data))
+    out: dict[str, str] = {}
+    for rel, name, fn in BLOCKS:
+        if rel not in out:
+            out[rel] = _read(root / rel)
+        out[rel] = _replace(out[rel], name, fn(data))
     return out
 
 

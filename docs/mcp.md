@@ -41,6 +41,8 @@ python -m mcp_server --transport http --allow-host host.docker.internal:8765
 
 `--host 0.0.0.0` makes the server reachable from the local network. The server has no built-in authentication, so keep it on localhost unless you understand the consequences.
 
+**Running it as a background container instead of a foreground command** (no terminal window to keep open): `docker compose up -d` in the repository root starts it as the `mcp` service in `docker-compose.yml` (`restart: unless-stopped`, port published as `127.0.0.1:8765` only). See `docs/dify_setup.md`, section A2, for the exact steps and what was verified about Dify still reaching it through `host.docker.internal`.
+
 ## Claude Desktop config on Windows
 
 Edit `%APPDATA%\Claude\claude_desktop_config.json` (create it if it does not exist), adjust the paths, save, and restart Claude Desktop:

@@ -177,6 +177,23 @@ python scripts/run_error_injection.py                 # FAT10-MAD2 error injecti
 python scripts/generate_docs.py                       # refresh README results + business case numbers
 ```
 
+### Dify demo (Windows)
+
+`docker-compose.yml` also runs the MCP server (`docs/mcp.md`) as its own `mcp` service, alongside
+`adjudicator` (the web client above): both `restart: unless-stopped`, so once started neither
+needs a terminal window kept open.
+
+```powershell
+copy .env.example .env      # fill in DEEPSEEK_API_KEY (optional; see docs/dify_setup.md, A2)
+docker compose up -d --build
+```
+
+For the full Dify integration (self-hosted Dify + this repo's MCP server, one-time setup then
+everyday use), see `docs/dify_setup.md`. Once that one-time setup is done,
+`scripts\start_demo.bat` and `scripts\stop_demo.bat` (double-click, or run from `cmd`; no
+PowerShell needed) start and stop Dify's containers and this repository's containers together,
+waiting until Dify, the MCP server and the web client all respond before printing their URLs.
+
 ## Repository layout
 
 ```

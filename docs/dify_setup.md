@@ -9,7 +9,7 @@ There are two ways to connect:
 - **Way A (recommended): self-hosted Dify + the MCP server** (part A). Dify sees three tools directly through MCP: `list_cases`, `get_evidence`, `run_adjudication`.
 - **Way B: an OpenAPI custom tool** (part B, the earlier way; suitable for Dify's cloud version).
 
-> Status: steps A1–A2 (and A1b) were run on this machine and their results are written into each step. A3–A7 are browser steps a person did; the exported app (`integrations/dify/interface-adjudicator-qa.yml`) and two screenshots (`dify_q1.png`, `dify_q2.png`) are now in the repository and were checked (A6, A7). Question 3 of A6 was not run. Three issues found in testing were fixed in this repository's code and prompt (A6); `check_reply.py`, part of a Dify build-mode skill, could not be reached from here to extend as originally asked (A7 explains why).
+> Status: steps A1–A2 (and A1b, A9) were run on this machine and their results are written into each step. A2's MCP server and the web client now run as this repository's own Docker containers (`docker-compose.yml`), not a bare terminal command — see A2 for why and what was re-verified after the change. A3–A7 are browser steps a person did; the exported app (`integrations/dify/interface-adjudicator-qa.yml`) and two screenshots (`dify_q1.png`, `dify_q2.png`) are now in the repository and were checked (A6, A7). Question 3 of A6 was not run. Three issues found in testing were fixed in this repository's code and prompt (A6); `check_reply.py`, part of a Dify build-mode skill, could not be reached from here to extend as originally asked (A7 explains why).
 
 ---
 
@@ -53,21 +53,27 @@ docker compose up -d ssrf_proxy
 
 **Tested**: after this change, an MCP `initialize` request sent from inside the `docker-api-1` container, through the proxy (`http://ssrf_proxy:3128`), to `http://host.docker.internal:8765/mcp` returned HTTP 200 (proxy log `TCP_MISS/200`); before the change the same request was `TCP_DENIED/403`. The `/etc/squid/dify_allow_private.conf` generated inside the container contains `acl dify_allowed_private_domains dstdomain host.docker.internal`.
 
-### A2. Start this repository's MCP server (HTTP)
+### A2. Start this repository's MCP server and web client (Docker; no terminal window to keep open)
 
-From the repository root, in an environment where the dependencies are installed (`pip install -r requirements.txt`):
+The MCP server and the web client run as containers from this repository's own `docker-compose.yml`, wrapping the same `python -m mcp_server` command `docs/mcp.md` documents. Containers restart with the machine (`restart: unless-stopped`) and survive Docker Desktop restarting; there is no window to keep open and nothing that dies because a terminal was closed — an earlier version of this step ran the MCP server directly in a terminal window that had to stay open, which was fragile, and this replaces it.
+
+From the repository root:
 
 ```powershell
-$env:DEEPSEEK_API_KEY = "<your key>"      # without a key list_cases / get_evidence still work and run_adjudication returns an error
-python -m mcp_server --transport http --port 8765 --allow-host host.docker.internal:8765
+copy .env.example .env
+notepad .env          # fill in DEEPSEEK_API_KEY (optional -- see below), save, close
+docker compose up -d --build
 ```
 
-- It listens on the local machine only, `127.0.0.1:8765`; the address is `http://127.0.0.1:8765/mcp`.
-- `--allow-host host.docker.internal:8765` makes the server accept the `Host` header sent by a Dify container (by default the server rejects unfamiliar Host values, a protection against DNS rebinding).
-- The server has no authentication of its own, so **do not** expose it to the local network with `--host 0.0.0.0`.
-- Keep the key only in this terminal's environment; never put it into Dify.
+- `.env` is gitignored; never commit it. Without a key, `list_cases` / `get_evidence` and the web client's `/evidence`, `/health` still work; `run_adjudication` and paid queries do not.
+- This starts two containers: `mcp` (the MCP HTTP server, `docker-compose.yml`'s `mcp` service) and `adjudicator` (the web client, `http://127.0.0.1:8000/`).
+- The MCP server's port is published as `127.0.0.1:8765:8765` — reachable from this machine and, as verified below, from Dify's containers through `host.docker.internal`, but not from the local network, matching `docs/mcp.md`'s "listens on localhost only by default".
+- `--allow-host host.docker.internal:8765` (baked into the `mcp` service's command) makes the server accept the `Host` header a Dify container sends (by default it rejects unfamiliar Host values, a protection against DNS rebinding).
+- To stop: `docker compose stop` (keeps the containers and their images; `docker compose down` also removes the containers). `scripts/start_demo.bat` / `scripts/stop_demo.bat` do this and the equivalent for Dify together — see A9.
 
-**Tested**: from inside Dify's `api` container, an MCP `initialize` request to `http://host.docker.internal:8765/mcp` returned HTTP 200 with the server capabilities (so a container can reach, through `host.docker.internal`, a service on the host that listens only on 127.0.0.1).
+**Tested**: `docker compose build` and `docker compose up -d` both succeeded; `http://127.0.0.1:8000/` and `http://127.0.0.1:8765/mcp` both responded (200 and the expected "missing session ID" 400 respectively — the same signature confirmed earlier as "server is up"). From inside Dify's `api` container, an MCP `initialize` request to `http://host.docker.internal:8765/mcp` returned HTTP 200 with the server capabilities: a container can reach, through `host.docker.internal`, a service that now runs in its own container and is published to the host's `127.0.0.1` only — not just a bare process bound to `127.0.0.1`, which was the only configuration checked before.
+
+Running the MCP server directly with `python -m mcp_server` (docs/mcp.md) still works and is unchanged; Docker is the default here because a bare terminal window is fragile (this section replaced one that said to keep one open).
 
 ### A3. [You act in the browser] Create the administrator account
 
@@ -139,6 +145,19 @@ App page, top-right menu → **Export DSL** (**do not** tick "include secrets").
 - **`run_adjudication` times out**: it is a full investigation and takes tens of seconds; raise the tool-call timeout in Dify.
 - **The tool was called with `case_id` "fat10-mad2" and failed** (reported by the person who ran Dify; no log was saved): the MCP server now normalises case ids, ignoring case, hyphens, underscores and spaces (`fat10-mad2`, `FAT10 MAD2` and `fat10_mad2` are the same case), and an unknown id returns an error that lists the valid ids.
 - **An answer contains a number or citation the tools never gave**: the prompt is not constraining the model well; reset it to the content of `integrations/dify/system_prompt.md` and record it as a defect.
+
+### A9. Everyday start/stop (after the one-time setup above)
+
+Once A1–A6 are done once, `scripts\start_demo.bat` and `scripts\stop_demo.bat` (double-click, or run from `cmd`; no PowerShell needed) start and stop both Dify and this repository's containers together:
+
+```
+scripts\start_demo.bat     REM Docker Desktop + Dify (docker compose up -d in the Dify checkout),
+                            REM this repo's mcp + adjudicator containers, waits for all three,
+                            REM then prints the Dify / MCP / web-client URLs
+scripts\stop_demo.bat      REM docker compose stop in both places (containers and data kept)
+```
+
+See README, "Dify demo" for what each step does. Nothing in the everyday flow requires a terminal window to stay open: `docker compose up -d` returns as soon as the containers are started, and the containers keep running (and restart with the machine) on their own.
 
 ---
 
